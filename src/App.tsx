@@ -29,9 +29,24 @@ const queryClient = new QueryClient({
   },
 });
 
+const AppRoutes = () => {
+  usePageTracking();
+  return (
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/products" element={<Products />} />
+      <Route path="/products/:id" element={<ProductDetail />} />
+      <Route path="/testimonials" element={<Testimonials />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/faq" element={<FAQ />} />
+      <Route path="/admin" element={<Admin />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
+
 const App = () => {
   useEffect(() => {
-    // Track web vitals in production with error handling
     if (process.env.NODE_ENV === 'production') {
       try {
         import('./utils/performance').then(({ trackWebVitals }) => {
@@ -55,7 +70,6 @@ const App = () => {
               <Sonner />
               <BrowserRouter>
                 <AppRoutes />
-              </BrowserRouter>
               </BrowserRouter>
             </HelmetProvider>
           </TooltipProvider>
