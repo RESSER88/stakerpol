@@ -8,6 +8,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/utils/translations';
 import OptimizedImage from '@/components/ui/OptimizedImage';
 import LiftHeightBadge from '@/components/products/LiftHeightBadge';
+import { trackPhoneClick } from '@/utils/analytics';
 
 interface ProductCardProps {
   product: Product;
@@ -47,7 +48,7 @@ const ProductCard = ({ product, priority = false }: ProductCardProps) => {
             className="cta-button w-full text-sm md:text-base py-2 md:py-3"
             asChild
           >
-            <a href="tel:+48694133592">
+            <a href="tel:+48694133592" onClick={() => trackPhoneClick(`product_card_${product.model}`)}>
               <Phone className="mr-2 h-3 w-3 md:h-4 md:w-4" />
               {t('callNow')}
             </a>
