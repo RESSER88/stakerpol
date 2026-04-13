@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Phone } from 'lucide-react';
+import { trackPhoneClick } from '@/utils/analytics';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/utils/translations';
@@ -44,7 +45,7 @@ const Header = () => {
             </Link>
             <LanguageSwitcher />
             <Button className="cta-button" asChild>
-              <a href="tel:+48694133592">
+              <a href="tel:+48694133592" onClick={() => trackPhoneClick('header_desktop')}>
                 <Phone className="mr-2 h-4 w-4" />
                 +48 694 133 592
               </a>
@@ -104,7 +105,7 @@ const Header = () => {
                 {t('contact')}
               </Link>
               <Button className="cta-button w-full" asChild>
-                <a href="tel:+48694133592">
+                <a href="tel:+48694133592" onClick={() => trackPhoneClick('header_mobile')}>
                   <Phone className="mr-2 h-4 w-4" />
                   +48 694 133 592
                 </a>

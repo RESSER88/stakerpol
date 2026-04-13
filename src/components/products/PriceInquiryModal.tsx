@@ -17,6 +17,7 @@ import { Product } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/utils/translations';
 import { supabase } from '@/integrations/supabase/client';
+import { trackFormSubmit, trackEmailClick } from '@/utils/analytics';
 
 interface PriceInquiryModalProps {
   isOpen: boolean;
@@ -176,6 +177,10 @@ Pozdrawiam` : '';
     } catch (e) {
       console.warn('Lead save/notify failed (continuing with mailto):', e);
     }
+
+    // Track analytics events
+    trackFormSubmit('price_inquiry', product.model);
+    trackEmailClick('price_inquiry_modal');
 
     // Always open email client
     window.location.href = mailtoLink;

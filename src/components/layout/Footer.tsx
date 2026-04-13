@@ -1,6 +1,7 @@
 
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin, Instagram, Youtube, Facebook } from 'lucide-react';
+import { trackPhoneClick, trackEmailClick, trackSocialClick } from '@/utils/analytics';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/utils/translations';
 
@@ -55,11 +56,11 @@ const Footer = () => {
             <p className="mb-4">{companyInfo.description}</p>
             <div className="flex items-center space-x-2 mb-3 group">
               <Phone size={16} className="text-toyota-orange group-hover:animate-pulse-light" />
-              <a href="tel:+48694133592" className="hover:text-toyota-orange transition-colors">+48 694 133 592</a>
+              <a href="tel:+48694133592" className="hover:text-toyota-orange transition-colors" onClick={() => trackPhoneClick('footer')}>+48 694 133 592</a>
             </div>
             <div className="flex items-center space-x-2 mb-3 group">
               <Mail size={16} className="text-toyota-orange group-hover:animate-pulse-light" />
-              <a href="mailto:info@stakerpol.pl" className="hover:text-toyota-orange transition-colors">info@stakerpol.pl</a>
+              <a href="mailto:info@stakerpol.pl" className="hover:text-toyota-orange transition-colors" onClick={() => trackEmailClick('footer')}>info@stakerpol.pl</a>
             </div>
             <div className="flex items-start space-x-2 group">
               <MapPin size={16} className="mt-1 flex-shrink-0 text-toyota-orange group-hover:animate-pulse-light" />
@@ -106,6 +107,7 @@ const Footer = () => {
               href="https://www.instagram.com/stakerpol_paleciak_elektryczny" 
               target="_blank" 
               rel="noopener noreferrer"
+              onClick={() => trackSocialClick('instagram')}
               className="w-10 h-10 bg-gray-800 hover:bg-stakerpol-orange rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
             >
               <Instagram size={20} className="text-white" />
@@ -114,6 +116,7 @@ const Footer = () => {
               href="https://www.youtube.com/@stakerpol" 
               target="_blank" 
               rel="noopener noreferrer"
+              onClick={() => trackSocialClick('youtube')}
               className="w-10 h-10 bg-gray-800 hover:bg-stakerpol-orange rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
             >
               <Youtube size={20} className="text-white" />
@@ -122,6 +125,7 @@ const Footer = () => {
               href="https://www.facebook.com/stakerpol/?locale=pl_PL" 
               target="_blank" 
               rel="noopener noreferrer"
+              onClick={() => trackSocialClick('facebook')}
               className="w-10 h-10 bg-gray-800 hover:bg-stakerpol-orange rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
             >
               <Facebook size={20} className="text-white" />
