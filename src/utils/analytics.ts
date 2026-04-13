@@ -1,14 +1,8 @@
 // GA4 analytics utility – fires gtag events for CTA clicks and conversions
 
-declare global {
-  interface Window {
-    gtag?: (...args: unknown[]) => void;
-  }
-}
-
-const gtag = (...args: unknown[]) => {
-  if (typeof window !== 'undefined' && window.gtag) {
-    window.gtag(...args);
+const gtag = (...args: any[]) => {
+  if (typeof window !== 'undefined' && typeof (window as any).gtag === 'function') {
+    (window as any).gtag(...args);
   }
 };
 
