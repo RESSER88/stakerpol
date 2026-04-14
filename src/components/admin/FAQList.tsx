@@ -124,7 +124,7 @@ const FAQList: React.FC<FAQListProps> = ({
                         onClick={() => onToggleActive(faq.id, !faq.is_active)}
                         title={faq.is_active ? 'Dezaktywuj' : 'Aktywuj'}
                       >
-                        {faq.is_active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4 text-green-500" />}
+                        {faq.is_active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4 text-primary" />}
                       </Button>
                       <Button
                         variant="outline"
