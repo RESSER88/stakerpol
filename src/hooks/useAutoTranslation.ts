@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { logger } from '@/utils/logger';
+import { FEATURES } from '@/config/featureFlags';
 
 interface TranslationStats {
   current_month: string;
@@ -186,6 +187,7 @@ export const useAutoTranslation = () => {
   };
 
   useEffect(() => {
+    if (!FEATURES.DEEPL_ENABLED) return;
     loadStats();
     loadJobs();
   }, []);

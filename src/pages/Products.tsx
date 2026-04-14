@@ -14,6 +14,7 @@ import { Helmet } from 'react-helmet-async';
 import ProductFilter from '@/components/products/ProductFilter';
 import React, { useState, useMemo } from 'react';
 import { Product } from '@/types';
+import { getSiteDescription } from '@/config/featureFlags';
 const Products = () => {
   const { language } = useLanguage();
   const t = useTranslation(language);
@@ -25,20 +26,7 @@ const Products = () => {
     setFilteredProducts(products);
   }, [products]);
 
-  const getPageDescription = () => {
-    switch (language) {
-      case 'en':
-        return 'We offer a wide selection of BT Toyota forklifts, perfectly adapted to various applications and needs.';
-      case 'cs':
-        return 'Nabízíme široký výběr vysokozdvižných vozíků BT Toyota, ideálně přizpůsobených různým aplikacím a potřebám.';
-      case 'sk':
-        return 'Ponúkame široký výber vysokozdvižných vozíkov BT Toyota, ideálne prispôsobených rôznym aplikáciám a potrebám.';
-      case 'de':
-        return 'Wir bieten eine große Auswahl an BT Toyota Gabelstaplern, perfekt angepasst an verschiedene Anwendungen und Bedürfnisse.';
-      default:
-        return 'Oferujemy szeroki wybór wózków widłowych BT Toyota, idealnie dopasowanych do różnych zastosowań i potrzeb.';
-    }
-  };
+  const getPageDescription = () => getSiteDescription(language);
 
   const renderContent = () => {
     if (isLoading) {

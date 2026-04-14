@@ -20,6 +20,7 @@ import ImageStatusCard from '@/components/admin/ImageStatusCard';
 import HealthCheck from '@/components/monitoring/HealthCheck';
 import ProductionReadinessPanel from '@/components/admin/ProductionReadinessPanel';
 import SEOManagerTool from '@/components/admin/SEOManagerTool';
+import { FEATURES } from '@/config/featureFlags';
 
 const Admin = () => {
   const { user, loading: authLoading, isAdmin, adminLoading, signOut } = useSupabaseAuth();
@@ -227,21 +228,23 @@ const Admin = () => {
 
           <TabsContent value="settings">
             <div className="space-y-6">
-              {/* Translation Management Panel */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Languages className="h-5 w-5" />
-                    Tłumaczenia AI
-                  </CardTitle>
-                  <CardDescription>
-                    Zarządzanie automatycznymi tłumaczeniami produktów za pomocą DeepL API
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <TranslationManager />
-                </CardContent>
-              </Card>
+              {/* Translation Management Panel — hidden when DeepL disabled */}
+              {FEATURES.DEEPL_ENABLED && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Languages className="h-5 w-5" />
+                      Tłumaczenia AI
+                    </CardTitle>
+                    <CardDescription>
+                      Zarządzanie automatycznymi tłumaczeniami produktów za pomocą DeepL API
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <TranslationManager />
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Image Status Card (Collapsible) */}
               <ImageStatusCard 
@@ -252,11 +255,13 @@ const Admin = () => {
                 onOpenChange={setIsImageStatusOpen}
               />
 
-              {/* Translation Stats Panel */}
-              <TranslationStatsPanel 
-                isOpen={isTranslationStatsOpen}
-                onOpenChange={setIsTranslationStatsOpen}
-              />
+              {/* Translation Stats Panel — hidden when DeepL disabled */}
+              {FEATURES.DEEPL_ENABLED && (
+                <TranslationStatsPanel 
+                  isOpen={isTranslationStatsOpen}
+                  onOpenChange={setIsTranslationStatsOpen}
+                />
+              )}
             </div>
           </TabsContent>
 

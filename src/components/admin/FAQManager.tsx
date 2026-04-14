@@ -9,6 +9,7 @@ import { runFAQMigration } from '@/utils/migrateFAQData';
 import { Download } from 'lucide-react';
 import FAQList from './FAQList';
 import FAQForm from './FAQForm';
+import { FEATURES } from '@/config/featureFlags';
 
 const FAQManager: React.FC = () => {
   const { createFAQ, updateFAQ, deleteFAQ, hardDeleteFAQ, toggleFAQActive, getAllFAQsForAdmin } = useSupabaseFAQ();
@@ -109,15 +110,17 @@ const FAQManager: React.FC = () => {
                 Dodawaj, edytuj i zarządzaj pytaniami FAQ w różnych językach
               </CardDescription>
             </div>
-            <Button
-              onClick={() => setShowMigrationConfirm(true)}
-              disabled={migrationLoading}
-              variant="outline"
-              className="flex items-center space-x-2"
-            >
-              <Download className="h-4 w-4" />
-              <span>{migrationLoading ? 'Migracja...' : 'Migruj FAQ z kodu'}</span>
-            </Button>
+            {FEATURES.SHOW_FAQ_MIGRATION && (
+              <Button
+                onClick={() => setShowMigrationConfirm(true)}
+                disabled={migrationLoading}
+                variant="outline"
+                className="flex items-center space-x-2"
+              >
+                <Download className="h-4 w-4" />
+                <span>{migrationLoading ? 'Migracja...' : 'Migruj FAQ z kodu'}</span>
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>

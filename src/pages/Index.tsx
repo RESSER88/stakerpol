@@ -14,6 +14,7 @@ import { useTranslation } from '@/utils/translations';
 import { getRandomItems } from '@/utils/randomUtils';
 import { useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
+import { getMetaTitle } from '@/config/featureFlags';
 import FAQSection from '@/components/ui/FAQSection';
 import FAQSchema from '@/components/seo/FAQSchema';
 
@@ -78,8 +79,8 @@ const Index = () => {
   return (
     <Layout>
       <Helmet>
-        <title>Stakerpol - Wózki widłowe Toyota BT | Sprzedaż używanych wózków elektrycznych i spalinowych</title>
-        <meta name="description" content="Profesjonalna sprzedaż używanych wózków widłowych Toyota i BT. Elektryczne i spalinowe paleciaki magazynowe z serwisem. Sprawdź ofertę wózków paletowych w Stakerpol." />
+        <title>{getMetaTitle()}</title>
+        <meta name="description" content="Profesjonalna sprzedaż używanych wózków paletowych Toyota i BT. Elektryczne paleciaki magazynowe z serwisem. Sprawdź ofertę w Stakerpol." />
         <meta property="og:title" content="Stakerpol - Wózki widłowe Toyota BT | Sprzedaż używanych wózków" />
         <meta property="og:description" content="Profesjonalna sprzedaż używanych wózków widłowych Toyota i BT. Elektryczne i spalinowe paleciaki magazynowe z serwisem." />
         <meta property="og:image" content="/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.png" />
