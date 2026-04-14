@@ -51,6 +51,25 @@ const ProductDetail = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [id]);
 
+  const productFaqItems = useMemo(() => {
+    if (FEATURES.PRODUCT_FAQ && allFaqs.length > 0 && product) {
+      let selectedFaqs = allFaqs;
+      const typedProduct = product as any;
+      if (typedProduct?.faqIds && typedProduct.faqIds.length > 0) {
+        const assigned = allFaqs.filter(f => typedProduct.faqIds.includes(f.id));
+        if (assigned.length > 0) selectedFaqs = assigned;
+      }
+      return selectedFaqs.slice(0, 4).map(f => ({ question: f.question, answer: f.answer }));
+    }
+    if (!product) return [];
+    return [
+      { question: t('product_faq_surface_question' as any).replace('{model}', product.model), answer: t('product_faq_surface_answer' as any) },
+      { question: t('product_faq_truck_question' as any).replace('{model}', product.model), answer: t('product_faq_truck_answer' as any) },
+      { question: t('product_faq_cold_question' as any), answer: t('product_faq_cold_answer' as any) },
+      { question: t('product_faq_height_question' as any).replace('{model}', product.model), answer: t('product_faq_height_answer' as any) },
+    ];
+  }, [allFaqs, product, t, language]);
+
   if (isLoading) {
     return (
       <Layout>
