@@ -2,6 +2,7 @@
 export interface Product {
   id: string;
   slug?: string; // SEO-friendly unique slug (model-serial)
+  faqIds?: string[]; // max 4 FAQ IDs from faqs table
   model: string;
   image: string; // Keep for backward compatibility - will be same as images[0]
   images: string[]; // Array of up to 5 images
