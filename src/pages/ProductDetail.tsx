@@ -37,6 +37,14 @@ const ProductDetail = () => {
 
   // Fetch SEO settings for dynamic JSON-LD schema
   const { seoSettings } = useProductSEO(product?.id || '');
+  // Dynamic FAQ: fetch from Supabase or fall back to static
+  const { faqs: allFaqs, fetchFAQs } = useSupabaseFAQ();
+
+  useEffect(() => {
+    if (FEATURES.PRODUCT_FAQ) {
+      fetchFAQs(language);
+    }
+  }, [language]);
   
   useEffect(() => {
     // Scroll to top when component mounts or when ID changes
