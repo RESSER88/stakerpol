@@ -1,15 +1,18 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, HelpCircle } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Product } from '@/types';
+import { useSupabaseFAQ, FAQ } from '@/hooks/useSupabaseFAQ';
+import { FEATURES } from '@/config/featureFlags';
 
 interface ProductFormProps {
   product: Product;
-  onFieldChange: (field: string, value: string) => void;
+  onFieldChange: (field: string, value: string | string[]) => void;
   onSpecsFieldChange: (field: string, value: string) => void;
 }
 
