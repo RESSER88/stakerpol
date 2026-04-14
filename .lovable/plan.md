@@ -1,111 +1,146 @@
 
 
-# Diagnoza i plan naprawy FAQ — Stakerpol
+# Plan wdrożenia — 6 zadań FAQ + UX + DeepL + teksty
 
-## Diagnoza
+## Podsumowanie
 
-### Główna przyczyna: brak `TO authenticated` w politykach RLS tabeli `faqs`
+Wdrożenie 6 zmian w sposób bezpieczny z feature flagami, fallbackami i możliwością cofnięcia. Zmiany dotyczą: FAQ per produkt, tekstów strony, meta title, dezaktywacji DeepL, ukrycia przycisku migracji i ulepszenia UI FAQ.
 
-Porównanie polityk FAQ (migracja `20250904`) z działającymi politikami products (migracja `20250623`):
+---
 
-```text
-❌ FAQ (NIE DZIAŁA):
-CREATE POLICY "Only admins can insert FAQs" 
-ON public.faqs FOR INSERT 
-WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
+## 0. Feature flags — konfiguracja centralna
 
-✅ Products (DZIAŁA):
-CREATE POLICY "Only admins can insert products"
-ON public.products FOR INSERT
-TO authenticated                              ← BRAK W FAQ!
-WITH CHECK (public.has_role(auth.uid(), 'admin'));
+Utworzyć plik `src/config/featureFlags.ts`:
+```ts
+export const FEATURES = {
+  PRODUCT_FAQ: true,          // Zadanie 1
+  USE_PALLET_TRUCKS_TEXT: true, // Zadanie 2
+  NEW_META_TITLE: true,       // Zadanie 3
+  DEEPL_ENABLED: false,       // Zadanie 4 — domyślnie wyłączony
+  SHOW_FAQ_MIGRATION: false,  // Zadanie 5
+  MODERN_FAQ_UI: true,        // Zadanie 6
+};
 ```
 
-**Bez `TO authenticated`** polityka stosuje się do roli `PUBLIC` (domyślna). Klient Supabase używa klucza `anon`, więc zapytania lecą jako rola `anon`. Dla roli `anon` `auth.uid()` zwraca NULL → `has_role(NULL, 'admin')` = false → **BLOKADA**.
+---
 
-Ale moment — w konsoli widzimy błąd `"new row violates row-level security policy"` przy **INSERT** (nie UPDATE/DELETE). To znaczy, że **INSERT też nie działa poprawnie**, mimo że wcześniej stwierdzono, że CREATE działa. Prawdopodobnie INSERT działał przed remix projektu lub nigdy nie działał.
+## 1. FAQ przypisane do produktu
 
-### Dodatkowe problemy:
+**Problem:** Obecnie `ProductDetail.tsx` (linie 104-125) ma hardcoded 5 FAQ z tłumaczeń statycznych, identyczne dla każdego produktu.
 
-1. **SELECT policy** (`USING (is_active = true)`) — admin widzi TYLKO aktywne FAQ. Po soft-delete (is_active=false) rekord znika z panelu admina. `getAllFAQsForAdmin()` nie może pobrać nieaktywnych.
+**Plan:**
+- Dodać do interfejsu `Product` w `src/types/index.ts` opcjonalne pole `faqIds?: string[]` (max 4 ID z tabeli `faqs`)
+- W `ProductForm.tsx` dodać sekcję: dropdown języka + multi-select do wyboru max 4 FAQ z bazy (hook `useSupabaseFAQ`)
+- W `ProductDetail.tsx`:
+  - Jeśli produkt ma `faqIds` → pobierz te FAQ z bazy
+  - Jeśli brak → losowe 4 FAQ z bazy dla danego języka (fallback)
+  - Jeśli baza niedostępna → obecna logika statyczna (drugi fallback)
+- Feature flag `PRODUCT_FAQ` kontroluje czy używać nowej logiki
 
-2. **Przycisk migracji** — pojawia się tylko gdy `faqs.length === 0`. Jeśli w bazie są jakiekolwiek FAQ, przycisk się nie pokazuje.
+**Pliki:** `src/types/index.ts`, `src/components/admin/ProductForm.tsx`, `src/pages/ProductDetail.tsx`, `src/hooks/useSupabaseFAQ.ts` (dodać `getFAQsByIds`)
 
-3. **deleteFAQ** robi soft-delete (UPDATE is_active=false), co jest poprawne, ale po operacji admin nie zobaczy tego rekordu (problem z SELECT policy).
+---
 
-## Plan naprawy — 3 kroki
+## 2. Zmiana tekstu "wózków widłowych" → "wózków paletowych"
 
-### Krok 1: Migracja SQL — naprawić polityki RLS
+**Problem:** Tekst pojawia się w wielu miejscach hardcoded.
 
-Utworzyć nową migrację SQL, która:
-- Usuwa wszystkie 4 istniejące polityki na tabeli `faqs`
-- Tworzy nowe polityki z `TO authenticated` dla operacji admina
-- Dodaje osobną politykę SELECT dla admina (widzi WSZYSTKIE FAQ, nie tylko aktywne)
-- Zachowuje publiczny SELECT dla aktywnych FAQ (dla frontendu)
+**Plan:**
+- W `src/config/featureFlags.ts` dodać stałą `SITE_DESCRIPTION`:
+  ```ts
+  export const SITE_DESCRIPTION = {
+    pl: 'Oferujemy szeroki wybór wózków paletowych BT Toyota, idealnie dopasowanych do różnych zastosowań i potrzeb',
+  };
+  ```
+- Zamienić w `Products.tsx` (linia 39): `wózków widłowych` → użyć zmiennej
+- Zamienić w `Index.tsx` meta description (linia 82)
+- Zamienić w `ProductDetail.tsx` meta description (linia 94)
+- `LocalBusinessSchema.tsx` — **NIE zmieniać** (SEO schema to osobna kwestia)
 
-```sql
--- Usunięcie starych polityk
-DROP POLICY IF EXISTS "Anyone can view active FAQs" ON public.faqs;
-DROP POLICY IF EXISTS "Only admins can insert FAQs" ON public.faqs;
-DROP POLICY IF EXISTS "Only admins can update FAQs" ON public.faqs;
-DROP POLICY IF EXISTS "Only admins can delete FAQs" ON public.faqs;
+**Pliki:** `src/pages/Products.tsx`, `src/pages/Index.tsx`, `src/pages/ProductDetail.tsx`
 
--- Nowe polityki
-CREATE POLICY "Anyone can view active FAQs" 
-ON public.faqs FOR SELECT 
-USING (is_active = true);
+---
 
-CREATE POLICY "Admins can view all FAQs" 
-ON public.faqs FOR SELECT 
-TO authenticated
-USING (public.has_role(auth.uid(), 'admin'));
+## 3. Meta title strony
 
-CREATE POLICY "Only admins can insert FAQs" 
-ON public.faqs FOR INSERT 
-TO authenticated
-WITH CHECK (public.has_role(auth.uid(), 'admin'));
+**Problem:** `index.html` linia 7 ma title "Stakerpol Wózki paletowe BT Toyota", a `Index.tsx` linia 81 nadpisuje na "Stakerpol - Wózki widłowe Toyota BT | Sprzedaż..."
 
-CREATE POLICY "Only admins can update FAQs" 
-ON public.faqs FOR UPDATE 
-TO authenticated
-USING (public.has_role(auth.uid(), 'admin'))
-WITH CHECK (public.has_role(auth.uid(), 'admin'));
+**Plan:**
+- `index.html` linia 7: zmienić na `Stakerpol - Paleciaki elektryczne Toyota BT`
+- `Index.tsx` Helmet title (linia 81): zmienić na `Stakerpol - Paleciaki elektryczne Toyota BT`
+- Feature flag `NEW_META_TITLE` — jeśli false, użyj starego tytułu
 
-CREATE POLICY "Only admins can delete FAQs" 
-ON public.faqs FOR DELETE 
-TO authenticated
-USING (public.has_role(auth.uid(), 'admin'));
-```
+**Pliki:** `index.html`, `src/pages/Index.tsx`
 
-### Krok 2: Poprawki w kodzie frontendu
+---
 
-**`FAQManager.tsx`:**
-- Przycisk "Migruj FAQ" — zawsze widoczny (nie tylko gdy lista pusta), z potwierdzeniem przed nadpisaniem
-- Dodać osobny przycisk "Dezaktywuj" i "Usuń trwale" w tabeli FAQ
+## 4. Dezaktywacja DeepL — chirurgicznie
 
-**`FAQList.tsx`:**
-- Dodać kolumnę/przycisk toggle aktywacji (is_active) 
-- Dodać przycisk "Usuń trwale" (hard delete) obok soft-delete
+**Problem:** DeepL jest zintegrowany w panelu admina przez `TranslationManager.tsx` (4 zakładki), `TranslationStatsPanel.tsx`, `useAutoTranslation.ts` oraz edge functions.
 
-**`useSupabaseFAQ.ts`:**
-- Dodać funkcję `hardDeleteFAQ(id)` — prawdziwy DELETE z bazy
-- Dodać funkcję `toggleFAQActive(id, is_active)` — przełączanie aktywności
+**Plan (etap 1 — dezaktywacja, bez usuwania kodu):**
+- Feature flag `DEEPL_ENABLED = false`
+- W `src/pages/Admin.tsx` (linie 228-244): ukryć kartę "Tłumaczenia AI" gdy flag = false
+- W `TranslationStatsPanel.tsx`: ukryć panel gdy flag = false
+- W `useAutoTranslation.ts`: w `useEffect` (linia 188) — nie wywoływać `loadStats()`/`loadJobs()` gdy flag = false
+- Statyczne tłumaczenia (pliki `src/utils/translations/*.ts`) działają niezależnie od DeepL — **nic się nie zepsuje**
 
-### Krok 3: Weryfikacja
+**NIE ruszać:** Edge functions, tabeli `deepl_api_keys`, tabeli `translation_jobs` — zostawić na etap 2 (czyszczenie).
 
-Po wdrożeniu migracji przetestować:
-- INSERT nowego FAQ
-- UPDATE istniejącego FAQ
-- Soft-delete (dezaktywacja)
-- Hard-delete (trwałe usunięcie)
-- Migracja danych z hardcoded
+**Pliki:** `src/pages/Admin.tsx`, `src/components/admin/TranslationStatsPanel.tsx`, `src/hooks/useAutoTranslation.ts`
 
-## Podsumowanie zmian
+---
 
-| Plik | Zmiana |
-|------|--------|
-| `supabase/migrations/NEW.sql` | Nowa migracja — naprawione polityki RLS |
-| `src/hooks/useSupabaseFAQ.ts` | Dodanie `hardDeleteFAQ` i `toggleFAQActive` |
-| `src/components/admin/FAQManager.tsx` | Przycisk migracji zawsze widoczny + potwierdzenie |
-| `src/components/admin/FAQList.tsx` | Przycisk toggle aktywacji + przycisk trwałego usunięcia |
+## 5. Ukrycie przycisku "Migruj FAQ z kodu"
+
+**Plan:**
+- W `FAQManager.tsx` — ukryć przycisk migracji gdy `FEATURES.SHOW_FAQ_MIGRATION === false`
+- Kod NIE jest usuwany, tylko ukryty za flagą
+
+**Pliki:** `src/components/admin/FAQManager.tsx`
+
+---
+
+## 6. UI FAQ — nowoczesny styl
+
+**Problem:** `FAQSection.tsx` ma za duży padding, obramowania po rozwinięciu, styl nie jest "clean".
+
+**Plan zmian w `src/components/ui/FAQSection.tsx`:**
+- Zmniejszyć `px-6 py-2` → `px-4 py-1`
+- Usunąć `border rounded-lg` z `AccordionItem` → zastąpić `border-b border-border/50`
+- `AccordionTrigger`: dodać `text-sm md:text-base`, poprawić line-height
+- `AccordionContent`: usunąć dodatkowe padding, tekst `text-sm`
+- Sekcja: `bg-white` → `bg-background`
+- Spacing: `space-y-2` → `space-y-0` (elementy przylegają)
+- Styl SaaS-owy: separator liniowy zamiast boxów
+
+**Pliki:** `src/components/ui/FAQSection.tsx`
+
+---
+
+## Kolejność wdrożenia
+
+1. `src/config/featureFlags.ts` — centralna konfiguracja
+2. UI FAQ (zadanie 6) — czysta zmiana wizualna, zero ryzyka
+3. Teksty + meta (zadania 2, 3) — proste zamiany
+4. Dezaktywacja DeepL (zadanie 4) — ukrycie w UI
+5. Ukrycie migracji (zadanie 5) — jedna linia
+6. FAQ per produkt (zadanie 1) — najdłuższe, wymaga zmian w typach i formularzach
+
+## Jak cofnąć każdą zmianę
+
+| Zmiana | Cofnięcie |
+|--------|-----------|
+| FAQ per produkt | `FEATURES.PRODUCT_FAQ = false` |
+| Tekst paletowe | `FEATURES.USE_PALLET_TRUCKS_TEXT = false` |
+| Meta title | `FEATURES.NEW_META_TITLE = false` |
+| DeepL | `FEATURES.DEEPL_ENABLED = true` |
+| Przycisk migracji | `FEATURES.SHOW_FAQ_MIGRATION = true` |
+| UI FAQ | `FEATURES.MODERN_FAQ_UI = false` |
+
+## Ryzyka
+
+- **FAQ per produkt:** Wymaga migracji danych w Supabase (dodanie kolumny `faq_ids` do `products`) — ale jako pole opcjonalne, zero ryzyka dla istniejących danych
+- **DeepL:** Statyczne tłumaczenia działają niezależnie — wyłączenie DeepL nie wpływa na wielojęzyczność strony
+- **Meta title:** Zmiana może wpłynąć na pozycjonowanie w Google — ale to zamierzona zmiana SEO
 
