@@ -22,6 +22,11 @@ interface ValidationErrors {
 
 const ProductForm = ({ product, onFieldChange, onSpecsFieldChange }: ProductFormProps) => {
   const [errors, setErrors] = useState<ValidationErrors>({});
+  const { faqs } = useSupabaseFAQ();
+  const [faqLang, setFaqLang] = useState('pl');
+
+  const availableFaqs = faqs.filter(f => f.language === faqLang);
+  const selectedFaqIds = product.faqIds || [];
 
   const validateField = (field: string, value: string, maxLength?: number): string => {
     if (maxLength && value.length > maxLength) {
