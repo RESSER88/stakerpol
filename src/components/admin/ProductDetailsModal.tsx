@@ -56,7 +56,7 @@ const ProductDetailsModal = ({
     }
   }, [selectedProduct, defaultNewProduct]);
 
-  const updateField = (field: string, value: string) => {
+  const updateField = (field: string, value: string | string[]) => {
     setEditedProduct({...editedProduct, [field]: value});
   };
   

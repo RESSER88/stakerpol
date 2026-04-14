@@ -30,6 +30,7 @@ export const mapSupabaseProductToProduct = (supabaseProduct: SupabaseProduct, im
   return {
     id: supabaseProduct.id,
     slug: (supabaseProduct as any).slug || undefined,
+    faqIds: (supabaseProduct as any).faq_ids || [],
     model: supabaseProduct.name,
     image: supabaseProduct.image_url || (images.length > 0 ? images[0].image_url : ''),
     images: images.map(img => img.image_url).filter(Boolean),
@@ -85,8 +86,9 @@ export const mapProductToSupabaseInsert = (product: any): SupabaseProductInsert 
     detailed_description: product.specs.additionalDescription,
     image_url: product.images && product.images.length > 0 ? product.images[0] : product.image,
     // dostarczamy slug po stronie klienta jako fallback; po stronie DB działa trigger zapewniający slug, jeśli nie podano
-    slug: product.slug?.toString() || toSlug(product.model, product.specs.serialNumber)
-  };
+    slug: product.slug?.toString() || toSlug(product.model, product.specs.serialNumber),
+    faq_ids: product.faqIds || []
+  } as any;
 };
 
 export const mapProductToSupabaseUpdate = (product: any): SupabaseProductUpdate => {

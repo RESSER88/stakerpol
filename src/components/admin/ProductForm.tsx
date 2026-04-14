@@ -1,15 +1,18 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, HelpCircle } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Product } from '@/types';
+import { useSupabaseFAQ, FAQ } from '@/hooks/useSupabaseFAQ';
+import { FEATURES } from '@/config/featureFlags';
 
 interface ProductFormProps {
   product: Product;
-  onFieldChange: (field: string, value: string) => void;
+  onFieldChange: (field: string, value: string | string[]) => void;
   onSpecsFieldChange: (field: string, value: string) => void;
 }
 
@@ -19,6 +22,11 @@ interface ValidationErrors {
 
 const ProductForm = ({ product, onFieldChange, onSpecsFieldChange }: ProductFormProps) => {
   const [errors, setErrors] = useState<ValidationErrors>({});
+  const { faqs } = useSupabaseFAQ();
+  const [faqLang, setFaqLang] = useState('pl');
+
+  const availableFaqs = faqs.filter(f => f.language === faqLang);
+  const selectedFaqIds = product.faqIds || [];
 
   const validateField = (field: string, value: string, maxLength?: number): string => {
     if (maxLength && value.length > maxLength) {
@@ -109,9 +117,10 @@ const ProductForm = ({ product, onFieldChange, onSpecsFieldChange }: ProductForm
       </div>
       
       <Tabs defaultValue="main" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className={`grid w-full ${FEATURES.PRODUCT_FAQ ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <TabsTrigger value="main">Sekcja główna</TabsTrigger>
           <TabsTrigger value="extended">Sekcja rozwijana</TabsTrigger>
+          {FEATURES.PRODUCT_FAQ && <TabsTrigger value="faq"><HelpCircle className="h-4 w-4 mr-1" />FAQ</TabsTrigger>}
         </TabsList>
         
         <TabsContent value="main" className="space-y-4">
@@ -301,6 +310,67 @@ const ProductForm = ({ product, onFieldChange, onSpecsFieldChange }: ProductForm
             </div>
           </div>
         </TabsContent>
+        {FEATURES.PRODUCT_FAQ && (
+          <TabsContent value="faq" className="space-y-4">
+            <h3 className="font-semibold text-base sm:text-lg text-stakerpol-navy">FAQ przypisane do produktu (max 4)</h3>
+            
+            <div className="flex gap-2 mb-4">
+              {['pl', 'en', 'de', 'cs', 'sk'].map(lang => (
+                <button
+                  key={lang}
+                  type="button"
+                  onClick={() => setFaqLang(lang)}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    faqLang === lang 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                >
+                  {lang.toUpperCase()}
+                </button>
+              ))}
+            </div>
+
+            {availableFaqs.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Brak FAQ w języku {faqLang.toUpperCase()}. Dodaj FAQ w panelu FAQ.</p>
+            ) : (
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                {availableFaqs.map(faq => {
+                  const isSelected = selectedFaqIds.includes(faq.id);
+                  const isDisabled = !isSelected && selectedFaqIds.length >= 4;
+                  return (
+                    <label
+                      key={faq.id}
+                      className={`flex items-start gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                        isSelected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                      } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        disabled={isDisabled}
+                        onCheckedChange={(checked) => {
+                          const newIds = checked
+                            ? [...selectedFaqIds, faq.id]
+                            : selectedFaqIds.filter(id => id !== faq.id);
+                          onFieldChange('faqIds', newIds);
+                        }}
+                        className="mt-0.5"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium leading-tight">{faq.question}</p>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{faq.answer}</p>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+            
+            <p className="text-xs text-muted-foreground">
+              Zaznaczono: {selectedFaqIds.length}/4. Jeśli brak zaznaczonych — wyświetlą się losowe FAQ.
+            </p>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

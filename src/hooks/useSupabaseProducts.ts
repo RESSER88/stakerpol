@@ -172,9 +172,12 @@ export const useSupabaseProducts = () => {
         }
       }
 
-      // Trigger automatic translation in background
+      // Trigger automatic translation in background (only if DeepL enabled)
       if (newProduct) {
-        translateProductFields(newProduct.id, product);
+        const { FEATURES } = await import('@/config/featureFlags');
+        if (FEATURES.DEEPL_ENABLED) {
+          translateProductFields(newProduct.id, product);
+        }
       }
 
       const endTime = performance.now();
@@ -279,8 +282,11 @@ export const useSupabaseProducts = () => {
         }
       }
 
-      // Trigger automatic translation in background
-      translateProductFields(product.id, product);
+      // Trigger automatic translation in background (only if DeepL enabled)
+      const { FEATURES } = await import('@/config/featureFlags');
+      if (FEATURES.DEEPL_ENABLED) {
+        translateProductFields(product.id, product);
+      }
 
       const endTime = performance.now();
       console.log(`=== PRODUCT UPDATED in ${(endTime - startTime).toFixed(2)}ms ===`);
