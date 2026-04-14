@@ -117,9 +117,10 @@ const ProductForm = ({ product, onFieldChange, onSpecsFieldChange }: ProductForm
       </div>
       
       <Tabs defaultValue="main" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className={`grid w-full ${FEATURES.PRODUCT_FAQ ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <TabsTrigger value="main">Sekcja główna</TabsTrigger>
           <TabsTrigger value="extended">Sekcja rozwijana</TabsTrigger>
+          {FEATURES.PRODUCT_FAQ && <TabsTrigger value="faq"><HelpCircle className="h-4 w-4 mr-1" />FAQ</TabsTrigger>}
         </TabsList>
         
         <TabsContent value="main" className="space-y-4">
