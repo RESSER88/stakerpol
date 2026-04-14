@@ -389,6 +389,7 @@ export type Database = {
           detailed_description: string | null
           dimensions: string | null
           drive_type: string | null
+          faq_ids: string[] | null
           foldable_platform: string | null
           free_lift: number | null
           id: string
@@ -419,6 +420,7 @@ export type Database = {
           detailed_description?: string | null
           dimensions?: string | null
           drive_type?: string | null
+          faq_ids?: string[] | null
           foldable_platform?: string | null
           free_lift?: number | null
           id?: string
@@ -449,6 +451,7 @@ export type Database = {
           detailed_description?: string | null
           dimensions?: string | null
           drive_type?: string | null
+          faq_ids?: string[] | null
           foldable_platform?: string | null
           free_lift?: number | null
           id?: string

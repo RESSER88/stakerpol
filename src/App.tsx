@@ -47,7 +47,7 @@ const AppRoutes = () => {
 
 const App = () => {
   useEffect(() => {
-    if (process.env.NODE_ENV === 'production') {
+    if (import.meta.env.PROD) {
       try {
         import('./utils/performance').then(({ trackWebVitals }) => {
           trackWebVitals();

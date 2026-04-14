@@ -33,7 +33,7 @@ export const measurePerformance = {
       window.performance.measure(name, `${name}-start`, `${name}-end`);
       
       const measure = window.performance.getEntriesByName(name)[0];
-      if (measure && process.env.NODE_ENV === 'development') {
+      if (measure && import.meta.env.DEV) {
         console.log(`Performance [${name}]: ${measure.duration.toFixed(2)}ms`);
       }
     }
