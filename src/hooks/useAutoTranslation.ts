@@ -186,6 +186,9 @@ export const useAutoTranslation = () => {
   };
 
   useEffect(() => {
+    // Feature flag: skip DeepL API calls when disabled
+    const { FEATURES } = require('@/config/featureFlags');
+    if (!FEATURES.DEEPL_ENABLED) return;
     loadStats();
     loadJobs();
   }, []);

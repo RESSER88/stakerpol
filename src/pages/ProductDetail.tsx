@@ -91,7 +91,7 @@ const ProductDetail = () => {
     if (product.specs?.workingHours) specs.push(`${product.specs.workingHours}mth`);
     
     const specsText = specs.length > 0 ? ` - ${specs.join(', ')}` : '';
-    return `${product.shortDescription || product.model}${specsText}. Profesjonalna sprzedaż używanych wózków widłowych Toyota/BT. Sprawdź ofertę Stakerpol.`;
+    return `${product.shortDescription || product.model}${specsText}. Profesjonalna sprzedaż używanych wózków paletowych Toyota/BT. Sprawdź ofertę Stakerpol.`;
   };
 
   const getOgImage = () => {
