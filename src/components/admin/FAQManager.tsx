@@ -11,7 +11,7 @@ import FAQList from './FAQList';
 import FAQForm from './FAQForm';
 
 const FAQManager: React.FC = () => {
-  const { createFAQ, updateFAQ, deleteFAQ, getAllFAQsForAdmin } = useSupabaseFAQ();
+  const { createFAQ, updateFAQ, deleteFAQ, hardDeleteFAQ, toggleFAQActive, getAllFAQsForAdmin } = useSupabaseFAQ();
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLanguage, setSelectedLanguage] = useState('all');
@@ -19,6 +19,7 @@ const FAQManager: React.FC = () => {
   const [editingFAQ, setEditingFAQ] = useState<FAQ | undefined>();
   const [deletingFAQId, setDeletingFAQId] = useState<string | null>(null);
   const [migrationLoading, setMigrationLoading] = useState(false);
+  const [showMigrationConfirm, setShowMigrationConfirm] = useState(false);
   const { toast } = useToast();
 
   const loadFAQs = async () => {
@@ -54,9 +55,20 @@ const FAQManager: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    await deleteFAQ(id);
-    setDeletingFAQId(null);
+  const handleHardDelete = async (id: string) => {
+    setDeletingFAQId(id);
+  };
+
+  const confirmHardDelete = async () => {
+    if (deletingFAQId) {
+      await hardDeleteFAQ(deletingFAQId);
+      setDeletingFAQId(null);
+      loadFAQs();
+    }
+  };
+
+  const handleToggleActive = async (id: string, isActive: boolean) => {
+    await toggleFAQActive(id, isActive);
     loadFAQs();
   };
 
@@ -66,6 +78,7 @@ const FAQManager: React.FC = () => {
   };
 
   const handleMigration = async () => {
+    setShowMigrationConfirm(false);
     setMigrationLoading(true);
     const result = await runFAQMigration();
     
@@ -74,7 +87,7 @@ const FAQManager: React.FC = () => {
         title: "Migracja zakończona",
         description: `Przeniesiono ${result.count} pytań FAQ do bazy danych`,
       });
-      loadFAQs(); // Refresh the list
+      loadFAQs();
     } else {
       toast({
         title: "Błąd migracji",
@@ -96,23 +109,24 @@ const FAQManager: React.FC = () => {
                 Dodawaj, edytuj i zarządzaj pytaniami FAQ w różnych językach
               </CardDescription>
             </div>
-            {faqs.length === 0 && !loading && (
-              <Button
-                onClick={handleMigration}
-                disabled={migrationLoading}
-                className="flex items-center space-x-2"
-              >
-                <Download className="h-4 w-4" />
-                <span>{migrationLoading ? 'Migracja...' : 'Migruj FAQ'}</span>
-              </Button>
-            )}
+            <Button
+              onClick={() => setShowMigrationConfirm(true)}
+              disabled={migrationLoading}
+              variant="outline"
+              className="flex items-center space-x-2"
+            >
+              <Download className="h-4 w-4" />
+              <span>{migrationLoading ? 'Migracja...' : 'Migruj FAQ z kodu'}</span>
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
           <FAQList
             faqs={faqs}
             onEdit={handleEdit}
-            onDelete={(id) => setDeletingFAQId(id)}
+            onDelete={(id) => deleteFAQ(id).then(() => loadFAQs())}
+            onHardDelete={handleHardDelete}
+            onToggleActive={handleToggleActive}
             onAdd={handleAdd}
             selectedLanguage={selectedLanguage}
             onLanguageChange={setSelectedLanguage}
@@ -142,21 +156,40 @@ const FAQManager: React.FC = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Hard delete confirmation */}
       <AlertDialog open={!!deletingFAQId} onOpenChange={() => setDeletingFAQId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Potwierdź usunięcie</AlertDialogTitle>
+            <AlertDialogTitle>Potwierdź trwałe usunięcie</AlertDialogTitle>
             <AlertDialogDescription>
-              Czy na pewno chcesz usunąć to FAQ? Ta akcja nie może być cofnięta.
+              Czy na pewno chcesz TRWALE usunąć to FAQ? Rekord zostanie skasowany z bazy danych i nie będzie można go przywrócić.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Anuluj</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deletingFAQId && handleDelete(deletingFAQId)}
+              onClick={confirmHardDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Usuń
+              Usuń trwale
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Migration confirmation */}
+      <AlertDialog open={showMigrationConfirm} onOpenChange={setShowMigrationConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Potwierdź migrację FAQ</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ta operacja usunie wszystkie istniejące FAQ z bazy i wstawi 175 wpisów (35 pytań × 5 języków) z danych statycznych. Czy kontynuować?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+            <AlertDialogAction onClick={handleMigration}>
+              Rozpocznij migrację
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
