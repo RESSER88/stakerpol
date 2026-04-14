@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Plus } from 'lucide-react';
+import { Edit, Trash2, Plus, Power, PowerOff } from 'lucide-react';
 import { FAQ } from '@/hooks/useSupabaseFAQ';
 
 interface FAQListProps {
   faqs: FAQ[];
   onEdit: (faq: FAQ) => void;
   onDelete: (id: string) => void;
+  onHardDelete: (id: string) => void;
+  onToggleActive: (id: string, isActive: boolean) => void;
   onAdd: () => void;
   selectedLanguage: string;
   onLanguageChange: (language: string) => void;
@@ -20,6 +22,8 @@ const FAQList: React.FC<FAQListProps> = ({
   faqs,
   onEdit,
   onDelete,
+  onHardDelete,
+  onToggleActive,
   onAdd,
   selectedLanguage,
   onLanguageChange,
@@ -95,7 +99,7 @@ const FAQList: React.FC<FAQListProps> = ({
             </TableHeader>
             <TableBody>
               {filteredFAQs.map((faq) => (
-                <TableRow key={faq.id}>
+                <TableRow key={faq.id} className={!faq.is_active ? 'opacity-50' : ''}>
                   <TableCell>
                     <Badge variant="outline">
                       {getLanguageLabel(faq.language)}
@@ -117,6 +121,14 @@ const FAQList: React.FC<FAQListProps> = ({
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => onToggleActive(faq.id, !faq.is_active)}
+                        title={faq.is_active ? 'Dezaktywuj' : 'Aktywuj'}
+                      >
+                        {faq.is_active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4 text-green-500" />}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => onEdit(faq)}
                       >
                         <Edit className="h-4 w-4" />
@@ -124,8 +136,9 @@ const FAQList: React.FC<FAQListProps> = ({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => onDelete(faq.id)}
+                        onClick={() => onHardDelete(faq.id)}
                         className="text-destructive hover:text-destructive"
+                        title="Usuń trwale"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

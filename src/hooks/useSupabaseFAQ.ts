@@ -101,6 +101,29 @@ export const useSupabaseFAQ = () => {
     }
   };
 
+  const toggleFAQActive = async (id: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('faqs')
+        .update({ is_active: isActive })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: isActive ? "FAQ aktywowane" : "FAQ dezaktywowane",
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Nie udało się zmienić statusu FAQ",
+        variant: "destructive",
+      });
+      throw err;
+    }
+  };
+
   const deleteFAQ = async (id: string) => {
     try {
       const { error } = await supabase
@@ -112,12 +135,35 @@ export const useSupabaseFAQ = () => {
 
       toast({
         title: "Success",
-        description: "FAQ deleted successfully",
+        description: "FAQ dezaktywowane",
       });
     } catch (err) {
       toast({
         title: "Error",
-        description: "Failed to delete FAQ",
+        description: "Failed to deactivate FAQ",
+        variant: "destructive",
+      });
+      throw err;
+    }
+  };
+
+  const hardDeleteFAQ = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('faqs')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "FAQ trwale usunięte",
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Nie udało się trwale usunąć FAQ",
         variant: "destructive",
       });
       throw err;
@@ -159,7 +205,9 @@ export const useSupabaseFAQ = () => {
     fetchFAQs,
     createFAQ,
     updateFAQ,
+    toggleFAQActive,
     deleteFAQ,
+    hardDeleteFAQ,
     getAllFAQsForAdmin,
   };
 };
