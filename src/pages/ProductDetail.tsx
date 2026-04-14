@@ -111,48 +111,6 @@ const ProductDetail = () => {
     return product.image || '';
   };
 
-  // Dynamic FAQ: fetch from Supabase or fall back to static
-  const { faqs: allFaqs, fetchFAQs } = useSupabaseFAQ();
-
-  useEffect(() => {
-    if (FEATURES.PRODUCT_FAQ) {
-      fetchFAQs(language);
-    }
-  }, [language]);
-
-  const productFaqItems = useMemo(() => {
-    if (FEATURES.PRODUCT_FAQ && allFaqs.length > 0) {
-      // If product has assigned FAQ IDs, use those; otherwise pick random 4
-      let selectedFaqs = allFaqs;
-      if (product?.faqIds && product.faqIds.length > 0) {
-        const assigned = allFaqs.filter(f => product.faqIds!.includes(f.id));
-        if (assigned.length > 0) selectedFaqs = assigned;
-      }
-      // Take up to 4
-      const limited = selectedFaqs.slice(0, 4);
-      return limited.map(f => ({ question: f.question, answer: f.answer }));
-    }
-
-    // Fallback: static FAQ from translations
-    return [
-      {
-        question: t('product_faq_surface_question' as any).replace('{model}', product?.model || ''),
-        answer: t('product_faq_surface_answer' as any),
-      },
-      {
-        question: t('product_faq_truck_question' as any).replace('{model}', product?.model || ''),
-        answer: t('product_faq_truck_answer' as any),
-      },
-      {
-        question: t('product_faq_cold_question' as any),
-        answer: t('product_faq_cold_answer' as any),
-      },
-      {
-        question: t('product_faq_height_question' as any).replace('{model}', product?.model || ''),
-        answer: t('product_faq_height_answer' as any),
-      },
-    ];
-  }, [allFaqs, product, t, language]);
 
   const productSchemaData = generateProductSchema(product, seoSettings);
 
