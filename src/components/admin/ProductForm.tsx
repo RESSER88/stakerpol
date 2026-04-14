@@ -375,6 +375,5 @@ const ProductForm = ({ product, onFieldChange, onSpecsFieldChange }: ProductForm
     </div>
   );
 };
-};
 
 export default ProductForm;
