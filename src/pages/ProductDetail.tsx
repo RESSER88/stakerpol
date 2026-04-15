@@ -52,16 +52,18 @@ const ProductDetail = () => {
   }, [id]);
 
   const productFaqItems = useMemo(() => {
-    if (FEATURES.PRODUCT_FAQ && allFaqs.length > 0 && product) {
-      let selectedFaqs = allFaqs;
+    if (!product) return [];
+    if (FEATURES.PRODUCT_FAQ && allFaqs.length > 0) {
+      // allFaqs are already fetched filtered by language via fetchFAQs(language)
+      // Additionally filter by language here to be safe
+      const langFiltered = allFaqs.filter(f => f.language === language);
       const typedProduct = product as any;
       if (typedProduct?.faqIds && typedProduct.faqIds.length > 0) {
-        const assigned = allFaqs.filter(f => typedProduct.faqIds.includes(f.id));
-        if (assigned.length > 0) selectedFaqs = assigned;
+        const assigned = langFiltered.filter(f => typedProduct.faqIds.includes(f.id));
+        return assigned.slice(0, 4).map(f => ({ question: f.question, answer: f.answer }));
       }
-      return selectedFaqs.slice(0, 4).map(f => ({ question: f.question, answer: f.answer }));
+      return langFiltered.slice(0, 4).map(f => ({ question: f.question, answer: f.answer }));
     }
-    if (!product) return [];
     return [
       { question: t('product_faq_surface_question' as any).replace('{model}', product.model), answer: t('product_faq_surface_answer' as any) },
       { question: t('product_faq_truck_question' as any).replace('{model}', product.model), answer: t('product_faq_truck_answer' as any) },

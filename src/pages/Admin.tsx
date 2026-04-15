@@ -173,7 +173,7 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="products" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="products" className="flex items-center gap-2">
               <Package className="h-4 w-4" />
               Produkty
@@ -185,18 +185,6 @@ const Admin = () => {
             <TabsTrigger value="faq" className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
               FAQ
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Ustawienia
-            </TabsTrigger>
-            <TabsTrigger value="monitoring" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Monitoring
-            </TabsTrigger>
-            <TabsTrigger value="production" className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Production
             </TabsTrigger>
           </TabsList>
 
