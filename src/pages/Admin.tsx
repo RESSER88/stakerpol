@@ -214,52 +214,6 @@ const Admin = () => {
             <FAQManager />
           </TabsContent>
 
-          <TabsContent value="settings">
-            <div className="space-y-6">
-              {/* Translation Management Panel — hidden when DeepL disabled */}
-              {FEATURES.DEEPL_ENABLED && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Languages className="h-5 w-5" />
-                      Tłumaczenia AI
-                    </CardTitle>
-                    <CardDescription>
-                      Zarządzanie automatycznymi tłumaczeniami produktów za pomocą DeepL API
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <TranslationManager />
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Image Status Card (Collapsible) */}
-              <ImageStatusCard 
-                products={products || []}
-                isMonitoring={isMonitoring}
-                completeMigration={completeMigration}
-                isOpen={isImageStatusOpen}
-                onOpenChange={setIsImageStatusOpen}
-              />
-
-              {/* Translation Stats Panel — hidden when DeepL disabled */}
-              {FEATURES.DEEPL_ENABLED && (
-                <TranslationStatsPanel 
-                  isOpen={isTranslationStatsOpen}
-                  onOpenChange={setIsTranslationStatsOpen}
-                />
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="monitoring">
-            <HealthCheck />
-          </TabsContent>
-
-          <TabsContent value="production">
-            <ProductionReadinessPanel />
-          </TabsContent>
         </Tabs>
       </div>
     </div>
