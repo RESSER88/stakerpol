@@ -1,26 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useSupabaseProducts } from '@/hooks/useSupabaseProducts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Package, Settings, BarChart3, CheckCircle, AlertCircle, Upload, Languages, Search } from 'lucide-react';
+import { Loader2, Package, AlertCircle, Search } from 'lucide-react';
 import AdminLogin from '@/components/admin/AdminLogin';
 import ProductManager from '@/components/admin/ProductManager';
-import { useToast } from '@/hooks/use-toast';
 import { Product } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
-import { useMigrationMonitor } from '@/hooks/useMigrationMonitor';
-import TranslationStatsPanel from '@/components/admin/TranslationStatsPanel';
-import TranslationManager from '@/components/admin/TranslationManager';
 import FAQManager from '@/components/admin/FAQManager';
-import ImageStatusCard from '@/components/admin/ImageStatusCard';
-import HealthCheck from '@/components/monitoring/HealthCheck';
-import ProductionReadinessPanel from '@/components/admin/ProductionReadinessPanel';
 import SEOManagerTool from '@/components/admin/SEOManagerTool';
-import { FEATURES } from '@/config/featureFlags';
 
 const Admin = () => {
   const { user, loading: authLoading, isAdmin, adminLoading, signOut } = useSupabaseAuth();
@@ -32,19 +21,10 @@ const Admin = () => {
     deleteProduct 
   } = useSupabaseProducts();
   
-  // Migration monitoring
-  const { stats: migrationStats, isMonitoring, completeMigration } = useMigrationMonitor(products || []);
-  
   // ProductManager state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [productImages, setProductImages] = useState<string[]>([]);
-  
-  // Settings panel states
-  const [isTranslationStatsOpen, setIsTranslationStatsOpen] = useState(false);
-  const [isImageStatusOpen, setIsImageStatusOpen] = useState(false);
-  
-  const { toast } = useToast();
 
   // ProductManager handlers - Fixed defaultNewProduct with correct Product interface properties
   const defaultNewProduct: Product = {
@@ -173,7 +153,7 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="products" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="products" className="flex items-center gap-2">
               <Package className="h-4 w-4" />
               Produkty
@@ -185,18 +165,6 @@ const Admin = () => {
             <TabsTrigger value="faq" className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
               FAQ
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Ustawienia
-            </TabsTrigger>
-            <TabsTrigger value="monitoring" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Monitoring
-            </TabsTrigger>
-            <TabsTrigger value="production" className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Production
             </TabsTrigger>
           </TabsList>
 
@@ -226,52 +194,6 @@ const Admin = () => {
             <FAQManager />
           </TabsContent>
 
-          <TabsContent value="settings">
-            <div className="space-y-6">
-              {/* Translation Management Panel — hidden when DeepL disabled */}
-              {FEATURES.DEEPL_ENABLED && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Languages className="h-5 w-5" />
-                      Tłumaczenia AI
-                    </CardTitle>
-                    <CardDescription>
-                      Zarządzanie automatycznymi tłumaczeniami produktów za pomocą DeepL API
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <TranslationManager />
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Image Status Card (Collapsible) */}
-              <ImageStatusCard 
-                products={products || []}
-                isMonitoring={isMonitoring}
-                completeMigration={completeMigration}
-                isOpen={isImageStatusOpen}
-                onOpenChange={setIsImageStatusOpen}
-              />
-
-              {/* Translation Stats Panel — hidden when DeepL disabled */}
-              {FEATURES.DEEPL_ENABLED && (
-                <TranslationStatsPanel 
-                  isOpen={isTranslationStatsOpen}
-                  onOpenChange={setIsTranslationStatsOpen}
-                />
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="monitoring">
-            <HealthCheck />
-          </TabsContent>
-
-          <TabsContent value="production">
-            <ProductionReadinessPanel />
-          </TabsContent>
         </Tabs>
       </div>
     </div>
