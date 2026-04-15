@@ -21,19 +21,10 @@ const Admin = () => {
     deleteProduct 
   } = useSupabaseProducts();
   
-  // Migration monitoring
-  const { stats: migrationStats, isMonitoring, completeMigration } = useMigrationMonitor(products || []);
-  
   // ProductManager state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [productImages, setProductImages] = useState<string[]>([]);
-  
-  // Settings panel states
-  const [isTranslationStatsOpen, setIsTranslationStatsOpen] = useState(false);
-  const [isImageStatusOpen, setIsImageStatusOpen] = useState(false);
-  
-  const { toast } = useToast();
 
   // ProductManager handlers - Fixed defaultNewProduct with correct Product interface properties
   const defaultNewProduct: Product = {
