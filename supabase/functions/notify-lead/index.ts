@@ -68,14 +68,14 @@ const handler = async (req: Request): Promise<Response> => {
 
       try {
         const emailResponse = await resend.emails.send({
-          from: "Stakerpol <noreply@stakerpol.pl>",
+          from: "Stakerpol <onboarding@resend.dev>",
           to: [to],
           subject,
           html,
         });
-        console.log("Email sent:", emailResponse);
-      } catch (e) {
-        console.warn("Email delivery failed:", e);
+        console.log("Email sent successfully:", JSON.stringify(emailResponse));
+      } catch (e: any) {
+        console.error("Email delivery failed:", e?.message || e, JSON.stringify(e));
       }
     }
 
