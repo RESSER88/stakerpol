@@ -1,25 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useSupabaseProducts } from '@/hooks/useSupabaseProducts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Package, AlertCircle, Search } from 'lucide-react';
 import AdminLogin from '@/components/admin/AdminLogin';
 import ProductManager from '@/components/admin/ProductManager';
-import { useToast } from '@/hooks/use-toast';
 import { Product } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
-import { useMigrationMonitor } from '@/hooks/useMigrationMonitor';
-import TranslationStatsPanel from '@/components/admin/TranslationStatsPanel';
-import TranslationManager from '@/components/admin/TranslationManager';
 import FAQManager from '@/components/admin/FAQManager';
-import ImageStatusCard from '@/components/admin/ImageStatusCard';
-import HealthCheck from '@/components/monitoring/HealthCheck';
-import ProductionReadinessPanel from '@/components/admin/ProductionReadinessPanel';
 import SEOManagerTool from '@/components/admin/SEOManagerTool';
-import { FEATURES } from '@/config/featureFlags';
 
 const Admin = () => {
   const { user, loading: authLoading, isAdmin, adminLoading, signOut } = useSupabaseAuth();
