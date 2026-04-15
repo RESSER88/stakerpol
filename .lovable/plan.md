@@ -1,29 +1,20 @@
 
 
-# Plan: Migracja SQL faq_ids + naprawa build errors
+# Plan: Natychmiastowa naprawa wysyłki emaili z notify-lead
 
-## Problem 1: Brak kolumny `faq_ids` w tabeli `products`
-Kolumna nie istnieje — potwierdzone zapytaniem do bazy. Kod w `supabase.ts` już mapuje `faq_ids`, ale dane nigdy nie przychodzą z bazy.
+## Problem
+Resend zwraca błąd 403 bo domena `stakerpol.pl` nie jest zweryfikowana. Emaile nie dochodzą.
 
-**Rozwiązanie:** Migracja SQL:
-```sql
-ALTER TABLE public.products ADD COLUMN IF NOT EXISTS faq_ids TEXT[] DEFAULT '{}';
-```
+## Rozwiązanie
 
-## Problem 2: Build errors — `process` is not defined
-Trzy pliki używają `process.env.NODE_ENV`, co nie działa w Vite (przeglądarka). Trzeba zamienić na `import.meta.env.MODE`.
+### Plik: `supabase/functions/notify-lead/index.ts`
+1. Zmienić `from: "Stakerpol <noreply@stakerpol.pl>"` → `from: "Stakerpol <onboarding@resend.dev>"`
+2. Dodać logowanie pełnej odpowiedzi z Resend (dla debugowania)
+3. Deploy edge function
+4. Przetestować wysyłkę emaila wywołując funkcję z testowymi danymi
 
-**Pliki do zmiany:**
-| Plik | Linia | Zmiana |
-|------|-------|--------|
-| `src/App.tsx` | 50 | `process.env.NODE_ENV === 'production'` → `import.meta.env.PROD` |
-| `src/utils/logger.ts` | 5 | `process.env.NODE_ENV === 'development'` → `import.meta.env.DEV` |
-| `src/utils/performance.ts` | 36 | `process.env.NODE_ENV === 'development'` → `import.meta.env.DEV` |
+### Wynik
+Email z powiadomieniem o nowym zapytaniu dotrze na `info@stakerpol.pl` natychmiast po zmianie.
 
-## Kolejność
-1. Wykonać migrację SQL (dodanie kolumny `faq_ids`)
-2. Naprawić 3 pliki z `process.env` → `import.meta.env`
-
-## Ryzyko
-- Zerowe — kolumna opcjonalna, `import.meta.env` to standardowy sposób w Vite
+> **Uwaga:** `onboarding@resend.dev` to testowa domena Resend — działa bez weryfikacji DNS. Aby wrócić do `@stakerpol.pl`, trzeba zweryfikować domenę w panelu Resend (dodać rekordy DNS u rejestratora).
 
