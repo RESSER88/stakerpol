@@ -19,18 +19,25 @@ const MobileContactButton = () => {
     reset();
   };
 
-  // Keyboard-aware height via visualViewport API
   useEffect(() => {
     if (!isSheetOpen) return;
+    const sheet = sheetRef.current;
+    if (!sheet) return;
     const vv = window.visualViewport;
     if (!vv) return;
 
     const onResize = () => {
-      setSheetMaxHeight(`${vv.height * 0.85}px`);
+      const vh = vv.height;
+      sheet.style.maxHeight = `${vh * 0.92}px`;
     };
     vv.addEventListener('resize', onResize);
+    vv.addEventListener('scroll', onResize);
     onResize();
-    return () => vv.removeEventListener('resize', onResize);
+    return () => {
+      vv.removeEventListener('resize', onResize);
+      vv.removeEventListener('scroll', onResize);
+      if (sheet) sheet.style.maxHeight = '';
+    };
   }, [isSheetOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
