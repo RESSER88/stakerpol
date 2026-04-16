@@ -5,7 +5,6 @@ import { trackCTAClick } from '@/utils/analytics';
 
 const MobileContactButton = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [sheetMaxHeight, setSheetMaxHeight] = useState('85vh');
   const sheetRef = useRef<HTMLDivElement>(null);
   const { formData, errors, status, updateField, submit, reset } = useContactForm();
 
@@ -20,18 +19,25 @@ const MobileContactButton = () => {
     reset();
   };
 
-  // Keyboard-aware height via visualViewport API
   useEffect(() => {
     if (!isSheetOpen) return;
+    const sheet = sheetRef.current;
+    if (!sheet) return;
     const vv = window.visualViewport;
     if (!vv) return;
 
     const onResize = () => {
-      setSheetMaxHeight(`${vv.height * 0.85}px`);
+      const vh = vv.height;
+      sheet.style.maxHeight = `${vh * 0.92}px`;
     };
     vv.addEventListener('resize', onResize);
+    vv.addEventListener('scroll', onResize);
     onResize();
-    return () => vv.removeEventListener('resize', onResize);
+    return () => {
+      vv.removeEventListener('resize', onResize);
+      vv.removeEventListener('scroll', onResize);
+      if (sheet) sheet.style.maxHeight = '';
+    };
   }, [isSheetOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,7 +65,7 @@ const MobileContactButton = () => {
           <div
             ref={sheetRef}
             className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl animate-slide-up overflow-y-auto"
-            style={{ maxHeight: sheetMaxHeight }}
+            style={{ maxHeight: '92vh', transition: 'max-height 0.15s ease' }}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b">
               <h2 className="font-semibold text-gray-800">Wyślij zapytanie</h2>
@@ -81,7 +87,7 @@ const MobileContactButton = () => {
                   className="flex items-center justify-center gap-2 w-full py-3 rounded-lg text-sm font-semibold text-white bg-[hsl(210,60%,25%)] hover:bg-[hsl(210,60%,20%)] transition-all"
                 >
                   <Phone size={16} />
-                  📞 Zadzwoń teraz
+                  Zadzwoń teraz
                 </a>
 
                 {/* Divider */}
