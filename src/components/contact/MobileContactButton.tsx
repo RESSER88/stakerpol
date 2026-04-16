@@ -65,7 +65,7 @@ const MobileContactButton = () => {
           <div
             ref={sheetRef}
             className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl animate-slide-up overflow-y-auto"
-            style={{ maxHeight: sheetMaxHeight }}
+            style={{ maxHeight: '92vh', transition: 'max-height 0.15s ease' }}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b">
               <h2 className="font-semibold text-gray-800">Wyślij zapytanie</h2>
