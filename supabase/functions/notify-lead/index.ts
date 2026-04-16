@@ -52,7 +52,9 @@ const handler = async (req: Request): Promise<Response> => {
     // Send email via Resend if configured
     if (Deno.env.get("RESEND_API_KEY")) {
       const to = "info@stakerpol.pl";
-      const subject = `Nowe zapytanie cenowe: ${lead.product_model}`;
+      const subject = lead.product_model === 'Zapytanie ogólne'
+        ? 'Nowe zapytanie ze strony'
+        : `Nowe zapytanie cenowe: ${lead.product_model}`;
       const html = `
         <h2>Nowe zapytanie cenowe</h2>
         <p><strong>Model:</strong> ${lead.product_model}</p>

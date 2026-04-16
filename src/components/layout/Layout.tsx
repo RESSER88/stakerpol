@@ -5,6 +5,7 @@ import Footer from './Footer';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import HreflangLinks from '@/components/seo/HreflangLinks';
 import CookieConsent from '@/components/consent/CookieConsent';
+import FloatingContactBubble from '@/components/contact/FloatingContactBubble';
 import GSCVerification from '@/components/seo/GSCVerification';
 import { useProductTranslationIntegration } from '@/hooks/useProductTranslationIntegration';
 
@@ -33,6 +34,7 @@ const Layout = ({ children }: LayoutProps) => {
       </main>
       <Footer />
       <CookieConsent />
+      <FloatingContactBubble />
     </div>
   );
 };
