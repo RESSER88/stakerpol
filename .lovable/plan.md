@@ -1,36 +1,66 @@
 
 
-# Plan: Generate "Living Book" knowledge document
+# Plan: Widgety kontaktowe (desktop bubble + mobile navbar button)
 
-I will create a comprehensive markdown document covering all 12 areas requested. This is a data/artifact generation task — I will write a script to output the document to `/mnt/documents/`.
+## Analiza kolorów
 
-## What will be produced
+Obecna paleta strony:
+- **Primary (CTA):** pomarańczowy `#FF6B00` (HSL 25 100% 50%) — używany w `.cta-button`, przyciskach telefonu
+- **Navy:** `#0A2647` — tło ciemne
+- **Akcent telefonu:** pomarańczowy (ten sam primary)
 
-A single markdown file `Living_Book_Stakerpol.md` saved to `/mnt/documents/` containing the complete structured knowledge document based on all the codebase analysis I've performed.
+Proponowany czerwony `#C0392B` i niebieski `#185FA5` **kolidują** z istniejącą paletą. Strona jest spójna wokół pomarańczowego. Rekomendacja:
 
-## Key findings to include
+| Element | Propozycja użytkownika | Rekomendacja dopasowana do strony |
+|---------|----------------------|----------------------------------|
+| Główny przycisk / bubble | `#C0392B` (czerwony) | **`#FF6B00`** (pomarańczowy — ten sam co CTA) |
+| Przycisk „Zadzwoń" | `#185FA5` (niebieski) | **`#0A2647`** (navy — obecny na stronie) |
+| Pulsowanie | czerwone glow | pomarańczowe glow |
 
-**Routes:** `/` (home), `/products` (listing), `/products/:id` (detail), `/testimonials`, `/contact`, `/faq`, `/admin` (protected), `*` (404)
+To zachowa spójność wizualną. Jeśli wolisz czerwony — zaimplementuję czerwony.
 
-**Tech:** React 18 + Vite 5 + Tailwind v3 + TypeScript + Supabase (DB, Auth, Edge Functions, Realtime, Storage)
+## Co zostanie zbudowane
 
-**Auth:** Supabase email/password, `user_roles` table with `app_role` enum (admin/moderator/user), `has_role()` security definer function
+### 1. `FloatingContactBubble.tsx` (desktop, ukryty na mobile)
+- Okrągły przycisk 52px, fixed bottom-right, z-[9999]
+- Pulsująca animacja box-shadow
+- Klik → 2 sub-bubbles (envelope + phone) animowane slide-up
+- „Wyślij zapytanie" → popup z formularzem (imię, telefon/email, treść)
+- „Zadzwoń" → popup z kartą tel:+48694133592
+- Submit → wywołuje `supabase.functions.invoke('notify-lead')` (Resend email)
+- Po sukcesie: „Dziękujemy! Odpiszemy w ciągu 24 godzin." + auto-close 3s
 
-**Database:** 13 tables including products (29 rows), price_inquiries, faqs, product_images, product_translations, orders, etc.
+### 2. `MobileContactButton.tsx` (mobile, ukryty na desktop)
+- Pill button „✉ Zapytaj" w headerze mobilnym
+- Pulsująca animacja
+- Klik → bottom sheet z formularzem (te same pola)
+- Submit → ta sama logika (notify-lead → Resend)
+- Overlay + zamknięcie na ✕ lub tap overlay
 
-**Edge Functions:** 7 functions (notify-lead, auto-translate, geo-feed, migrate-images, schedule-translations, sitemap, translation-worker)
+### 3. `useContactForm.ts` — shared hook
+- Walidacja pól (required, format email/telefon)
+- Submit logic: `supabase.functions.invoke('notify-lead', { body: {...} })`
+- Stany: loading, success, error
 
-**State:** React Context (language), Zustand (productStore with persist), React Query (server state)
+### 4. Modyfikacja `notify-lead` Edge Function
+- Rozszerzenie payload o pola z nowego formularza (name, contact, message — bez product_model)
+- Product_model = "Zapytanie ogólne" gdy brak produktu
+- Redeploy edge function
 
-**Email:** Resend via notify-lead edge function, currently using `onboarding@resend.dev` sender (domain not verified)
+### 5. Modyfikacja plików
+- **`Header.tsx`** — dodanie `MobileContactButton` w sekcji mobilnej
+- **`Layout.tsx`** — dodanie `FloatingContactBubble`
+- **`tailwind.config.ts`** — dodanie keyframe `pulse-glow` dla pulsowania bubble
+- **`notify-lead/index.ts`** — obsługa nowego typu payload
 
-**Languages:** PL, EN, DE, CS, SK — modular translation files + DeepL API integration
+### 6. GA4 tracking
+- Event `contact_bubble_open` przy rozwinięciu bubble
+- Event `contact_form_submit` przy wysłaniu formularza
+- Event `contact_call_click` przy kliknięciu „Zadzwoń"
 
-**Integrations:** Supabase, Resend, DeepL, GA4, Elfsight (Google Reviews widget)
+## Numer telefonu
+Użyty z kodu: **+48 694 133 592** (zgodny z headerem)
 
-**No TODO/FIXME/HACK comments found.** Some `console.log` statements present in admin code.
-
-## Steps
-1. Write the complete markdown document to `/mnt/documents/Living_Book_Stakerpol.md`
-2. No UI changes needed — pure artifact generation
+## Tekst
+- „Odpowiadamy w ciągu 24 godzin!" — zgodnie z życzeniem użytkownika
 
