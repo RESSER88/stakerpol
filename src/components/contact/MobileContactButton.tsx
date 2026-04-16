@@ -87,7 +87,7 @@ const MobileContactButton = () => {
                   className="flex items-center justify-center gap-2 w-full py-3 rounded-lg text-sm font-semibold text-white bg-[hsl(210,60%,25%)] hover:bg-[hsl(210,60%,20%)] transition-all"
                 >
                   <Phone size={16} />
-                  📞 Zadzwoń teraz
+                  Zadzwoń teraz
                 </a>
 
                 {/* Divider */}
