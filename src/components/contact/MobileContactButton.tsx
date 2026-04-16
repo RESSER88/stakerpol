@@ -1,10 +1,12 @@
-import { useState } from 'react';
-import { Mail, X, Send } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Mail, X, Send, Phone } from 'lucide-react';
 import { useContactForm } from '@/hooks/useContactForm';
 import { trackCTAClick } from '@/utils/analytics';
 
 const MobileContactButton = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [sheetMaxHeight, setSheetMaxHeight] = useState('85vh');
+  const sheetRef = useRef<HTMLDivElement>(null);
   const { formData, errors, status, updateField, submit, reset } = useContactForm();
 
   const openSheet = () => {
@@ -17,6 +19,20 @@ const MobileContactButton = () => {
     setIsSheetOpen(false);
     reset();
   };
+
+  // Keyboard-aware height via visualViewport API
+  useEffect(() => {
+    if (!isSheetOpen) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const onResize = () => {
+      setSheetMaxHeight(`${vv.height * 0.85}px`);
+    };
+    vv.addEventListener('resize', onResize);
+    onResize();
+    return () => vv.removeEventListener('resize', onResize);
+  }, [isSheetOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,10 +55,12 @@ const MobileContactButton = () => {
 
       {isSheetOpen && (
         <div className="fixed inset-0 z-[9999] md:hidden">
-          {/* Overlay */}
           <div className="absolute inset-0 bg-black/40" onClick={closeSheet} />
-          {/* Sheet */}
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl animate-slide-up max-h-[85vh] overflow-y-auto">
+          <div
+            ref={sheetRef}
+            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl animate-slide-up overflow-y-auto"
+            style={{ maxHeight: sheetMaxHeight }}
+          >
             <div className="flex items-center justify-between px-5 py-4 border-b">
               <h2 className="font-semibold text-gray-800">Wyślij zapytanie</h2>
               <button onClick={closeSheet} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
@@ -55,29 +73,49 @@ const MobileContactButton = () => {
                 <p className="text-sm text-gray-500 mt-1">Odpiszemy w ciągu 24 godzin.</p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="p-5 space-y-4">
-                <div>
-                  <input placeholder="Imię i nazwisko" value={formData.name} onChange={e => updateField('name', e.target.value)} className={inputCls(errors.name)} />
-                  {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
-                </div>
-                <div>
-                  <input placeholder="Telefon lub e-mail" value={formData.contact} onChange={e => updateField('contact', e.target.value)} className={inputCls(errors.contact)} />
-                  {errors.contact && <p className="text-xs text-red-500 mt-1">{errors.contact}</p>}
-                </div>
-                <div>
-                  <textarea placeholder="Treść zapytania" rows={4} value={formData.message} onChange={e => updateField('message', e.target.value)} className={inputCls(errors.message) + ' resize-none'} />
-                  {errors.message && <p className="text-xs text-red-500 mt-1">{errors.message}</p>}
-                </div>
-                <button
-                  type="submit"
-                  disabled={status === 'loading'}
-                  className="w-full py-3 rounded-lg text-sm font-semibold text-white bg-[hsl(25,100%,50%)] hover:bg-[hsl(25,100%,45%)] transition-all disabled:opacity-60 flex items-center justify-center gap-2 animate-[pulse-glow_2.2s_infinite]"
+              <div className="p-5">
+                {/* Phone button */}
+                <a
+                  href="tel:+48694133592"
+                  onClick={() => trackCTAClick('mobile_call_button')}
+                  className="flex items-center justify-center gap-2 w-full py-3 rounded-lg text-sm font-semibold text-white bg-[hsl(210,60%,25%)] hover:bg-[hsl(210,60%,20%)] transition-all"
                 >
-                  <Send size={14} />
-                  {status === 'loading' ? 'Wysyłanie...' : 'Wyślij zapytanie →'}
-                </button>
-                {status === 'error' && <p className="text-xs text-red-500 text-center">Błąd wysyłki. Spróbuj ponownie.</p>}
-              </form>
+                  <Phone size={16} />
+                  📞 Zadzwoń teraz
+                </a>
+
+                {/* Divider */}
+                <div className="flex items-center gap-3 my-4">
+                  <hr className="flex-1 border-gray-200" />
+                  <span className="text-xs text-gray-400 whitespace-nowrap">lub wyślij wiadomość</span>
+                  <hr className="flex-1 border-gray-200" />
+                </div>
+
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <input placeholder="Imię i nazwisko" value={formData.name} onChange={e => updateField('name', e.target.value)} className={inputCls(errors.name)} />
+                    {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
+                  </div>
+                  <div>
+                    <input placeholder="Telefon lub e-mail" value={formData.contact} onChange={e => updateField('contact', e.target.value)} className={inputCls(errors.contact)} />
+                    {errors.contact && <p className="text-xs text-red-500 mt-1">{errors.contact}</p>}
+                  </div>
+                  <div>
+                    <textarea placeholder="Treść zapytania" rows={4} value={formData.message} onChange={e => updateField('message', e.target.value)} className={inputCls(errors.message) + ' resize-none'} />
+                    {errors.message && <p className="text-xs text-red-500 mt-1">{errors.message}</p>}
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={status === 'loading'}
+                    className="w-full py-3 rounded-lg text-sm font-semibold text-white bg-[hsl(25,100%,50%)] hover:bg-[hsl(25,100%,45%)] transition-all disabled:opacity-60 flex items-center justify-center gap-2 animate-[pulse-glow_2.2s_infinite]"
+                  >
+                    <Send size={14} />
+                    {status === 'loading' ? 'Wysyłanie...' : 'Wyślij zapytanie →'}
+                  </button>
+                  {status === 'error' && <p className="text-xs text-red-500 text-center">Błąd wysyłki. Spróbuj ponownie.</p>}
+                </form>
+              </div>
             )}
           </div>
         </div>
