@@ -5,7 +5,6 @@ import { trackCTAClick } from '@/utils/analytics';
 
 const MobileContactButton = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [sheetMaxHeight, setSheetMaxHeight] = useState('85vh');
   const sheetRef = useRef<HTMLDivElement>(null);
   const { formData, errors, status, updateField, submit, reset } = useContactForm();
 
