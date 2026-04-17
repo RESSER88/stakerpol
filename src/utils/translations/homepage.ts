@@ -45,18 +45,81 @@ export const homepageTranslations: Translations = {
     de: 'Über uns'
   },
   aboutUsTitle: {
-    pl: 'Dlaczego wybrać Stakerpol?',
-    en: 'Why choose Stakerpol?',
-    cs: 'Proč si vybrat Stakerpol?',
-    sk: 'Prečo si vybrať Stakerpol?',
-    de: 'Warum Stakerpol wählen?'
+    pl: 'Stakerpol — Twój partner w wyposażeniu magazynu',
+    en: 'Stakerpol — Your partner in warehouse equipment',
+    de: 'Stakerpol — Ihr Partner für Lagerausstattung',
+    cs: 'Stakerpol — Váš partner pro vybavení skladu',
+    sk: 'Stakerpol — Váš partner pre vybavenie skladu'
+  },
+  aboutUsSubtitle: {
+    pl: 'Sprawdzone wózki Toyota BT. Realna oszczędność. Pewność działania.',
+    en: 'Trusted Toyota BT trucks. Real savings. Reliable performance.',
+    de: 'Bewährte Toyota BT-Stapler. Echte Ersparnisse. Zuverlässige Leistung.',
+    cs: 'Prověřené vozíky Toyota BT. Skutečná úspora. Spolehlivý provoz.',
+    sk: 'Overené vozíky Toyota BT. Skutočná úspora. Spoľahlivá prevádzka.'
+  },
+  aboutUsIntro1: {
+    pl: 'Od 2008 roku pomagamy firmom usprawniać pracę magazynu bez przepłacania za nowy sprzęt. Jako rodzinna firma wiemy, że za każdą decyzją zakupową stoi człowiek — dlatego stawiamy na Partnerstwo, Pasję i Profesjonalizm.',
+    en: 'Since 2008, we have been helping companies streamline warehouse operations without overpaying for new equipment. As a family-owned business, we know that behind every purchase decision stands a person — that is why we build our work on three pillars: Partnership, Passion, and Professionalism.',
+    de: 'Seit 2008 helfen wir Unternehmen, ihre Lagerarbeit effizienter zu gestalten — ohne für neue Geräte zu viel zu bezahlen. Als Familienunternehmen wissen wir, dass hinter jeder Kaufentscheidung ein Mensch steht. Deshalb setzen wir auf drei Säulen: Partnerschaft, Leidenschaft und Professionalität.',
+    cs: 'Od roku 2008 pomáháme firmám zefektivnit provoz skladu bez zbytečného přeplácení za nové vybavení. Jako rodinná firma víme, že za každým rozhodnutím o nákupu stojí člověk — proto stavíme naši práci na třech pilířích: Partnerství, Vášeň a Profesionalita.',
+    sk: 'Od roku 2008 pomáhame firmám zefektívniť prácu v sklade bez zbytočného preplácania za nové zariadenia. Ako rodinná firma vieme, že za každým rozhodnutím o nákupe stojí človek — preto staviame našu prácu na troch pilieroch: Partnerstvo, Vášeň a Profesionalita.'
+  },
+  aboutUsIntro2: {
+    pl: 'Specjalizujemy się w używanych elektrycznych wózkach paletowych Toyota BT SWE 200D — modelu cenionym za niezawodność i niskie koszty eksploatacji. Każdy egzemplarz przechodzi staranną weryfikację, a Ty otrzymujesz konfigurację dopasowaną do realnych potrzeb Twojego magazynu.',
+    en: 'We specialize in used Toyota BT SWE 200D electric pallet trucks — a model valued for its reliability and low operating costs. Every unit undergoes thorough inspection, and you receive a configuration tailored to the real needs of your warehouse.',
+    de: 'Wir sind spezialisiert auf gebrauchte Elektro-Hubwagen Toyota BT SWE 200D — ein Modell, das für seine Zuverlässigkeit und niedrigen Betriebskosten geschätzt wird. Jedes Gerät wird sorgfältig geprüft, und Sie erhalten eine Konfiguration, die exakt auf die Anforderungen Ihres Lagers zugeschnitten ist.',
+    cs: 'Specializujeme se na použité elektrické paletové vozíky Toyota BT SWE 200D — model ceněný pro svou spolehlivost a nízké provozní náklady. Každý kus prochází pečlivou kontrolou a Vy získáváte konfiguraci přizpůsobenou skutečným potřebám Vašeho skladu.',
+    sk: 'Špecializujeme sa na použité elektrické paletové vozíky Toyota BT SWE 200D — model oceňovaný pre svoju spoľahlivosť a nízke prevádzkové náklady. Každý kus prechádza dôkladnou kontrolou a Vy získavate konfiguráciu prispôsobenú reálnym potrebám Vášho skladu.'
+  },
+  aboutUsBenefitsTitle: {
+    pl: 'Co zyskujesz, wybierając Stakerpol:',
+    en: 'What you gain by choosing Stakerpol:',
+    de: 'Ihre Vorteile mit Stakerpol:',
+    cs: 'Co získáte volbou Stakerpol:',
+    sk: 'Čo získate voľbou Stakerpol:'
+  },
+  aboutUsBenefit1: {
+    pl: 'sprawdzony sprzęt Toyota w cenie nawet kilkukrotnie niższej od nowego,',
+    en: 'proven Toyota equipment at a fraction of the price of a new one,',
+    de: 'bewährte Toyota-Technik zu einem Bruchteil des Neupreises,',
+    cs: 'prověřenou techniku Toyota za zlomek ceny nového vozíku,',
+    sk: 'overenú techniku Toyota za zlomok ceny nového vozíka,'
+  },
+  aboutUsBenefit2: {
+    pl: 'doradztwo oparte na 17 latach doświadczenia, a nie na prowizji,',
+    en: 'advice based on 17 years of experience — not on commission,',
+    de: 'Beratung auf Basis von 17 Jahren Erfahrung — nicht auf Provisionsbasis,',
+    cs: 'poradenství založené na 17 letech zkušeností — nikoli na provizi,',
+    sk: 'poradenstvo založené na 17 rokoch skúseností — nie na provízii,'
+  },
+  aboutUsBenefit3: {
+    pl: 'szczerą rozmowę o tym, czego naprawdę potrzebujesz — zamiast sprzedaży „na siłę",',
+    en: 'an honest conversation about what you truly need, instead of pushy sales,',
+    de: 'ein ehrliches Gespräch darüber, was Sie wirklich brauchen — statt aggressiver Verkaufstaktik,',
+    cs: 'upřímný rozhovor o tom, co skutečně potřebujete — místo nátlakového prodeje,',
+    sk: 'úprimný rozhovor o tom, čo skutočne potrebujete — namiesto nátlakového predaja,'
+  },
+  aboutUsBenefit4: {
+    pl: 'partnera, który jest obecny także po zakupie.',
+    en: 'a partner who stays by your side also after the purchase.',
+    de: 'ein Partner, der auch nach dem Kauf für Sie da ist.',
+    cs: 'partnera, který je s Vámi i po nákupu.',
+    sk: 'partnera, ktorý je s Vami aj po nákupe.'
+  },
+  aboutUsClosing: {
+    pl: 'Zapraszam do kontaktu — chętnie doradzę najlepsze rozwiązanie dla Państwa magazynu.',
+    en: 'Get in touch — I will be happy to recommend the best solution for your warehouse.',
+    de: 'Kontaktieren Sie uns gerne — ich berate Sie persönlich und finde die beste Lösung für Ihr Lager.',
+    cs: 'Neváhejte se ozvat — rád Vám doporučím nejlepší řešení pro Váš sklad.',
+    sk: 'Neváhajte nás kontaktovať — rád Vám odporučím najlepšie riešenie pre Váš sklad.'
   },
   aboutUsDescription: {
-    pl: 'Stakerpol to rodzinna firma działająca od 2008 roku, która powstała z pasji i chęci budowania wartościowych relacji w biznesie. Naszą działalność opieramy na trzech filarach: Partnerstwie, Pasji i Profesjonalizmie. Specjalizujemy się w sprzedaży używanych elektrycznych wózków paletowych Toyota BT SWE 200D, oferując różne konfiguracje dopasowane do potrzeb magazynowych. Zapewniamy najwyższą jakość sprzętu, profesjonalne doradztwo i autentyczne zaangażowanie w każdą współpracę. Dla nas najważniejszy jest szacunek do Klienta i długofalowe relacje oparte na wzajemnym zaufaniu.',
-    en: 'Stakerpol is a family-run company operating since 2008, born from a passion for business and building valuable relationships. Our activity is based on three pillars: Partnership, Passion, and Professionalism. We specialize in selling used Toyota BT SWE 200D electric pallet trucks, offering various configurations tailored to warehouse needs. We ensure top-quality equipment, expert advice, and genuine commitment to every collaboration. For us, the most important thing is respect for the client and long-term relationships based on mutual trust.',
-    de: 'Stakerpol ist ein familiengeführtes Unternehmen, das seit 2008 tätig ist und aus der Leidenschaft und dem Wunsch entstanden ist, wertvolle Geschäftsbeziehungen aufzubauen. Unsere Tätigkeit basiert auf drei Säulen: Partnerschaft, Leidenschaft und Professionalität. Wir sind auf den Verkauf gebrauchter elektrischer BT SWE 200D Palettenhubwagen von Toyota spezialisiert und bieten verschiedene Konfigurationen, die auf Lagerbedürfnisse zugeschnitten sind. Wir garantieren höchste Qualität, professionelle Beratung und echtes Engagement bei jeder Zusammenarbeit. Für uns zählt vor allem der Respekt gegenüber dem Kunden und langfristige Beziehungen, die auf gegenseitigem Vertrauen basieren.',
-    cs: 'Stakerpol je rodinná firma působící od roku 2008, která vznikla z vášně a touhy budovat hodnotné obchodní vztahy. Naše činnost stojí na třech pilířích: partnerství, vášeň a profesionalita. Specializujeme se na prodej použitých elektrických paletových vozíků Toyota BT SWE 200D a nabízíme různé konfigurace podle potřeb skladů. Zajišťujeme nejvyšší kvalitu zařízení, odborné poradenství a opravdové nasadení při každé spolupráci. Pro nás je nejdůležitější respekt ke klientovi a dlouhodobé vztahy založené na vzájemné důvěře.',
-    sk: 'Stakerpol je rodinná firma pôsobiaca od roku 2008, ktorá vznikla z vášne a túžby budovať hodnotné obchodné vzťahy. Naša činnosť stojí na troch pilieroch: partnerstvo, vášeň a profesionalita. Špecializujeme sa na predaj použitých elektrických paletových vozíkov Toyota BT SWE 200D a ponúkame rôzne konfigurácie prispôsobené skladovým potrebám. Zaručujeme najvyššiu kvalitu zariadení, odborné poradenstvo a úprimné nasadenie v každej spolupráci. Pre nás je najdôležitejší rešpekt ku klientovi a dlhodobé vzťahy založené na vzájomnej dôvere.'
+    pl: 'Stakerpol to rodzinna firma działająca od 2008 roku.',
+    en: 'Stakerpol is a family-run company operating since 2008.',
+    de: 'Stakerpol ist ein familiengeführtes Unternehmen seit 2008.',
+    cs: 'Stakerpol je rodinná firma působící od roku 2008.',
+    sk: 'Stakerpol je rodinná firma pôsobiaca od roku 2008.'
   },
   whyChooseUs: {
     pl: 'Dlaczego my?',
