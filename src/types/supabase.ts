@@ -37,6 +37,13 @@ export const mapSupabaseProductToProduct = (supabaseProduct: SupabaseProduct, im
     shortDescription: supabaseProduct.short_description || '',
     createdAt: supabaseProduct.created_at,
     updatedAt: supabaseProduct.updated_at,
+    availabilityStatus: (supabaseProduct as any).availability_status || 'available',
+    conditionLabel: (supabaseProduct as any).condition_label || '',
+    shortMarketingDescription: (supabaseProduct as any).short_marketing_description || '',
+    leasingMonthlyFromPln: (supabaseProduct as any).leasing_monthly_from_pln ?? null,
+    warrantyMonths: (supabaseProduct as any).warranty_months ?? 3,
+    isFeatured: (supabaseProduct as any).is_featured ?? false,
+    slogan: (supabaseProduct as any).slogan || '',
     specs: {
       productionYear: supabaseProduct.production_year?.toString() || '',
       serialNumber: supabaseProduct.serial_number || '',
@@ -87,7 +94,16 @@ export const mapProductToSupabaseInsert = (product: any): SupabaseProductInsert 
     image_url: product.images && product.images.length > 0 ? product.images[0] : product.image,
     // dostarczamy slug po stronie klienta jako fallback; po stronie DB działa trigger zapewniający slug, jeśli nie podano
     slug: product.slug?.toString() || toSlug(product.model, product.specs.serialNumber),
-    faq_ids: product.faqIds || []
+    faq_ids: product.faqIds || [],
+    availability_status: product.availabilityStatus || 'available',
+    condition_label: product.conditionLabel || null,
+    short_marketing_description: product.shortMarketingDescription || null,
+    leasing_monthly_from_pln: product.leasingMonthlyFromPln != null && product.leasingMonthlyFromPln !== ''
+      ? Number(product.leasingMonthlyFromPln) : null,
+    warranty_months: product.warrantyMonths != null && product.warrantyMonths !== ''
+      ? Number(product.warrantyMonths) : 3,
+    is_featured: !!product.isFeatured,
+    slogan: product.slogan || null,
   } as any;
 };
 

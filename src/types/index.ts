@@ -9,6 +9,14 @@ export interface Product {
   shortDescription: string;
   createdAt: string; // ISO date string for when product was created
   updatedAt: string; // ISO date string for when product was last updated
+  // Iteration 2 - hero/CTA fields
+  availabilityStatus?: 'available' | 'reserved' | 'sold';
+  conditionLabel?: string;
+  shortMarketingDescription?: string;
+  leasingMonthlyFromPln?: number | null;
+  warrantyMonths?: number;
+  isFeatured?: boolean;
+  slogan?: string;
   specs: {
     // Main section (always visible)
     productionYear: string;
