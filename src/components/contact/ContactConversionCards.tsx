@@ -138,9 +138,7 @@ const ContactConversionCards = () => {
                 </p>
                 <CallbackMiniForm />
               </div>
-            </div>
-          </>
-        )}
+        </div>
       </div>
     </section>
   );
