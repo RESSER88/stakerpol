@@ -315,5 +315,68 @@ export const productsTranslations: Translations = {
     cs: 'Zavolat',
     sk: 'Zavolať',
     de: 'Anrufen'
+  },
+  cardYearChip: {
+    pl: 'ROK',
+    en: 'YEAR',
+    cs: 'ROK',
+    sk: 'ROK',
+    de: 'BJ'
+  },
+  cardAvailable: {
+    pl: 'Dostępny od ręki',
+    en: 'Available now',
+    cs: 'K dispozici',
+    sk: 'Dostupné ihneď',
+    de: 'Sofort verfügbar'
+  },
+  cardSpecHeight: {
+    pl: 'mm',
+    en: 'mm',
+    cs: 'mm',
+    sk: 'mm',
+    de: 'mm'
+  },
+  cardSpecYear: {
+    pl: 'rok',
+    en: 'year',
+    cs: 'rok',
+    sk: 'rok',
+    de: 'Jahr'
+  },
+  cardSpecHours: {
+    pl: 'mth',
+    en: 'mth',
+    cs: 'mth',
+    sk: 'mth',
+    de: 'Bh'
+  },
+  cardSpecCapacity: {
+    pl: 'kg',
+    en: 'kg',
+    cs: 'kg',
+    sk: 'kg',
+    de: 'kg'
+  },
+  cardCallBtn: {
+    pl: 'Zadzwoń',
+    en: 'Call',
+    cs: 'Volat',
+    sk: 'Zavolať',
+    de: 'Anrufen'
+  },
+  cardAskBtn: {
+    pl: 'Zapytaj',
+    en: 'Ask',
+    cs: 'Zeptat se',
+    sk: 'Spýtať sa',
+    de: 'Anfragen'
+  },
+  cardFullSpec: {
+    pl: 'Pełna specyfikacja →',
+    en: 'Full specification →',
+    cs: 'Plná specifikace →',
+    sk: 'Plná špecifikácia →',
+    de: 'Vollständige Spezifikation →'
   }
 };

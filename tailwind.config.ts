@@ -160,6 +160,8 @@ export default {
 			},
 			fontFamily: {
 				'sans': ['Montserrat', 'system-ui', 'sans-serif'],
+				'archivo': ['Archivo', 'Montserrat', 'system-ui', 'sans-serif'],
+				'mono': ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
 			}
 		}
 	},
