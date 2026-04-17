@@ -60,18 +60,19 @@ const CallbackMiniForm = () => {
           value={phone}
           onChange={e => setPhone(e.target.value)}
           maxLength={20}
-          className="flex-1 px-3 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-stakerpol-orange/40 focus:border-stakerpol-orange"
+          className="flex-1 min-w-0 px-3 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-stakerpol-orange/40 focus:border-stakerpol-orange"
         />
         <button
           type="submit"
           disabled={status === 'loading'}
-          className="px-4 py-2.5 rounded-lg bg-stakerpol-orange hover:bg-stakerpol-orange/90 text-white text-sm font-semibold disabled:opacity-60"
+          style={{ backgroundColor: '#F97316', color: '#ffffff' }}
+          className="px-5 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 shadow-sm"
         >
-          {status === 'loading' ? '...' : 'Oddzwońcie'}
+          {status === 'loading' ? '...' : 'Wyślij'}
         </button>
       </div>
-      {error && <p className="text-xs text-red-500">{error}</p>}
-      {status === 'error' && <p className="text-xs text-red-500">Błąd. Spróbuj ponownie.</p>}
+      {error && <p className="text-xs text-red-500 text-left">{error}</p>}
+      {status === 'error' && <p className="text-xs text-red-500 text-left">Błąd. Spróbuj ponownie.</p>}
     </form>
   );
 };
