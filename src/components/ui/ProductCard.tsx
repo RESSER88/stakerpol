@@ -35,11 +35,11 @@ const ProductCard = ({ product, priority = false }: ProductCardProps) => {
       <div className="bg-white rounded-md shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_18px_40px_-20px_rgba(0,0,0,0.18)] hover:-translate-y-[3px] transition-all duration-[250ms] ease-out h-full flex flex-col overflow-hidden">
         {/* Image with chips */}
         <Link to={productLink} className="block relative">
-          <div className="aspect-[4/3] overflow-hidden bg-stakerpol-lightgray relative">
+          <div className="aspect-[3/4] overflow-hidden bg-stakerpol-lightgray relative">
             <OptimizedImage
               src={displayImage}
               alt={product.model}
-              aspectRatio="4:3"
+              aspectRatio="3:4"
               priority={priority}
               className="h-full w-full object-cover"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

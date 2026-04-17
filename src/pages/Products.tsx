@@ -75,34 +75,37 @@ const Products = () => {
         <meta property="og:url" content={`https://stakerpol.pl/${language}/products`} />
         <meta name="twitter:card" content="summary" />
       </Helmet>
-      <section className="bg-gradient-to-b from-stakerpol-lightgray to-white py-12">
-        <div className="container-custom">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-4xl font-bold text-center animate-fade-in text-stakerpol-navy">{t('electricTrolleys')}</h1>
-            <div className="flex items-center gap-4">
-              <Link 
-                to="/admin" 
-                className="flex items-center text-muted-foreground hover:text-stakerpol-orange transition-colors"
-                title="Panel administracyjny"
-              >
-                <Shield size={20} />
-              </Link>
-            </div>
-          </div>
-          
-          <p className="text-xl text-center text-muted-foreground max-w-3xl mx-auto mb-8 animate-fade-in">
-            {getPageDescription()}
-          </p>
-          
-          <div className="flex justify-center mb-8">
-            <ProductFilter 
-              products={products} 
+      <section className="bg-gradient-to-b from-stakerpol-lightgray to-white py-8 relative">
+        <div className="container-custom relative">
+          <h1 className="sr-only">Wózki widłowe BT Toyota – oferta</h1>
+
+          <Link
+            to="/admin"
+            className="absolute top-0 right-4 text-muted-foreground/50 hover:text-stakerpol-orange transition-colors z-10"
+            title="Panel administracyjny"
+          >
+            <Shield size={18} />
+          </Link>
+
+          <div className="hidden md:flex justify-center mb-8">
+            <ProductFilter
+              products={products}
               onFilterChange={setFilteredProducts}
               language={language}
             />
           </div>
-          
+
           {renderContent()}
+        </div>
+
+        {/* Floating filter button - mobile only */}
+        <div className="md:hidden fixed right-4 top-1/2 -translate-y-1/2 z-40">
+          <ProductFilter
+            products={products}
+            onFilterChange={setFilteredProducts}
+            language={language}
+            variant="floating"
+          />
         </div>
       </section>
       <FAQSection title={t('category_faq_title')} items={categoryFaqItems} />
