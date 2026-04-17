@@ -8,26 +8,15 @@ const ContactDetailsCard = () => {
       </div>
 
       <div className="space-y-4">
-        {/* Phone + person */}
-        <div className="grid grid-cols-[1fr_auto] items-center gap-3">
-          <div className="flex items-start gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-full bg-stakerpol-orange/10 flex items-center justify-center flex-shrink-0">
-              <Phone className="text-stakerpol-orange" size={18} />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Telefon</div>
-              <a href="tel:+48694133592" className="text-stakerpol-orange font-bold text-lg hover:underline">694 133 592</a>
-              <div className="text-xs text-gray-500 mt-0.5">pon–pt 8:00–17:00</div>
-            </div>
+        {/* Phone */}
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full bg-stakerpol-orange/10 flex items-center justify-center flex-shrink-0">
+            <Phone className="text-stakerpol-orange" size={18} />
           </div>
-          <div className="flex items-center gap-2 pl-2 border-l border-gray-200">
-            <div className="w-10 h-10 rounded-full bg-stakerpol-orange text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
-              MS
-            </div>
-            <div className="min-w-0 hidden sm:block">
-              <div className="font-semibold text-gray-800 leading-tight text-sm">Michał Seweryn</div>
-              <div className="text-[11px] text-gray-500 leading-tight mt-0.5">Właściciel · Doradca techniczny</div>
-            </div>
+          <div className="min-w-0">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Telefon</div>
+            <a href="tel:+48694133592" className="text-stakerpol-orange font-bold text-lg hover:underline">694 133 592</a>
+            <div className="text-xs text-gray-500 mt-0.5">pon–pt 8:00–17:00</div>
           </div>
         </div>
 
