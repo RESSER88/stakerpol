@@ -192,6 +192,8 @@ const ProductDetail = () => {
       
       <RelatedProducts currentProductId={product.id} products={products} />
       
+      <ProductTrustSection productModel={product.model} productSlug={product.slug || product.id} />
+      
       <CallToAction />
     </Layout>
   );
