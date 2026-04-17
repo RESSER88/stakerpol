@@ -24,6 +24,8 @@ export function useContactForm() {
   const [formData, setFormData] = useState<ContactFormData>({ name: '', contact: '', message: '' });
   const [errors, setErrors] = useState<ContactFormErrors>({});
   const [status, setStatus] = useState<FormStatus>('idle');
+  const [honeypot, setHoneypot] = useState('');
+  const [consent, setConsent] = useState(false);
 
   const validate = (): boolean => {
     const e: ContactFormErrors = {};
@@ -34,6 +36,7 @@ export function useContactForm() {
       e.contact = 'Podaj poprawny email lub telefon';
     }
     if (!formData.message.trim()) e.message = 'Pole wymagane';
+    if (!consent) e.consent = 'Prosimy o akceptację polityki prywatności.';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -43,7 +46,14 @@ export function useContactForm() {
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: undefined }));
   };
 
+  const updateConsent = (value: boolean) => {
+    setConsent(value);
+    if (value && errors.consent) setErrors(prev => ({ ...prev, consent: undefined }));
+  };
+
   const submit = async () => {
+    // Honeypot: silently block bots
+    if (honeypot) return false;
     if (!validate()) return false;
     setStatus('loading');
     try {
@@ -61,6 +71,7 @@ export function useContactForm() {
       trackFormSubmit('contact_widget');
       setStatus('success');
       setFormData({ name: '', contact: '', message: '' });
+      setConsent(false);
       return true;
     } catch {
       setStatus('error');
@@ -71,7 +82,9 @@ export function useContactForm() {
   const reset = () => {
     setStatus('idle');
     setErrors({});
+    setConsent(false);
+    setHoneypot('');
   };
 
-  return { formData, errors, status, updateField, submit, reset };
+  return { formData, errors, status, honeypot, setHoneypot, consent, updateConsent, updateField, submit, reset };
 }
