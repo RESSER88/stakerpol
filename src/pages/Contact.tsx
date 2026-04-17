@@ -2,8 +2,7 @@ import Layout from '@/components/layout/Layout';
 import { MapPin } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import ContactTopInfoBar from '@/components/contact/ContactTopInfoBar';
-import ContactHero from '@/components/contact/ContactHero';
-import ContactStatsBar from '@/components/contact/ContactStatsBar';
+import ContactCompactHero from '@/components/contact/ContactCompactHero';
 import ContactDetailsCard from '@/components/contact/ContactDetailsCard';
 import ContactLeadForm from '@/components/contact/ContactLeadForm';
 import ContactConversionCards from '@/components/contact/ContactConversionCards';
@@ -22,13 +21,12 @@ const Contact = () => {
       </Helmet>
 
       <ContactTopInfoBar />
-      <ContactHero />
-      <ContactStatsBar />
+      <ContactCompactHero />
 
       {/* Two-column: details + form */}
-      <section className="bg-gray-50 py-16">
+      <section className="bg-gray-50 py-8">
         <div className="container-custom">
-          <div className="grid lg:grid-cols-5 gap-8">
+          <div className="grid lg:grid-cols-5 gap-6">
             <div className="lg:col-span-2">
               <ContactDetailsCard />
             </div>
@@ -42,7 +40,7 @@ const Contact = () => {
       <ContactConversionCards />
 
       {/* Map */}
-      <section className="bg-white py-12">
+      <section className="bg-white py-8">
         <div className="container-custom">
           <div className="flex items-center gap-2 mb-4">
             <MapPin className="text-stakerpol-orange" size={20} />

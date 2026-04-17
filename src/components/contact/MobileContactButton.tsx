@@ -1,12 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Mail, X, Send, Phone } from 'lucide-react';
 import { useContactForm } from '@/hooks/useContactForm';
 import { trackCTAClick } from '@/utils/analytics';
 
 const MobileContactButton = () => {
+  const location = useLocation();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
   const { formData, errors, status, honeypot, setHoneypot, consent, updateConsent, updateField, submit, reset } = useContactForm();
+
+  // Hide on /contact — page has its own sticky bottom bar
+  const isContactPage = location.pathname === '/contact' || location.pathname === '/kontakt';
 
   const openSheet = () => {
     setIsSheetOpen(true);
@@ -48,6 +53,8 @@ const MobileContactButton = () => {
 
   const inputCls = (err?: string) =>
     `w-full px-3 py-2.5 text-sm rounded-lg border ${err ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[hsl(25,100%,50%)] transition-all`;
+
+  if (isContactPage) return null;
 
   return (
     <>
