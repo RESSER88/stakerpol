@@ -7,11 +7,11 @@ import { trackCTAClick } from '@/utils/analytics';
 const MobileContactButton = () => {
   const location = useLocation();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-
-  // Hide on /contact — page has its own sticky bottom bar
-  if (location.pathname === '/contact' || location.pathname === '/kontakt') return null;
   const sheetRef = useRef<HTMLDivElement>(null);
   const { formData, errors, status, honeypot, setHoneypot, consent, updateConsent, updateField, submit, reset } = useContactForm();
+
+  // Hide on /contact — page has its own sticky bottom bar
+  const isContactPage = location.pathname === '/contact' || location.pathname === '/kontakt';
 
   const openSheet = () => {
     setIsSheetOpen(true);
