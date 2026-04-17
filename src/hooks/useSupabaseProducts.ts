@@ -189,6 +189,7 @@ export const useSupabaseProducts = () => {
 
       // Trigger automatic translation in background (only if DeepL enabled)
       if (newProduct) {
+        await upsertBenefits(newProduct.id, benefits || []);
         const { FEATURES } = await import('@/config/featureFlags');
         if (FEATURES.DEEPL_ENABLED) {
           translateProductFields(newProduct.id, product);
