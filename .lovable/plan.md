@@ -1,75 +1,77 @@
 
 
-## Plan: Sekcja "Proces przygotowania + Wsparcie posprzedażowe" na stronie produktu
+## Plan: Przeprojektowanie karty produktu na liście `/products`
 
-### Lokalizacja
-W `src/pages/ProductDetail.tsx` wstawiamy nową sekcję **między `RelatedProducts` a `CallToAction`** (na końcu strony produktu, po powiązanych produktach). Uwaga: w obecnym układzie nie ma "4 linii produktów" — jest tylko jeden grid `RelatedProducts` (3 karty). Sekcja proces/wsparcie pojawi się raz, jako blok zaufania przed finalnym CTA.
+### Mapowanie pól z Supabase → karta
+Tabela `products` w bazie nie ma 1:1 nazw z briefu. Mapowanie:
 
-### Nowy komponent: `src/components/products/ProductTrustSection.tsx`
-Trzy części w jednym komponencie, każda jako osobny `<section>`:
+| Brief | Realne pole DB | Pole w `Product` (TS) |
+|---|---|---|
+| `model` / `name` | `name` | `model` |
+| `lift_height_mm` | `lift_height` (numeric) | `specs.liftHeight` |
+| `production_year` | `production_year` (int) | `specs.productionYear` |
+| `operating_hours` / `mth` | `working_hours` (numeric) | `specs.workingHours` |
+| `load_capacity_kg` | `lift_capacity_mast` (numeric) | `specs.mastLiftingCapacity` |
+| `main_image_url` | `image_url` + `product_images[0]` | `images[0]` / `image` |
+| `slug` / `id` | `slug` / `id` | `slug` / `id` |
 
-**Część 1 — Proces przygotowania (jasne tło `bg-white`)**
-- H2 wyśrodkowany: "Każdy wózek przechodzi pełny proces przygotowania"
-- Subheadline szary
-- Grid 4 kolumn (`md:grid-cols-4`) — 4 kroki:
-  - 01 `ClipboardCheck` — Pełna diagnostyka
-  - 02 `Wrench` — Wymiana elementów zużywalnych
-  - 03 `BatteryCharging` — Test baterii trakcyjnej
-  - 04 `SprayCan` — Poprawki lakiernicze
-- Każdy krok: duża cyfra `text-stakerpol-orange/20` jako tło dekoracyjne (absolute), kółko `bg-stakerpol-orange/10` z ikoną `text-stakerpol-orange`, tytuł `text-stakerpol-navy font-bold`, opis `text-gray-600`
-- Linia łącząca kroki na desktop: `border-t-2 border-dashed border-stakerpol-orange/30` w tle gridu
+Dostępność („Dostępny od ręki") — w bazie nie ma flagi stanu magazynowego. Wszystkie produkty z listy traktujemy jako dostępne (zielony chip statyczny). Jeśli w przyszłości pojawi się pole `availability`, podmienimy źródło.
 
-**Część 2 — Wsparcie posprzedażowe (`bg-gray-50`)**
-- H2: "Wsparcie posprzedażowe"
-- Grid 3 kolumn (`md:grid-cols-3`), karty białe z `shadow-sm`:
-  - `Headset` — Wsparcie serwisowe
-  - `Package` — Materiały eksploatacyjne
-  - `CalendarCheck` — Prezentacja na żywo
-- Ikony `text-stakerpol-navy`, tła kółek `bg-stakerpol-navy/10`
+**Bez zmian w schemacie DB** — wszystkie wymagane pola istnieją.
 
-**Część 3 — CTA konwersja (`bg-stakerpol-navy text-white`)**
-- H2 wyśrodkowany: "Chcesz zobaczyć ten model na żywo?"
-- Subheadline biały/szary
-- 3 przyciski w rzędzie (mobile: stack):
-  - **Umów prezentację** — `bg-stakerpol-orange`, link `/contact#form?subject=prezentacja&product={slug}`, `trackCTAClick('product_process_presentation')`
-  - **WhatsApp** — `bg-green-600`, `https://wa.me/48694133592?text=...{model}`, `trackWhatsAppClick('product_process')`
-  - **Zadzwoń** — outline biały, `tel:+48694133592`, `trackPhoneClick('product_process')`
+### Pliki do zmiany
 
-### Props komponentu
-```ts
-interface ProductTrustSectionProps {
-  productModel: string;
-  productSlug?: string;
-}
-```
-Używane do prefill linków WhatsApp i formularza.
+**1. `src/components/ui/ProductCard.tsx`** — pełny redesign
+- Usuwam: długi tytuł, `shortDescription`, `LiftHeightBadge`, dwa duże przyciski CTA w obecnej formie
+- Nowa struktura:
+  - Wrapper `Card` z hover translate + soft shadow, `rounded-md`, white bg
+  - **Image** `aspect-[4/3]` z `OptimizedImage`, klikalna (Link do produktu)
+    - Chip lewy górny: czarny `bg-[#0E0E0E] text-white font-mono text-[10px] tracking-[0.08em]` → `ROK {year}`
+    - Chip prawy górny: biały pill z zieloną kropką `#14A84A` → `Dostępny od ręki` (i18n)
+  - **Tytuł** `text-stakerpol-navy font-extrabold` (Archivo 800), 16-17px mobile / 18-20px desktop, sama nazwa modelu, klikalna
+  - **Pasek specyfikacji** — `grid-cols-4` z `border-y border-[#E5E1D8]` i `divide-x divide-[#E5E1D8]`:
+    - kolumna: ikona `lucide` 16px `text-[#C8102E]`, wartość `font-mono font-bold text-xs`, etykieta `text-[8.5px] uppercase tracking-[0.04em] text-[#5B5B5B]`
+    - Ikony: `MoveVertical` (mm), `Calendar` (rok), `Clock` (mth), `Package` (kg)
+    - Helper `formatPL(n)` — `Intl.NumberFormat('pl-PL').format()` (spacja jako separator tysięcy)
+  - **CTA grid 2 kolumny** gap-1.5:
+    - Lewy „Zadzwoń" — `bg-stakerpol-orange` (#E85C1E), `Phone` ikona, `tel:+48694133592`, `trackPhoneClick('product_card_grid_'+model)`, `e.stopPropagation()`
+    - Prawy „Zapytaj" — `bg-[#0E0E0E]`, `Mail` ikona, otwiera `PriceInquiryModal` (istniejący komponent!) z prefillem produktu, `e.stopPropagation()`
+  - **„Pełna specyfikacja →"** — pełna szerokość, biały bg, `border border-[#E5E1D8]`, link do `/products/{slug}`
 
-### Tłumaczenia
-Dodaję klucze do `src/utils/translations/products.ts` (lub nowy plik) we wszystkich 5 językach (PL/EN/DE/CS/SK):
-- `trustProcessTitle`, `trustProcessSubtitle`
-- `trustStep1Title..4Title`, `trustStep1Desc..4Desc`
-- `trustSupportTitle`
-- `trustSupport1Title..3Title`, `trustSupport1Desc..3Desc`
-- `trustCtaTitle`, `trustCtaSubtitle`
-- `trustCtaPresentation`, `trustCtaCall` (WhatsApp jako brand zostaje)
+**2. `src/components/products/PriceInquiryModal.tsx`** — sprawdzić czy obsługuje prefill modelu w wiadomości; jeśli tak, używamy as-is. Brief mówi „resend email" — istniejący modal już pisze do `price_inquiries` + edge function `notify-lead` używa Resend. Spójne z resztą systemu, nie wymyślamy nowego flow.
 
-PL — pełne treści z briefu. EN/DE/CS/SK — przetłumaczone w spójnym tonie sprzedażowym.
+**3. `src/utils/translations/products.ts`** — dodać klucze (PL/EN/DE/CS/SK):
+- `cardYearChip` — „ROK"
+- `cardAvailable` — „Dostępny od ręki" / „Available now" / „Sofort verfügbar" / „K dispozici" / „Dostupné ihneď"
+- `cardSpecHeight` — „mm"
+- `cardSpecYear` — „rok" / „year" / „Jahr" / „rok" / „rok"
+- `cardSpecHours` — „mth"
+- `cardSpecCapacity` — „kg"
+- `cardCallBtn` — „Zadzwoń" / „Call" / „Anrufen" / „Volat" / „Zavolať"
+- `cardAskBtn` — „Zapytaj" / „Ask" / „Anfragen" / „Zeptat se" / „Spýtať sa"
+- `cardFullSpec` — „Pełna specyfikacja →" + tłumaczenia
 
-### Integracja w `ProductDetail.tsx`
-Po `<RelatedProducts ... />` przed `<CallToAction />`:
-```tsx
-<ProductTrustSection productModel={product.model} productSlug={product.slug || product.id} />
-```
+**4. `src/index.css`** — import fontów Archivo + JetBrains Mono z Google Fonts (preconnect + link). Dodać klasy utility:
+- `font-archivo` (już może być w tailwind.config), `font-mono` używamy istniejącego stacka — rozszerzamy `tailwind.config.ts` o `mono: ['JetBrains Mono', ...]` i `archivo: ['Archivo', ...]`
 
-### Pliki
-1. **Nowy** `src/components/products/ProductTrustSection.tsx`
-2. `src/utils/translations/products.ts` — dodanie ~18 kluczy × 5 języków
-3. `src/pages/ProductDetail.tsx` — import + wstawienie komponentu
+**5. `src/pages/Products.tsx`** — siatka:
+- Zmiana `product-grid-desktop` (lub override) na: `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5`
+- Reszta strony bez zmian (filtr, FAQ, CTA, hero)
+
+**6. `tailwind.config.ts`** — dodać `fontFamily.archivo` i `fontFamily.mono` (JetBrains Mono jako pierwszy w stacku)
 
 ### Bez zmian
-RelatedProducts, ProductInfo, kolory tokenów, inne strony, edge functions, CallToAction.
+- DB schema, RLS, edge functions
+- `ProductDetail.tsx`, `RelatedProducts`, `ProductInfo`, `LiftHeightBadge` (zostaje używany na detalu)
+- `PriceInquiryModal` poza ewentualnym prefillem już istnieje
 
-### Uwagi
-- Wariant wybrany: **podstawowy** (4 kroki + 3 karty + CTA). Bez timeline animacji ani galerii przed/po — można dodać później.
-- Kolorystyka spójna z resztą serwisu: `stakerpol-orange` dla procesu (akcent), `stakerpol-navy` dla wsparcia i finalnego CTA, zielony tylko dla WhatsApp.
+### Stan magazynowy
+Chip „Dostępny od ręki" jest statyczny — wszystkie produkty wystawione na liście traktujemy jako dostępne. Jeśli klient chce realny stan (np. „w drodze", „zarezerwowany"), trzeba dodać kolumnę `availability_status` — zgłoszę to jako follow-up po wdrożeniu.
+
+### Pliki (lista finalna)
+1. `src/components/ui/ProductCard.tsx` — pełny rewrite
+2. `src/utils/translations/products.ts` — +9 kluczy × 5 języków
+3. `src/pages/Products.tsx` — klasy gridu
+4. `src/index.css` — import fontów
+5. `tailwind.config.ts` — fontFamily
 
