@@ -21,6 +21,14 @@ import FAQSchema from '@/components/seo/FAQSchema';
 import { FEATURES } from '@/config/featureFlags';
 import { useSupabaseFAQ } from '@/hooks/useSupabaseFAQ';
 import ProductTrustSection from '@/components/products/ProductTrustSection';
+import ProductStatusBadges from '@/components/products/ProductStatusBadges';
+import ProductKeySpecsBar from '@/components/products/ProductKeySpecsBar';
+import ProductPriceBlock from '@/components/products/ProductPriceBlock';
+import ProductCTAButtons from '@/components/products/ProductCTAButtons';
+import ProductTrustStrip from '@/components/products/ProductTrustStrip';
+import ProductAboutSection from '@/components/products/ProductAboutSection';
+import ProductLeadCallback from '@/components/products/ProductLeadCallback';
+import ProductStickyBar from '@/components/products/ProductStickyBar';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -167,12 +175,18 @@ const ProductDetail = () => {
               alt={product.model} 
               images={product.images} 
             />
-            <div className="space-y-6">
+            <div className="space-y-4">
+              <ProductStatusBadges product={product as any} />
               <div>
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-stakerpol-navy leading-tight">
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2 text-stakerpol-navy leading-tight">
                   {product.model}
                 </h1>
-                <p className="text-lg md:text-xl text-gray-700 leading-relaxed">
+                {(product as any).slogan && (
+                  <p className="font-medium" style={{ fontSize: 13, color: '#5B5B5B' }}>
+                    {(product as any).slogan}
+                  </p>
+                )}
+                <p className="text-base md:text-lg text-gray-700 leading-relaxed mt-3">
                   {translations.shortDescription || product.shortDescription}
                   {translationsLoading && language !== 'pl' && (
                     <span className="ml-2 text-sm text-gray-500">
@@ -181,20 +195,30 @@ const ProductDetail = () => {
                   )}
                 </p>
               </div>
+              <ProductKeySpecsBar product={product as any} />
+              <ProductPriceBlock product={product as any} />
+              <ProductCTAButtons product={product as any} />
+              <ProductTrustStrip warrantyMonths={(product as any).warrantyMonths || 3} />
               <ProductInfo product={product} language={language} />
             </div>
           </div>
         </div>
       </section>
 
+      <ProductAboutSection product={product as any} />
+
+      <ProductLeadCallback productId={product.id} />
+
       <ProductTrustSection productModel={product.model} productSlug={product.slug || product.id} />
 
-      <FAQSection title={`FAQ – ${product.model}`} items={productFaqItems} />
+      <FAQSection title="Najczęstsze pytania" items={productFaqItems} />
       <FAQSchema items={productFaqItems} />
       
       <RelatedProducts currentProductId={product.id} products={products} />
       
       <CallToAction />
+
+      <ProductStickyBar product={product as any} />
     </Layout>
   );
 };
