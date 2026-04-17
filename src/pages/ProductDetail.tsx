@@ -187,14 +187,14 @@ const ProductDetail = () => {
         </div>
       </section>
 
-      <CallToAction />
+      <ProductTrustSection productModel={product.model} productSlug={product.slug || product.id} />
 
       <FAQSection title={`FAQ – ${product.model}`} items={productFaqItems} />
       <FAQSchema items={productFaqItems} />
       
       <RelatedProducts currentProductId={product.id} products={products} />
       
-      <ProductTrustSection productModel={product.model} productSlug={product.slug || product.id} />
+      <CallToAction />
     </Layout>
   );
 };
