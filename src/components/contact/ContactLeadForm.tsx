@@ -170,7 +170,8 @@ const ContactLeadForm = () => {
         <button
           type="submit"
           disabled={status === 'loading'}
-          className="w-full py-2.5 rounded-lg text-white font-semibold bg-stakerpol-orange hover:bg-stakerpol-orange/90 transition-colors disabled:opacity-60 flex items-center justify-center gap-2 min-h-[44px]"
+          style={{ backgroundColor: '#F97316', color: '#ffffff' }}
+          className="w-full py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2 min-h-[48px] shadow-sm"
         >
           <Send size={16} />
           {status === 'loading' ? 'Wysyłanie...' : 'Poproś o ofertę →'}
