@@ -12,6 +12,7 @@ interface ContactFormErrors {
   name?: string;
   contact?: string;
   message?: string;
+  consent?: string;
 }
 
 type FormStatus = 'idle' | 'loading' | 'success' | 'error';
