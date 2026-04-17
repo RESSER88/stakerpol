@@ -378,5 +378,61 @@ export const productsTranslations: Translations = {
     cs: 'Plná specifikace →',
     sk: 'Plná špecifikácia →',
     de: 'Vollständige Spezifikation →'
+  },
+  specGroupLiftCapacity: {
+    pl: 'Udźwig i wysokość',
+    en: 'Lift capacity & height',
+    cs: 'Nosnost a výška',
+    sk: 'Nosnosť a výška',
+    de: 'Tragkraft & Hubhöhe'
+  },
+  specGroupDimensions: {
+    pl: 'Wymiary i konstrukcja',
+    en: 'Dimensions & construction',
+    cs: 'Rozměry a konstrukce',
+    sk: 'Rozmery a konštrukcia',
+    de: 'Abmessungen & Konstruktion'
+  },
+  specGroupDrive: {
+    pl: 'Napęd i zasilanie',
+    en: 'Drive & power',
+    cs: 'Pohon a napájení',
+    sk: 'Pohon a napájanie',
+    de: 'Antrieb & Stromversorgung'
+  },
+  specGroupHistory: {
+    pl: 'Stan i historia',
+    en: 'Condition & history',
+    cs: 'Stav a historie',
+    sk: 'Stav a história',
+    de: 'Zustand & Historie'
+  },
+  specGroupExtras: {
+    pl: 'Wyposażenie dodatkowe',
+    en: 'Additional equipment',
+    cs: 'Doplňkové vybavení',
+    sk: 'Doplnkové vybavenie',
+    de: 'Zusatzausstattung'
+  },
+  specShowFull: {
+    pl: 'Pokaż pełną specyfikację',
+    en: 'Show full specification',
+    cs: 'Zobrazit plnou specifikaci',
+    sk: 'Zobraziť plnú špecifikáciu',
+    de: 'Vollständige Spezifikation anzeigen'
+  },
+  specHideFull: {
+    pl: 'Zwiń specyfikację',
+    en: 'Hide specification',
+    cs: 'Skrýt specifikaci',
+    sk: 'Skryť špecifikáciu',
+    de: 'Spezifikation ausblenden'
+  },
+  specParamsCount: {
+    pl: 'parametrów',
+    en: 'parameters',
+    cs: 'parametrů',
+    sk: 'parametrov',
+    de: 'Parameter'
   }
 };
