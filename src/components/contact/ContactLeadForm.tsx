@@ -74,11 +74,11 @@ const ContactLeadForm = () => {
   };
 
   const inputCls = (err?: string) =>
-    `w-full px-3.5 py-2.5 text-sm rounded-lg border ${err ? 'border-red-500' : 'border-gray-200'} bg-white focus:outline-none focus:ring-2 focus:ring-stakerpol-orange/40 focus:border-stakerpol-orange transition-all`;
+    `w-full px-3 py-2 text-sm rounded-lg border ${err ? 'border-red-500' : 'border-gray-200'} bg-white focus:outline-none focus:ring-2 focus:ring-stakerpol-orange/40 focus:border-stakerpol-orange transition-all`;
 
   if (status === 'success') {
     return (
-      <div id="form" className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 md:p-12 text-center">
+      <div id="form" className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
         <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
           <CheckCircle2 className="text-green-600" size={32} />
         </div>
@@ -89,35 +89,31 @@ const ContactLeadForm = () => {
   }
 
   return (
-    <div id="form" className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 md:p-8">
-      <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
-        Formularz kontaktowy
-      </div>
-      <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">Zostaw zapytanie</h2>
-      <p className="text-sm text-gray-500 mb-6">Oddzwonimy lub odpiszemy w ciągu kilku godzin.</p>
+    <div id="form" className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+      <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">Zostaw zapytanie</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid sm:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div className="grid sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Imię i nazwisko *</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Imię i nazwisko *</label>
             <input value={formData.name} onChange={e => updateField('name', e.target.value)} className={inputCls(errors.name)} maxLength={100} />
             {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Telefon *</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Telefon *</label>
             <input type="tel" value={formData.phone} onChange={e => updateField('phone', e.target.value)} className={inputCls(errors.phone)} maxLength={20} />
             {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">E-mail</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">E-mail</label>
           <input type="email" value={formData.email} onChange={e => updateField('email', e.target.value)} className={inputCls(errors.email)} maxLength={255} />
           {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Interesuje mnie</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Interesuje mnie</label>
           <select value={formData.interest} onChange={e => updateField('interest', e.target.value)} className={inputCls()}>
             <option value="">— wybierz —</option>
             {interestOptions.map(o => <option key={o} value={o}>{o}</option>)}
@@ -125,9 +121,9 @@ const ContactLeadForm = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Wiadomość *</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Wiadomość *</label>
           <textarea
-            rows={4}
+            rows={3}
             value={formData.message}
             onChange={e => updateField('message', e.target.value)}
             placeholder="Np. szukam paleciaka do magazynu o wysokości 3 m..."
@@ -173,17 +169,13 @@ const ContactLeadForm = () => {
         <button
           type="submit"
           disabled={status === 'loading'}
-          className="w-full py-3 rounded-lg text-white font-semibold bg-stakerpol-orange hover:bg-stakerpol-orange/90 transition-colors disabled:opacity-60 flex items-center justify-center gap-2 min-h-[48px]"
+          className="w-full py-2.5 rounded-lg text-white font-semibold bg-stakerpol-orange hover:bg-stakerpol-orange/90 transition-colors disabled:opacity-60 flex items-center justify-center gap-2 min-h-[44px]"
         >
           <Send size={16} />
           {status === 'loading' ? 'Wysyłanie...' : 'Poproś o ofertę →'}
         </button>
 
         {status === 'error' && <p className="text-sm text-red-500 text-center">Błąd wysyłki. Spróbuj ponownie lub zadzwoń.</p>}
-
-        <p className="text-xs text-gray-500 text-center">
-          Formularz działa — odpowiadamy w ciągu kilku godzin.
-        </p>
       </form>
     </div>
   );
