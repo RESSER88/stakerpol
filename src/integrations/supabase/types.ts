@@ -101,6 +101,44 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          created_at: string
+          id: string
+          page_url: string | null
+          phone: string
+          product_id: string | null
+          source: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          page_url?: string | null
+          phone: string
+          product_id?: string | null
+          source?: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          page_url?: string | null
+          phone?: string
+          product_id?: string | null
+          source?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string | null
@@ -248,6 +286,44 @@ export type Database = {
         }
         Relationships: []
       }
+      product_benefits: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon_name: string
+          id: string
+          product_id: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon_name?: string
+          id?: string
+          product_id: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon_name?: string
+          id?: string
+          product_id?: string
+          sort_order?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_benefits_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_images: {
         Row: {
           alt_text: string | null
@@ -383,8 +459,10 @@ export type Database = {
       products: {
         Row: {
           additional_options: string | null
+          availability_status: Database["public"]["Enums"]["availability_status"]
           battery: string | null
           condition: string | null
+          condition_label: string | null
           created_at: string
           detailed_description: string | null
           dimensions: string | null
@@ -395,6 +473,8 @@ export type Database = {
           id: string
           image_url: string | null
           initial_lift: string | null
+          is_featured: boolean
+          leasing_monthly_from_pln: number | null
           lift_capacity_initial: number | null
           lift_capacity_mast: number | null
           lift_height: number | null
@@ -407,15 +487,20 @@ export type Database = {
           production_year: number | null
           serial_number: string
           short_description: string | null
+          short_marketing_description: string | null
+          slogan: string | null
           slug: string
           updated_at: string
+          warranty_months: number
           wheels: string | null
           working_hours: number | null
         }
         Insert: {
           additional_options?: string | null
+          availability_status?: Database["public"]["Enums"]["availability_status"]
           battery?: string | null
           condition?: string | null
+          condition_label?: string | null
           created_at?: string
           detailed_description?: string | null
           dimensions?: string | null
@@ -426,6 +511,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           initial_lift?: string | null
+          is_featured?: boolean
+          leasing_monthly_from_pln?: number | null
           lift_capacity_initial?: number | null
           lift_capacity_mast?: number | null
           lift_height?: number | null
@@ -438,15 +525,20 @@ export type Database = {
           production_year?: number | null
           serial_number: string
           short_description?: string | null
+          short_marketing_description?: string | null
+          slogan?: string | null
           slug: string
           updated_at?: string
+          warranty_months?: number
           wheels?: string | null
           working_hours?: number | null
         }
         Update: {
           additional_options?: string | null
+          availability_status?: Database["public"]["Enums"]["availability_status"]
           battery?: string | null
           condition?: string | null
+          condition_label?: string | null
           created_at?: string
           detailed_description?: string | null
           dimensions?: string | null
@@ -457,6 +549,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           initial_lift?: string | null
+          is_featured?: boolean
+          leasing_monthly_from_pln?: number | null
           lift_capacity_initial?: number | null
           lift_capacity_mast?: number | null
           lift_height?: number | null
@@ -469,8 +563,11 @@ export type Database = {
           production_year?: number | null
           serial_number?: string
           short_description?: string | null
+          short_marketing_description?: string | null
+          slogan?: string | null
           slug?: string
           updated_at?: string
+          warranty_months?: number
           wheels?: string | null
           working_hours?: number | null
         }
@@ -850,6 +947,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      availability_status: "available" | "reserved" | "sold"
     }
     CompositeTypes: {
       http_header: {
@@ -994,6 +1092,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      availability_status: ["available", "reserved", "sold"],
     },
   },
 } as const
