@@ -7,7 +7,6 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/utils/translations';
 import { usePublicSupabaseProducts } from '@/hooks/usePublicSupabaseProducts';
 import { useProductTranslationsDisplay } from '@/hooks/useProductTranslationsDisplay';
-import CallToAction from '@/components/ui/CallToAction';
 import ProductImage from '@/components/products/ProductImage';
 import ProductInfo from '@/components/products/ProductInfo';
 import ProductHeader from '@/components/products/ProductHeader';
@@ -173,7 +172,10 @@ const ProductDetail = () => {
             <ProductImage 
               image={product.image} 
               alt={product.model} 
-              images={product.images} 
+              images={product.images}
+              productionYear={product.specs?.productionYear}
+              availabilityStatus={(product as any).availabilityStatus}
+              isFeatured={(product as any).isFeatured}
             />
             <div className="space-y-4">
               <ProductStatusBadges product={product as any} />
@@ -182,7 +184,7 @@ const ProductDetail = () => {
                   {product.model}
                 </h1>
                 {(product as any).slogan && (
-                  <p className="font-medium" style={{ fontSize: 13, color: '#5B5B5B' }}>
+                  <p className="font-medium text-[13px] text-ink-soft">
                     {(product as any).slogan}
                   </p>
                 )}
@@ -215,8 +217,6 @@ const ProductDetail = () => {
       <FAQSchema items={productFaqItems} />
       
       <RelatedProducts currentProductId={product.id} products={products} />
-      
-      <CallToAction />
 
       <ProductStickyBar product={product as any} />
     </Layout>

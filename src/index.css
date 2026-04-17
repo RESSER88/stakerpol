@@ -35,6 +35,21 @@
     --ring: 25 100% 50%;
 
     --radius: 0.5rem;
+
+    /* Product page design tokens (HSL) */
+    --color-surface-soft: 42 37% 96%;
+    --color-border-line: 42 22% 88%;
+    --color-red-accent: 351 79% 43%;
+    --color-navy-brand: 222 64% 33%;
+    --color-orange-cta: 17 80% 51%;
+    --color-ink: 0 0% 5%;
+    --color-ink-soft: 0 0% 36%;
+    --color-green-available: 140 77% 37%;
+    --color-whatsapp: 142 70% 49%;
+    --color-amber-soft-bg: 42 100% 94%;
+    --color-amber-soft-fg: 35 100% 27%;
+    --color-green-soft-bg: 140 50% 94%;
+    --color-green-soft-fg: 140 83% 26%;
   }
 
   .dark {

@@ -64,10 +64,29 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				stakerpol: {
-					navy: 'hsl(212 84% 16%)',       // #0A2647
-					gray: 'hsl(215 16% 47%)',       // #64748B
-					orange: 'hsl(25 100% 50%)',     // #FF6B00
-					lightgray: 'hsl(210 40% 96%)'   // #F1F5F9
+					navy: 'hsl(212 84% 16%)',
+					gray: 'hsl(215 16% 47%)',
+					orange: 'hsl(25 100% 50%)',
+					lightgray: 'hsl(210 40% 96%)'
+				},
+				'surface-soft': 'hsl(var(--color-surface-soft))',
+				'border-line': 'hsl(var(--color-border-line))',
+				'red-accent': 'hsl(var(--color-red-accent))',
+				'navy-brand': 'hsl(var(--color-navy-brand))',
+				'orange-cta': 'hsl(var(--color-orange-cta))',
+				ink: {
+					DEFAULT: 'hsl(var(--color-ink))',
+					soft: 'hsl(var(--color-ink-soft))',
+				},
+				'green-available': 'hsl(var(--color-green-available))',
+				whatsapp: 'hsl(var(--color-whatsapp))',
+				'amber-soft': {
+					DEFAULT: 'hsl(var(--color-amber-soft-bg))',
+					foreground: 'hsl(var(--color-amber-soft-fg))',
+				},
+				'green-soft': {
+					DEFAULT: 'hsl(var(--color-green-soft-bg))',
+					foreground: 'hsl(var(--color-green-soft-fg))',
 				}
 			},
 			borderRadius: {
