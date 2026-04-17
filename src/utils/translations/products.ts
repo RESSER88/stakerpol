@@ -168,5 +168,152 @@ export const productsTranslations: Translations = {
     cs: 'Podrobný popis',
     sk: 'Podrobný popis',
     de: 'Detaillierte Beschreibung'
+  },
+  trustProcessTitle: {
+    pl: 'Każdy wózek przechodzi pełny proces przygotowania',
+    en: 'Every truck goes through a full preparation process',
+    cs: 'Každý vozík prochází kompletním procesem přípravy',
+    sk: 'Každý vozík prechádza kompletným procesom prípravy',
+    de: 'Jeder Stapler durchläuft einen vollständigen Vorbereitungsprozess'
+  },
+  trustProcessSubtitle: {
+    pl: 'Kupujesz sprzęt gotowy do pracy — sprawdzony, serwisowany i objęty naszym wsparciem.',
+    en: 'You buy equipment ready to work — inspected, serviced and backed by our support.',
+    cs: 'Kupujete techniku připravenou k práci — prověřenou, servisovanou a s naší podporou.',
+    sk: 'Kupujete techniku pripravenú na prácu — preverenú, servisovanú a s našou podporou.',
+    de: 'Sie kaufen einsatzbereite Geräte — geprüft, gewartet und mit unserem Support.'
+  },
+  trustStep1Title: {
+    pl: 'Pełna diagnostyka',
+    en: 'Full diagnostics',
+    cs: 'Kompletní diagnostika',
+    sk: 'Kompletná diagnostika',
+    de: 'Vollständige Diagnose'
+  },
+  trustStep1Desc: {
+    pl: 'Kompleksowe testy techniczne wszystkich podzespołów wózka.',
+    en: 'Comprehensive technical tests of all truck components.',
+    cs: 'Komplexní technické testy všech komponent vozíku.',
+    sk: 'Komplexné technické testy všetkých komponentov vozíka.',
+    de: 'Umfassende technische Tests aller Staplerkomponenten.'
+  },
+  trustStep2Title: {
+    pl: 'Wymiana elementów zużywalnych',
+    en: 'Wear parts replacement',
+    cs: 'Výměna opotřebitelných dílů',
+    sk: 'Výmena opotrebiteľných dielov',
+    de: 'Austausch von Verschleißteilen'
+  },
+  trustStep2Desc: {
+    pl: 'Wymieniamy wszystkie elementy wymagające regeneracji.',
+    en: 'We replace all parts requiring regeneration.',
+    cs: 'Vyměňujeme všechny díly vyžadující regeneraci.',
+    sk: 'Vymieňame všetky diely vyžadujúce regeneráciu.',
+    de: 'Wir ersetzen alle Teile, die einer Erneuerung bedürfen.'
+  },
+  trustStep3Title: {
+    pl: 'Test baterii trakcyjnej',
+    en: 'Traction battery test',
+    cs: 'Test trakční baterie',
+    sk: 'Test trakčnej batérie',
+    de: 'Test der Antriebsbatterie'
+  },
+  trustStep3Desc: {
+    pl: 'Pomiar pojemności i kondycji baterii — znasz jej realny stan.',
+    en: 'Capacity and condition measurement — you know its real state.',
+    cs: 'Měření kapacity a kondice baterie — znáte její skutečný stav.',
+    sk: 'Meranie kapacity a kondície batérie — poznáte jej skutočný stav.',
+    de: 'Messung von Kapazität und Zustand — Sie kennen den echten Zustand.'
+  },
+  trustStep4Title: {
+    pl: 'Poprawki lakiernicze',
+    en: 'Paint touch-ups',
+    cs: 'Lakýrnické úpravy',
+    sk: 'Lakovnícke úpravy',
+    de: 'Lackausbesserungen'
+  },
+  trustStep4Desc: {
+    pl: 'Wózek trafia do Ciebie estetycznie przygotowany.',
+    en: 'The truck reaches you aesthetically prepared.',
+    cs: 'Vozík se k Vám dostane esteticky připravený.',
+    sk: 'Vozík sa k Vám dostane esteticky pripravený.',
+    de: 'Der Stapler erreicht Sie ästhetisch vorbereitet.'
+  },
+  trustSupportTitle: {
+    pl: 'Wsparcie posprzedażowe',
+    en: 'After-sales support',
+    cs: 'Posprodejní podpora',
+    sk: 'Popredajná podpora',
+    de: 'After-Sales-Support'
+  },
+  trustSupport1Title: {
+    pl: 'Wsparcie serwisowe',
+    en: 'Service support',
+    cs: 'Servisní podpora',
+    sk: 'Servisná podpora',
+    de: 'Service-Support'
+  },
+  trustSupport1Desc: {
+    pl: 'Pomoc techniczna i doradztwo także po zakupie.',
+    en: 'Technical help and advice also after the purchase.',
+    cs: 'Technická pomoc a poradenství i po nákupu.',
+    sk: 'Technická pomoc a poradenstvo aj po nákupe.',
+    de: 'Technische Hilfe und Beratung auch nach dem Kauf.'
+  },
+  trustSupport2Title: {
+    pl: 'Materiały eksploatacyjne',
+    en: 'Consumables',
+    cs: 'Spotřební materiál',
+    sk: 'Spotrebný materiál',
+    de: 'Verbrauchsmaterialien'
+  },
+  trustSupport2Desc: {
+    pl: 'Zapas części zużywalnych dostępny w razie potrzeby.',
+    en: 'Stock of wear parts available when needed.',
+    cs: 'Zásoba opotřebitelných dílů k dispozici dle potřeby.',
+    sk: 'Zásoba opotrebiteľných dielov k dispozícii podľa potreby.',
+    de: 'Vorrat an Verschleißteilen bei Bedarf verfügbar.'
+  },
+  trustSupport3Title: {
+    pl: 'Prezentacja na żywo',
+    en: 'Live presentation',
+    cs: 'Živá prezentace',
+    sk: 'Živá prezentácia',
+    de: 'Live-Präsentation'
+  },
+  trustSupport3Desc: {
+    pl: 'Umów wizytę i zobacz wózek przed zakupem.',
+    en: 'Book a visit and see the truck before buying.',
+    cs: 'Domluvte si návštěvu a prohlédněte si vozík před koupí.',
+    sk: 'Dohodnite si návštevu a pozrite si vozík pred kúpou.',
+    de: 'Vereinbaren Sie einen Besuch und sehen Sie den Stapler vor dem Kauf.'
+  },
+  trustCtaTitle: {
+    pl: 'Chcesz zobaczyć ten model na żywo?',
+    en: 'Want to see this model live?',
+    cs: 'Chcete vidět tento model naživo?',
+    sk: 'Chcete vidieť tento model naživo?',
+    de: 'Möchten Sie dieses Modell live sehen?'
+  },
+  trustCtaSubtitle: {
+    pl: 'Umów bezpłatną prezentację lub zapytaj o szczegóły — odpowiadamy tego samego dnia.',
+    en: 'Book a free presentation or ask for details — we reply the same day.',
+    cs: 'Domluvte si bezplatnou prezentaci nebo se zeptejte na detaily — odpovídáme týž den.',
+    sk: 'Dohodnite si bezplatnú prezentáciu alebo sa spýtajte na detaily — odpovedáme v ten istý deň.',
+    de: 'Buchen Sie eine kostenlose Präsentation oder fragen Sie nach Details — wir antworten am selben Tag.'
+  },
+  trustCtaPresentation: {
+    pl: 'Umów prezentację',
+    en: 'Book a presentation',
+    cs: 'Domluvit prezentaci',
+    sk: 'Dohodnúť prezentáciu',
+    de: 'Präsentation buchen'
+  },
+  trustCtaCall: {
+    pl: 'Zadzwoń',
+    en: 'Call',
+    cs: 'Zavolat',
+    sk: 'Zavolať',
+    de: 'Anrufen'
   }
 };
