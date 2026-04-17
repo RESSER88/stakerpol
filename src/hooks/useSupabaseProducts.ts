@@ -298,6 +298,9 @@ export const useSupabaseProducts = () => {
         }
       }
 
+      // Save benefits
+      await upsertBenefits(product.id, benefits || []);
+
       // Trigger automatic translation in background (only if DeepL enabled)
       const { FEATURES } = await import('@/config/featureFlags');
       if (FEATURES.DEEPL_ENABLED) {
@@ -392,10 +395,10 @@ export const useSupabaseProducts = () => {
     products,
     isLoading,
     error,
-    addProduct: (product: any, images: string[] = []) => 
-      addProductMutation.mutate({ product, images }),
-    updateProduct: (product: any, images: string[] = []) => 
-      updateProductMutation.mutate({ product, images }),
+    addProduct: (product: any, images: string[] = [], benefits: any[] = []) => 
+      addProductMutation.mutate({ product, images, benefits }),
+    updateProduct: (product: any, images: string[] = [], benefits: any[] = []) => 
+      updateProductMutation.mutate({ product, images, benefits }),
     deleteProduct: (productId: string) => 
       deleteProductMutation.mutate(productId),
     isAddingProduct: addProductMutation.isPending,
