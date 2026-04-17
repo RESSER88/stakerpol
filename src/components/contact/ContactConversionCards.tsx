@@ -92,18 +92,19 @@ const ContactConversionCards = () => {
 
         <div className="grid md:grid-cols-3 gap-4 items-stretch">
               {/* Card A */}
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col">
-                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-3">
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col items-center text-center">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-3 mx-auto">
                   <Phone className="text-red-600" size={22} />
                 </div>
-                <h3 className="font-bold text-base text-gray-900 mb-2">Nie wiesz, który model wybrać?</h3>
-                <p className="text-sm text-gray-600 mb-4 flex-1">
+                <h3 className="font-bold text-base text-gray-900 mb-2 text-center">Nie wiesz, który model wybrać?</h3>
+                <p className="text-sm text-gray-600 mb-4 flex-1 text-center">
                   Zadzwoń — w 10 minut powiemy Ci, który wózek sprawdzi się w Twoim magazynie.
                 </p>
                 <a
                   href="tel:+48694133592"
                   onClick={() => trackCTAClick('conversion_card_call')}
-                  className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-semibold min-h-[44px]"
+                  style={{ backgroundColor: '#F97316', color: '#ffffff' }}
+                  className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-semibold min-h-[44px] hover:opacity-90 transition-opacity shadow-sm"
                 >
                   <Phone size={16} />
                   Zadzwoń: 694 133 592
@@ -111,12 +112,12 @@ const ContactConversionCards = () => {
               </div>
 
               {/* Card B */}
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-3">
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col items-center text-center">
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-3 mx-auto">
                   <MessageSquare className="text-blue-600" size={22} />
                 </div>
-                <h3 className="font-bold text-base text-gray-900 mb-2">Dobierzemy wózek do Twojego magazynu</h3>
-                <p className="text-sm text-gray-600 mb-4 flex-1">
+                <h3 className="font-bold text-base text-gray-900 mb-2 text-center">Dobierzemy wózek do Twojego magazynu</h3>
+                <p className="text-sm text-gray-600 mb-4 flex-1 text-center">
                   Opisz swoje potrzeby — wysokość regałów, rodzaj nawierzchni, udźwig — przygotujemy propozycję.
                 </p>
                 <a
@@ -130,15 +131,17 @@ const ContactConversionCards = () => {
               </div>
 
               {/* Card C */}
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col">
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-3">
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col items-center text-center">
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-3 mx-auto">
                   <PhoneCall className="text-green-600" size={22} />
                 </div>
-                <h3 className="font-bold text-base text-gray-900 mb-2">Zostaw numer — oddzwonimy</h3>
-                <p className="text-sm text-gray-600 mb-4 flex-1">
+                <h3 className="font-bold text-base text-gray-900 mb-2 text-center">Zostaw numer — oddzwonimy</h3>
+                <p className="text-sm text-gray-600 mb-4 flex-1 text-center">
                   Wpisz numer, oddzwonimy w ciągu 2h w godzinach pracy.
                 </p>
-                <CallbackMiniForm />
+                <div className="w-full">
+                  <CallbackMiniForm />
+                </div>
               </div>
         </div>
       </div>
