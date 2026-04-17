@@ -47,10 +47,10 @@ const Products = () => {
     const displayProducts = filteredProducts.length > 0 ? filteredProducts : products;
 
     return (
-      <div className="product-grid-desktop">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
         {displayProducts.map((product, index) => (
           <div key={product.id} className="animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
-            <ProductCard product={product} />
+            <ProductCard product={product} priority={index < 3} />
           </div>
         ))}
       </div>
