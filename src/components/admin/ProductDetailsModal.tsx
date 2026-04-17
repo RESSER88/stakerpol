@@ -12,7 +12,10 @@ import {
 import { Product } from '@/types';
 import ProductImageManager from './ProductImageManager';
 import ProductForm from './ProductForm';
+import { BenefitDraft } from './BenefitsEditor';
 import { useProductFormValidation } from '@/hooks/useProductFormValidation';
+import { useProductBenefits } from '@/hooks/useProductBenefits';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProductDetailsModalProps {
   isOpen: boolean;
@@ -21,7 +24,7 @@ interface ProductDetailsModalProps {
   defaultNewProduct: Product;
   productImages: string[];
   onImagesChange: (images: string[]) => void;
-  onSave: (product: Product, images: string[]) => void;
+  onSave: (product: Product, images: string[], benefits: BenefitDraft[]) => void;
   products: Product[];
 }
 
@@ -36,13 +39,34 @@ const ProductDetailsModal = ({
   products
 }: ProductDetailsModalProps) => {
   const [editedProduct, setEditedProduct] = useState<Product>(defaultNewProduct);
+  const [benefits, setBenefits] = useState<BenefitDraft[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { validateProduct } = useProductFormValidation(products);
 
+  // Load existing benefits when editing existing product
+  useEffect(() => {
+    const load = async () => {
+      if (selectedProduct?.id && !selectedProduct.id.startsWith('new-') && !selectedProduct.model.includes('(kopia)')) {
+        const { data } = await supabase
+          .from('product_benefits' as any)
+          .select('*')
+          .eq('product_id', selectedProduct.id)
+          .order('sort_order', { ascending: true });
+        setBenefits(((data as any[]) || []).map((b: any) => ({
+          icon_name: b.icon_name,
+          title: b.title,
+          description: b.description || '',
+        })));
+      } else {
+        setBenefits([]);
+      }
+    };
+    if (isOpen) load();
+  }, [selectedProduct, isOpen]);
+
   useEffect(() => {
     if (selectedProduct) {
-      console.log('Setting edited product from selected:', selectedProduct);
       setEditedProduct({...selectedProduct});
     } else {
       const newProduct = {
@@ -51,12 +75,11 @@ const ProductDetailsModal = ({
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      console.log('Setting new product:', newProduct);
       setEditedProduct(newProduct);
     }
   }, [selectedProduct, defaultNewProduct]);
 
-  const updateField = (field: string, value: string | string[]) => {
+  const updateField = (field: string, value: any) => {
     setEditedProduct({...editedProduct, [field]: value});
   };
   
@@ -69,27 +92,17 @@ const ProductDetailsModal = ({
 
   const handleSave = async () => {
     if (isLoading) return;
-    
     setIsLoading(true);
-    
     try {
-      console.log('=== MODAL SAVE ===');
-      console.log('Selected product for validation:', selectedProduct);
-      console.log('Edited product:', editedProduct);
-      
-      // For validation, use the original product ID if editing existing
       const productIdForValidation = selectedProduct?.id && !selectedProduct.model.includes('(kopia)') 
         ? selectedProduct.id 
         : undefined;
-      
-      console.log('Using product ID for validation:', productIdForValidation);
       
       if (!validateProduct(editedProduct, productImages, productIdForValidation)) {
         setIsLoading(false);
         return;
       }
 
-      // Determine if this is editing existing vs new/copy
       const isEditingExisting = selectedProduct && 
         selectedProduct.id && 
         !selectedProduct.model.includes('(kopia)') &&
@@ -101,17 +114,13 @@ const ProductDetailsModal = ({
         updatedAt: new Date().toISOString()
       };
 
-      console.log('Final product to save:', productToSave);
-      console.log('Is editing existing in modal:', isEditingExisting);
-
-      onSave(productToSave, productImages);
+      onSave(productToSave, productImages, benefits.filter(b => b.title.trim()));
       
       toast({
         title: isEditingExisting ? "Zapisywanie zmian..." : "Dodawanie produktu...",
         description: `Przetwarzanie danych produktu ${editedProduct.model}`,
         duration: 3000
       });
-      
     } catch (error) {
       console.error('Error in modal handleSave:', error);
       toast({
@@ -153,6 +162,8 @@ const ProductDetailsModal = ({
             product={editedProduct}
             onFieldChange={updateField}
             onSpecsFieldChange={updateSpecsField}
+            benefits={benefits}
+            onBenefitsChange={setBenefits}
           />
         </div>
         
