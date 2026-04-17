@@ -7,39 +7,25 @@ interface Props {
 const formatPL = (n: number) => new Intl.NumberFormat('pl-PL').format(n);
 
 const ProductPriceBlock = ({ product }: Props) => {
-  const leasing = product.leasingMonthlyFromPln;
+  const leasing = (product as any).leasingMonthlyFromPln;
   const hasLeasing = leasing != null && Number(leasing) > 0;
 
   return (
-    <div
-      className="flex justify-between items-end"
-      style={{
-        background: '#FAF8F3',
-        border: '1px solid #E5E1D8',
-        borderRadius: 6,
-        padding: '12px 14px',
-      }}
-    >
+    <div className="flex justify-between items-end bg-surface-soft border border-border-line rounded-md px-3.5 py-3">
       <div>
-        <div
-          className="uppercase font-semibold"
-          style={{ fontSize: 10, color: '#5B5B5B', letterSpacing: '0.05em' }}
-        >
+        <div className="uppercase font-semibold text-[10px] text-ink-soft tracking-wider">
           Cena netto
         </div>
-        <div className="font-extrabold" style={{ fontSize: 16, color: '#1E3A8A' }}>
+        <div className="font-extrabold text-base text-navy-brand">
           Zapytaj o ofertę
         </div>
       </div>
       {hasLeasing && (
         <div className="text-right">
-          <div
-            className="uppercase font-semibold"
-            style={{ fontSize: 10, color: '#5B5B5B', letterSpacing: '0.05em' }}
-          >
+          <div className="uppercase font-semibold text-[10px] text-ink-soft tracking-wider">
             Leasing od
           </div>
-          <div className="font-extrabold font-mono" style={{ fontSize: 13, color: '#E85C1E' }}>
+          <div className="font-extrabold font-mono text-[13px] text-orange-cta">
             ~ {formatPL(Number(leasing))} zł/mies.
           </div>
         </div>

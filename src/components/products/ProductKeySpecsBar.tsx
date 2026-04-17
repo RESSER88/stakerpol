@@ -29,35 +29,15 @@ const ProductKeySpecsBar = ({ product }: Props) => {
   ];
 
   return (
-    <div
-      className="grid grid-cols-4 my-3 mx-1"
-      style={{
-        borderTop: '1px solid #E5E1D8',
-        borderBottom: '1px solid #E5E1D8',
-        padding: '14px 0',
-      }}
-    >
+    <div className="grid grid-cols-4 my-3 mx-1 py-3.5 border-y border-border-line">
       {cells.map((c, i) => (
         <div
           key={i}
-          className="flex flex-col items-center justify-center text-center"
-          style={{
-            borderRight: i < cells.length - 1 ? '1px solid #E5E1D8' : 'none',
-          }}
+          className={`flex flex-col items-center justify-center text-center ${i < cells.length - 1 ? 'border-r border-border-line' : ''}`}
         >
-          <c.Icon size={18} style={{ color: '#C8102E' }} />
-          <div
-            className="font-mono font-bold mt-1"
-            style={{ fontSize: 14, color: '#0E0E0E' }}
-          >
-            {c.value}
-          </div>
-          <div
-            className="uppercase font-semibold"
-            style={{ fontSize: 9, color: '#5B5B5B', letterSpacing: '0.05em' }}
-          >
-            {c.label}
-          </div>
+          <c.Icon size={18} className="text-red-accent" />
+          <div className="font-mono font-bold mt-1 text-sm text-ink">{c.value}</div>
+          <div className="uppercase font-semibold text-[9px] text-ink-soft tracking-wide">{c.label}</div>
         </div>
       ))}
     </div>

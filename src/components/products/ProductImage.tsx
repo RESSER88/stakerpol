@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import LazyImage from '@/components/ui/LazyImage';
+import ProductImageBadges from './ProductImageBadges';
 
 interface ProductImageProps {
   image: string;
   alt: string;
   images?: string[];
+  productionYear?: string | number;
+  availabilityStatus?: 'available' | 'reserved' | 'sold';
+  isFeatured?: boolean;
 }
 
-const ProductImage = ({ image, alt, images }: ProductImageProps) => {
+const ProductImage = ({ image, alt, images, productionYear, availabilityStatus, isFeatured }: ProductImageProps) => {
   // Use images array if provided, otherwise fallback to single image
   const allImages = images && images.length > 0 ? images : [image].filter(Boolean);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -82,6 +86,12 @@ const ProductImage = ({ image, alt, images }: ProductImageProps) => {
             alt={alt}
             aspectRatio="3:4"
             className="transition-transform duration-300 group-hover:scale-105"
+          />
+
+          <ProductImageBadges
+            productionYear={productionYear}
+            availabilityStatus={availabilityStatus}
+            isFeatured={isFeatured}
           />
           
           {/* Navigation arrows for multiple images */}

@@ -21,7 +21,7 @@ const renderIcon = (name: string) => {
     clock: Icons.Clock,
   };
   const C = map[safe] || Icons.Check;
-  return <C size={16} style={{ color: '#C8102E' }} className="shrink-0 mt-0.5" />;
+  return <C size={16} className="shrink-0 mt-0.5 text-red-accent" />;
 };
 
 const ProductAboutSection = ({ product }: Props) => {
@@ -35,13 +35,9 @@ const ProductAboutSection = ({ product }: Props) => {
     <section className="py-10 bg-white">
       <div className="container-custom max-w-3xl">
         <div className="flex items-baseline gap-2 mb-4">
-          <span className="font-mono font-bold" style={{ color: '#C8102E', fontSize: 13 }}>
-            01
-          </span>
-          <span style={{ color: '#5B5B5B' }}>·</span>
-          <h2 className="font-bold" style={{ fontSize: 18, color: '#0E0E0E' }}>
-            O tym modelu
-          </h2>
+          <span className="font-mono font-bold text-[13px] text-red-accent">01</span>
+          <span className="text-ink-soft">·</span>
+          <h2 className="font-bold text-lg text-ink">O tym modelu</h2>
         </div>
         {hasDescription && (
           <p className="text-base text-foreground/90 leading-relaxed mb-5">
@@ -53,13 +49,7 @@ const ProductAboutSection = ({ product }: Props) => {
             {benefits.slice(0, 3).map((b) => (
               <li
                 key={b.id}
-                className="flex items-start gap-3"
-                style={{
-                  background: '#FAF8F3',
-                  borderLeft: '3px solid #C8102E',
-                  borderRadius: 4,
-                  padding: '10px 12px',
-                }}
+                className="flex items-start gap-3 bg-surface-soft border-l-[3px] border-red-accent rounded px-3 py-2.5"
               >
                 {renderIcon(b.icon_name)}
                 <div>

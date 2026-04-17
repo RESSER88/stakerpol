@@ -13,28 +13,14 @@ const ProductTrustStrip = ({ warrantyMonths = 3 }: Props) => {
   ];
 
   return (
-    <div
-      className="grid grid-cols-4"
-      style={{
-        background: '#FAF8F3',
-        padding: 12,
-        borderTop: '1px solid #E5E1D8',
-        borderBottom: '1px solid #E5E1D8',
-      }}
-    >
+    <div className="grid grid-cols-4 bg-surface-soft p-3 border-y border-border-line">
       {items.map((it, i) => (
         <div
           key={i}
-          className="flex flex-col items-center justify-center text-center gap-1"
-          style={{
-            borderRight: i < items.length - 1 ? '1px solid #E5E1D8' : 'none',
-          }}
+          className={`flex flex-col items-center justify-center text-center gap-1 ${i < items.length - 1 ? 'border-r border-border-line' : ''}`}
         >
-          <it.Icon size={20} style={{ color: '#1E3A8A' }} />
-          <div
-            className="font-bold whitespace-pre-line leading-tight"
-            style={{ fontSize: 9.5, color: '#0E0E0E' }}
-          >
+          <it.Icon size={20} className="text-navy-brand" />
+          <div className="font-bold whitespace-pre-line leading-tight text-[9.5px] text-ink">
             {it.label}
           </div>
         </div>

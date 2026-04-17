@@ -14,19 +14,11 @@ const ProductStickyBar = ({ product }: Props) => {
 
   return (
     <>
-      <div
-        className="md:hidden sticky bottom-0 z-30 bg-white"
-        style={{
-          borderTop: '1px solid #E5E1D8',
-          boxShadow: '0 -4px 16px -8px rgba(0,0,0,0.15)',
-          padding: '10px 12px',
-        }}
-      >
+      <div className="md:hidden sticky bottom-0 z-30 bg-white border-t border-border-line shadow-[0_-4px_16px_-8px_rgba(0,0,0,0.15)] px-3 py-2.5">
         <div className="grid grid-cols-2 gap-2">
           <a
             href={`tel:${PHONE_TEL}`}
-            className="flex items-center justify-center gap-2 rounded-[4px] font-bold text-white"
-            style={{ background: '#E85C1E', padding: 12, fontSize: 13 }}
+            className="flex items-center justify-center gap-2 rounded-[4px] font-bold text-white bg-orange-cta py-3 text-[13px]"
           >
             <Phone size={14} />
             Zadzwoń
@@ -34,8 +26,7 @@ const ProductStickyBar = ({ product }: Props) => {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="flex items-center justify-center gap-2 rounded-[4px] font-bold text-white"
-            style={{ background: '#0E0E0E', padding: 12, fontSize: 13 }}
+            className="flex items-center justify-center gap-2 rounded-[4px] font-bold text-white bg-ink py-3 text-[13px]"
           >
             <Mail size={14} />
             Zapytaj

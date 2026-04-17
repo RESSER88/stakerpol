@@ -1,48 +1,33 @@
 interface Props {
-  productionYear?: string;
+  productionYear?: string | number;
   availabilityStatus?: 'available' | 'reserved' | 'sold';
+  isFeatured?: boolean;
 }
 
-const ProductImageBadges = ({ productionYear, availabilityStatus = 'available' }: Props) => {
-  const labelMap: Record<string, { text: string; color: string; dot: string; bg: string }> = {
-    available: { text: 'Dostępny od ręki', color: '#0E0E0E', dot: '#14A84A', bg: '#FFFFFF' },
-    reserved: { text: 'Zarezerwowany', color: '#8A5A00', dot: '#E0A700', bg: '#FFF7E0' },
-    sold: { text: 'Sprzedany', color: '#5B5B5B', dot: '#9CA3AF', bg: '#F3F4F6' },
-  };
+const ProductImageBadges = ({ productionYear, availabilityStatus = 'available', isFeatured }: Props) => {
+  const labelMap = {
+    available: { text: 'Dostępny od ręki', cls: 'bg-white text-ink', dotCls: 'bg-green-available', pill: true },
+    reserved: { text: 'Zarezerwowany', cls: 'bg-amber-soft text-amber-soft-foreground', dotCls: 'bg-amber-soft-foreground', pill: true },
+    sold: { text: 'Sprzedany', cls: 'bg-muted text-muted-foreground', dotCls: 'bg-muted-foreground', pill: true },
+  } as const;
   const status = labelMap[availabilityStatus] || labelMap.available;
 
   return (
     <>
       {productionYear && (
-        <div
-          className="absolute top-3 left-3 z-20 font-mono font-bold"
-          style={{
-            background: '#0E0E0E',
-            color: '#fff',
-            fontSize: 10.5,
-            padding: '5px 10px',
-            borderRadius: 3,
-          }}
-        >
+        <div className="absolute top-3 left-3 z-20 font-mono font-bold bg-ink text-white text-[10.5px] px-2.5 py-[5px] rounded-[3px] tracking-wider">
           ROK {productionYear}
         </div>
       )}
-      <div
-        className="absolute top-3 right-3 z-20 inline-flex items-center gap-1.5 font-bold"
-        style={{
-          background: status.bg,
-          color: status.color,
-          fontSize: 10.5,
-          padding: '5px 10px',
-          borderRadius: 99,
-        }}
-      >
-        <span
-          className="inline-block rounded-full"
-          style={{ width: 6, height: 6, background: status.dot }}
-        />
+      <div className={`absolute top-3 right-3 z-20 inline-flex items-center gap-1.5 font-bold text-[10.5px] px-2.5 py-[5px] rounded-full shadow-sm ${status.cls}`}>
+        <span className={`inline-block rounded-full w-1.5 h-1.5 ${status.dotCls}`} />
         {status.text}
       </div>
+      {isFeatured && (
+        <div className="absolute top-12 right-3 z-20 inline-flex items-center gap-1 font-bold text-[10.5px] px-2.5 py-[5px] rounded-[3px] bg-red-accent text-white">
+          ★ Polecany
+        </div>
+      )}
     </>
   );
 };
