@@ -107,9 +107,24 @@ export const useSupabaseProducts = () => {
     };
   }, [queryClient]);
 
+  const upsertBenefits = async (productId: string, benefits: any[] = []) => {
+    if (!productId) return;
+    await supabase.from('product_benefits' as any).delete().eq('product_id', productId);
+    if (!benefits.length) return;
+    const inserts = benefits.slice(0, 3).map((b: any, idx: number) => ({
+      product_id: productId,
+      icon_name: b.icon_name || 'check',
+      title: b.title,
+      description: b.description || null,
+      sort_order: idx,
+    }));
+    const { error } = await supabase.from('product_benefits' as any).insert(inserts);
+    if (error) console.error('Error saving benefits:', error);
+  };
+
   // Enhanced add product mutation
   const addProductMutation = useMutation({
-    mutationFn: async ({ product, images }: { product: any; images: string[] }) => {
+    mutationFn: async ({ product, images, benefits }: { product: any; images: string[]; benefits?: any[] }) => {
       console.log('=== ADDING PRODUCT TO DATABASE ===');
       console.log('Product data:', product);
       console.log('Images:', images);
@@ -220,7 +235,7 @@ export const useSupabaseProducts = () => {
 
   // Enhanced update product mutation
   const updateProductMutation = useMutation({
-    mutationFn: async ({ product, images }: { product: any; images: string[] }) => {
+    mutationFn: async ({ product, images, benefits }: { product: any; images: string[]; benefits?: any[] }) => {
       console.log('=== UPDATING PRODUCT IN DATABASE ===');
       console.log('Product ID:', product.id);
       console.log('Product data:', product);
