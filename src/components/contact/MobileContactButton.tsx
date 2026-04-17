@@ -6,7 +6,7 @@ import { trackCTAClick } from '@/utils/analytics';
 const MobileContactButton = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
-  const { formData, errors, status, updateField, submit, reset } = useContactForm();
+  const { formData, errors, status, honeypot, setHoneypot, consent, updateConsent, updateField, submit, reset } = useContactForm();
 
   const openSheet = () => {
     setIsSheetOpen(true);
@@ -110,6 +110,39 @@ const MobileContactButton = () => {
                   <div>
                     <textarea placeholder="Treść zapytania" rows={4} value={formData.message} onChange={e => updateField('message', e.target.value)} className={inputCls(errors.message) + ' resize-none'} />
                     {errors.message && <p className="text-xs text-red-500 mt-1">{errors.message}</p>}
+                  </div>
+                  {/* Honeypot */}
+                  <input
+                    type="text"
+                    name="website"
+                    value={honeypot}
+                    onChange={e => setHoneypot(e.target.value)}
+                    style={{ display: 'none', position: 'absolute', left: '-9999px' }}
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                  />
+                  {/* GDPR consent */}
+                  <div>
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={consent}
+                        onChange={e => updateConsent(e.target.checked)}
+                        className="mt-0.5 w-4 h-4 accent-[hsl(25,100%,50%)] cursor-pointer"
+                      />
+                      <span className="text-[13px] text-gray-700 leading-snug">
+                        Akceptuję{' '}
+                        <a href="/polityka-prywatnosci" target="_blank" rel="noopener noreferrer" className="text-[hsl(25,100%,50%)] underline">
+                          politykę prywatności
+                        </a>
+                        {' *'}
+                      </span>
+                    </label>
+                    <p className="text-[11px] text-gray-500 mt-1 ml-6 leading-snug">
+                      Używamy Twoich danych tylko do odpowiedzi na zapytanie. Dane będą usunięte po 30 dniach.
+                    </p>
+                    {errors.consent && <p className="text-xs text-red-500 mt-1 ml-6">{errors.consent}</p>}
                   </div>
                   <button
                     type="submit"
