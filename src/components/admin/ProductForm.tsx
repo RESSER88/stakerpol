@@ -119,13 +119,114 @@ const ProductForm = ({ product, onFieldChange, onSpecsFieldChange, benefits = []
         </div>
       </div>
       
-      <Tabs defaultValue="main" className="space-y-4">
-        <TabsList className={`grid w-full ${FEATURES.PRODUCT_FAQ ? 'grid-cols-3' : 'grid-cols-2'}`}>
+      <Tabs defaultValue="hero" className="space-y-4">
+        <TabsList className={`grid w-full ${FEATURES.PRODUCT_FAQ ? 'grid-cols-4' : 'grid-cols-3'}`}>
+          <TabsTrigger value="hero"><Sparkles className="h-4 w-4 mr-1" />Hero/CTA</TabsTrigger>
           <TabsTrigger value="main">Sekcja główna</TabsTrigger>
           <TabsTrigger value="extended">Sekcja rozwijana</TabsTrigger>
           {FEATURES.PRODUCT_FAQ && <TabsTrigger value="faq"><HelpCircle className="h-4 w-4 mr-1" />FAQ</TabsTrigger>}
         </TabsList>
-        
+
+        <TabsContent value="hero" className="space-y-6">
+          <div className="space-y-3">
+            <h3 className="font-semibold text-base sm:text-lg text-stakerpol-navy">Status i dostępność</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Status dostępności</label>
+                <select
+                  value={(product as any).availabilityStatus || 'available'}
+                  onChange={(e) => onFieldChange('availabilityStatus', e.target.value)}
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="available">Dostępny od ręki</option>
+                  <option value="reserved">Zarezerwowany</option>
+                  <option value="sold">Sprzedany</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Etykieta stanu</label>
+                <select
+                  value={(product as any).conditionLabel || ''}
+                  onChange={(e) => onFieldChange('conditionLabel', e.target.value)}
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">— wybierz —</option>
+                  <option value="Bardzo dobry stan">Bardzo dobry stan</option>
+                  <option value="Dobry stan">Dobry stan</option>
+                  <option value="Po serwisie">Po serwisie</option>
+                  <option value="Jak nowy">Jak nowy</option>
+                </select>
+              </div>
+              <div className="sm:col-span-2 flex items-center gap-2">
+                <Checkbox
+                  id="is_featured"
+                  checked={!!(product as any).isFeatured}
+                  onCheckedChange={(c) => onFieldChange('isFeatured', !!c)}
+                />
+                <label htmlFor="is_featured" className="text-sm font-medium cursor-pointer">
+                  Wyróżnij jako polecany (badge „★ Polecany")
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="font-semibold text-base sm:text-lg text-stakerpol-navy">Opis marketingowy</h3>
+            <div>
+              <label className="block text-sm font-medium mb-1">Krótki opis modelu (widoczny pod tytułem)</label>
+              <Textarea
+                value={(product as any).shortMarketingDescription || ''}
+                onChange={(e) => onFieldChange('shortMarketingDescription', e.target.value)}
+                placeholder="2-3 zdania, dlaczego ten model warto wybrać"
+                rows={4}
+                maxLength={600}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Slogan / podtytuł</label>
+              <Input
+                value={(product as any).slogan || ''}
+                onChange={(e) => onFieldChange('slogan', e.target.value)}
+                placeholder="np. Jak nowy · Wbudowany prostownik"
+                maxLength={120}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="font-semibold text-base sm:text-lg text-stakerpol-navy">Zalety produktu (max 3)</h3>
+            <BenefitsEditor benefits={benefits} onChange={(b) => onBenefitsChange?.(b)} />
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="font-semibold text-base sm:text-lg text-stakerpol-navy">Cena i leasing</h3>
+            <div>
+              <label className="block text-sm font-medium mb-1">Rata leasingowa od (zł/mies.)</label>
+              <Input
+                type="number"
+                inputMode="numeric"
+                value={(product as any).leasingMonthlyFromPln ?? ''}
+                onChange={(e) => onFieldChange('leasingMonthlyFromPln', e.target.value === '' ? null : Number(e.target.value))}
+                placeholder="np. 450 (puste = blok leasingu ukryty)"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="font-semibold text-base sm:text-lg text-stakerpol-navy">Gwarancja</h3>
+            <div>
+              <label className="block text-sm font-medium mb-1">Gwarancja (miesiące)</label>
+              <Input
+                type="number"
+                inputMode="numeric"
+                value={(product as any).warrantyMonths ?? 3}
+                onChange={(e) => onFieldChange('warrantyMonths', e.target.value === '' ? 3 : Number(e.target.value))}
+                placeholder="3"
+              />
+            </div>
+          </div>
+        </TabsContent>
+
         <TabsContent value="main" className="space-y-4">
           <h3 className="font-semibold text-base sm:text-lg text-stakerpol-navy">Sekcja główna (zawsze widoczna)</h3>
           
