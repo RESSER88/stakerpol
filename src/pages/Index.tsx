@@ -19,6 +19,8 @@ import FAQSection from '@/components/ui/FAQSection';
 import FAQSchema from '@/components/seo/FAQSchema';
 import HeroContactForm from '@/components/contact/HeroContactForm';
 import ContactConversionCards from '@/components/contact/ContactConversionCards';
+import HomeHelpHero from '@/components/home/HomeHelpHero';
+import HomeStatsBar from '@/components/home/HomeStatsBar';
 
 const Index = () => {
   const { language } = useLanguage();
@@ -147,6 +149,9 @@ const Index = () => {
       </section>
 
       <ContactConversionCards formHref="/contact#form" />
+
+      <HomeHelpHero />
+      <HomeStatsBar />
 
       {/* About Section */}
       <section className="section-padding bg-white">
