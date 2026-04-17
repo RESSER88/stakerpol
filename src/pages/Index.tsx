@@ -108,7 +108,7 @@ const Index = () => {
         }}
       >
         <div className="container-custom py-16 md:py-24">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6 md:pr-8 animate-fade-in">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                 {t('heroTitle')}
@@ -137,6 +137,9 @@ const Index = () => {
                   </Link>
                 </Button>
               </div>
+            </div>
+            <div className="hidden lg:block animate-fade-in">
+              <HeroContactForm />
             </div>
           </div>
         </div>
