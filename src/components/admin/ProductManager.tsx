@@ -24,8 +24,8 @@ interface ProductManagerProps {
   handleAdd: () => void;
   handleCopy: (product: Product) => void;
   handleDelete: (product: Product) => void;
-  addProduct: (product: Product, images: string[]) => void;
-  updateProduct: (product: Product, images: string[]) => void;
+  addProduct: (product: Product, images: string[], benefits?: any[]) => void;
+  updateProduct: (product: Product, images: string[], benefits?: any[]) => void;
 }
 
 const ProductManager = ({
@@ -130,25 +130,16 @@ const ProductManager = ({
     setIsExportModalOpen(true);
   };
 
-  const handleSave = (product: Product, images: string[]) => {
-    console.log('=== PRODUCT MANAGER SAVE ===');
-    console.log('Selected product for save decision:', selectedProduct);
-    console.log('Product to save:', product);
-    
-    // Check if this is editing an existing product vs adding new/copy
+  const handleSave = (product: Product, images: string[], benefits: any[] = []) => {
     const isEditingExisting = selectedProduct && 
       selectedProduct.id && 
       !selectedProduct.model.includes('(kopia)') &&
       products.some(p => p.id === selectedProduct.id);
     
-    console.log('Is editing existing in ProductManager:', isEditingExisting);
-    
     if (isEditingExisting) {
-      console.log('Calling updateProduct with ID:', product.id);
-      updateProduct(product, images);
+      updateProduct(product, images, benefits);
     } else {
-      console.log('Calling addProduct for new/copied product');
-      addProduct(product, images);
+      addProduct(product, images, benefits);
     }
     
     setIsEditDialogOpen(false);
