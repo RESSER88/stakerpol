@@ -150,18 +150,33 @@ const Index = () => {
 
       <ContactConversionCards formHref="/contact#form" />
 
-      <HomeHelpHero />
-      <HomeStatsBar />
-
       {/* About Section */}
       <section className="section-padding bg-white">
         <div className="container-custom">
           <h2 className="section-title text-center">{t('aboutUsTitle')}</h2>
-          <p className="section-subtitle text-center max-w-3xl mx-auto">
-            {t('aboutUsDescription')}
+          <p className="text-center text-lg md:text-xl font-medium text-stakerpol-navy max-w-3xl mx-auto mb-8">
+            {t('aboutUsSubtitle' as any)}
           </p>
+          <div className="max-w-3xl mx-auto space-y-4 text-gray-700">
+            <p>{t('aboutUsIntro1' as any)}</p>
+            <p>{t('aboutUsIntro2' as any)}</p>
+            <h3 className="text-xl font-semibold text-stakerpol-navy pt-2">
+              {t('aboutUsBenefitsTitle' as any)}
+            </h3>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>{t('aboutUsBenefit1' as any)}</li>
+              <li>{t('aboutUsBenefit2' as any)}</li>
+              <li>{t('aboutUsBenefit3' as any)}</li>
+              <li>{t('aboutUsBenefit4' as any)}</li>
+            </ul>
+            <p className="pt-2 font-medium">{t('aboutUsClosing' as any)}</p>
+          </div>
         </div>
       </section>
+
+      <HomeHelpHero />
+      <HomeStatsBar />
+
 
       {/* Why Choose Us Section */}
       <WhyChooseUs />
