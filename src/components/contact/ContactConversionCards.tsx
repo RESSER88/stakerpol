@@ -77,7 +77,11 @@ const CallbackMiniForm = () => {
   );
 };
 
-const ContactConversionCards = () => {
+interface ContactConversionCardsProps {
+  formHref?: string;
+}
+
+const ContactConversionCards = ({ formHref = '#form' }: ContactConversionCardsProps) => {
   return (
     <section className="bg-gray-50 py-8 border-t border-gray-200">
       <div className="container-custom">
@@ -121,7 +125,7 @@ const ContactConversionCards = () => {
                   Opisz swoje potrzeby — wysokość regałów, rodzaj nawierzchni, udźwig — przygotujemy propozycję.
                 </p>
                 <a
-                  href="#form"
+                  href={formHref}
                   onClick={() => trackCTAClick('conversion_card_form')}
                   className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border-2 border-stakerpol-orange text-stakerpol-orange hover:bg-stakerpol-orange hover:text-white text-sm font-semibold transition-colors min-h-[44px]"
                 >
