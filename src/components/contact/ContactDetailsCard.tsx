@@ -8,14 +8,26 @@ const ContactDetailsCard = () => {
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-full bg-stakerpol-orange/10 flex items-center justify-center flex-shrink-0">
-            <Phone className="text-stakerpol-orange" size={18} />
+        {/* Phone + person */}
+        <div className="grid grid-cols-[1fr_auto] items-center gap-3">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-full bg-stakerpol-orange/10 flex items-center justify-center flex-shrink-0">
+              <Phone className="text-stakerpol-orange" size={18} />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Telefon</div>
+              <a href="tel:+48694133592" className="text-stakerpol-orange font-bold text-lg hover:underline">694 133 592</a>
+              <div className="text-xs text-gray-500 mt-0.5">pon–pt 8:00–17:00</div>
+            </div>
           </div>
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Telefon</div>
-            <a href="tel:+48694133592" className="text-stakerpol-orange font-bold text-lg hover:underline">694 133 592</a>
-            <div className="text-xs text-gray-500 mt-0.5">pon–pt 8:00–17:00</div>
+          <div className="flex items-center gap-2 pl-2 border-l border-gray-200">
+            <div className="w-10 h-10 rounded-full bg-stakerpol-orange text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+              MS
+            </div>
+            <div className="min-w-0 hidden sm:block">
+              <div className="font-semibold text-gray-800 leading-tight text-sm">Michał Seweryn</div>
+              <div className="text-[11px] text-gray-500 leading-tight mt-0.5">Właściciel · Doradca techniczny</div>
+            </div>
           </div>
         </div>
 
@@ -62,23 +74,6 @@ const ContactDetailsCard = () => {
             <div>NIP: PL6492111954</div>
           </div>
         </div>
-      </div>
-
-      {/* Person card */}
-      <div className="mt-5 pt-4 border-t border-gray-200 flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-stakerpol-orange text-white flex items-center justify-center font-bold text-base flex-shrink-0">
-          MS
-        </div>
-        <div className="min-w-0">
-          <div className="font-semibold text-gray-800 leading-tight">Michał Seweryn</div>
-          <div className="text-xs text-gray-500 leading-tight mt-0.5">Właściciel · Doradca techniczny</div>
-        </div>
-      </div>
-
-      {/* Badge */}
-      <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-medium">
-        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-        Odpowiadamy tego samego dnia roboczego
       </div>
     </div>
   );
