@@ -9,13 +9,13 @@ const ContactTopInfoBar = () => {
             <Phone size={14} />
             <span className="hidden sm:inline">694 133 592</span>
           </a>
-          <a href="mailto:info@stakerpol.pl" className="flex items-center gap-1.5 hover:text-stakerpol-orange transition-colors">
+          <a href="mailto:info@stakerpol.pl" className="hidden sm:flex items-center gap-1.5 hover:text-stakerpol-orange transition-colors">
             <Mail size={14} />
-            <span className="hidden sm:inline">info@stakerpol.pl</span>
+            <span>info@stakerpol.pl</span>
           </a>
-          <a href="https://wa.me/48694133592" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-green-400 transition-colors">
+          <a href="https://wa.me/48694133592" target="_blank" rel="noopener noreferrer" className="hidden sm:flex items-center gap-1.5 hover:text-green-400 transition-colors">
             <MessageCircle size={14} />
-            <span className="hidden sm:inline">WhatsApp</span>
+            <span>WhatsApp</span>
           </a>
         </div>
         <div className="hidden md:block text-white/80">

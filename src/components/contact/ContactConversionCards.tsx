@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Phone, MessageSquare, PhoneCall, ArrowRight, ChevronDown } from 'lucide-react';
+import { Phone, MessageSquare, PhoneCall, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { trackCTAClick, trackFormSubmit } from '@/utils/analytics';
 
@@ -76,31 +76,19 @@ const CallbackMiniForm = () => {
 };
 
 const ContactConversionCards = () => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
   return (
     <section className="bg-gray-50 py-8 border-t border-gray-200">
       <div className="container-custom">
-        {!isExpanded ? (
-          <button
-            onClick={() => setIsExpanded(true)}
-            className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl border-2 border-stakerpol-orange text-stakerpol-orange hover:bg-stakerpol-orange hover:text-white font-semibold text-sm transition-colors"
-          >
-            Nie wiesz, który model wybrać? Rozwiń
-            <ChevronDown size={18} />
-          </button>
-        ) : (
-          <>
-            <div className="text-center mb-6">
-              <div className="text-xs font-semibold uppercase tracking-wider text-stakerpol-orange mb-1">
-                Dla niezdecydowanych
-              </div>
-              <h2 className="text-xl md:text-2xl font-bold text-stakerpol-navy">
-                Nie wiesz od czego zacząć? Pomożemy.
-              </h2>
-            </div>
+        <div className="text-center mb-6">
+          <h2 className="text-xl md:text-2xl font-bold text-stakerpol-navy">
+            Nie wiesz od czego zacząć? Pomożemy.
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Dobieramy wózek do konkretnych warunków magazynu — bez zobowiązań.
+          </p>
+        </div>
 
-            <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-3 gap-4 items-stretch">
               {/* Card A */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col">
                 <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-3">

@@ -15,6 +15,7 @@ const ContactDetailsCard = () => {
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Telefon</div>
             <a href="tel:+48694133592" className="text-stakerpol-orange font-bold text-lg hover:underline">694 133 592</a>
+            <div className="text-xs text-gray-500 mt-0.5">pon–pt 8:00–17:00</div>
           </div>
         </div>
 
