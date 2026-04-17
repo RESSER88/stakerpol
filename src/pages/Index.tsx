@@ -17,6 +17,7 @@ import { Loader2 } from 'lucide-react';
 import { getMetaTitle } from '@/config/featureFlags';
 import FAQSection from '@/components/ui/FAQSection';
 import FAQSchema from '@/components/seo/FAQSchema';
+import HeroContactForm from '@/components/contact/HeroContactForm';
 
 const Index = () => {
   const { language } = useLanguage();
