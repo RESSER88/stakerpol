@@ -1,0 +1,76 @@
+import { Phone, Mail, MessageCircle, Clock, MapPin } from 'lucide-react';
+
+const ContactDetailsCard = () => {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 md:p-8">
+      <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-5">
+        Dane kontaktowe
+      </div>
+
+      <div className="space-y-5">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full bg-stakerpol-orange/10 flex items-center justify-center flex-shrink-0">
+            <Phone className="text-stakerpol-orange" size={18} />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Telefon</div>
+            <a href="tel:+48694133592" className="text-stakerpol-orange font-semibold hover:underline">694 133 592</a>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full bg-stakerpol-orange/10 flex items-center justify-center flex-shrink-0">
+            <Mail className="text-stakerpol-orange" size={18} />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">E-mail</div>
+            <a href="mailto:info@stakerpol.pl" className="text-stakerpol-orange font-semibold hover:underline break-all">info@stakerpol.pl</a>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+            <MessageCircle className="text-green-600" size={18} />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">WhatsApp</div>
+            <a href="https://wa.me/48694133592" target="_blank" rel="noopener noreferrer" className="text-green-600 font-semibold hover:underline">694 133 592</a>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full bg-stakerpol-orange/10 flex items-center justify-center flex-shrink-0">
+            <Clock className="text-stakerpol-orange" size={18} />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Godziny pracy</div>
+            <div className="font-semibold text-gray-800">Pon–Pt, 8:00–17:00</div>
+            <div className="text-sm text-gray-500 flex items-start gap-1 mt-1">
+              <MapPin size={14} className="mt-0.5 flex-shrink-0" />
+              <span>ul. Szewska 6, 32-043 Skała</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Person */}
+      <div className="mt-6 pt-6 border-t border-gray-100 flex items-center gap-3">
+        <div className="w-12 h-12 rounded-full bg-stakerpol-orange text-white flex items-center justify-center font-bold text-lg flex-shrink-0">
+          MS
+        </div>
+        <div>
+          <div className="font-semibold text-gray-800">Michał Seweryn</div>
+          <div className="text-sm text-gray-500">Właściciel · Doradca techniczny</div>
+        </div>
+      </div>
+
+      {/* Badge */}
+      <div className="mt-5 inline-flex items-center gap-2 px-3 py-2 rounded-full bg-green-50 border border-green-200 text-green-700 text-sm font-medium">
+        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+        Odpowiadamy tego samego dnia roboczego
+      </div>
+    </div>
+  );
+};
+
+export default ContactDetailsCard;
