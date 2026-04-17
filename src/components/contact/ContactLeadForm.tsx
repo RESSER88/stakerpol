@@ -90,7 +90,8 @@ const ContactLeadForm = () => {
 
   return (
     <div id="form" className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-      <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">Zostaw zapytanie</h2>
+      <h2 className="text-xl md:text-2xl font-bold text-gray-900">Zostaw zapytanie</h2>
+      <p className="text-sm text-gray-600 mt-1 mb-4">Oddzwonimy lub odpiszemy w ciągu kilku godzin. Bezpłatne doradztwo.</p>
 
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="grid sm:grid-cols-2 gap-3">

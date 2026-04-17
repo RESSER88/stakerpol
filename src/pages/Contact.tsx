@@ -3,6 +3,7 @@ import { MapPin } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import ContactTopInfoBar from '@/components/contact/ContactTopInfoBar';
 import ContactCompactHero from '@/components/contact/ContactCompactHero';
+import ContactStatsBar from '@/components/contact/ContactStatsBar';
 import ContactDetailsCard from '@/components/contact/ContactDetailsCard';
 import ContactLeadForm from '@/components/contact/ContactLeadForm';
 import ContactConversionCards from '@/components/contact/ContactConversionCards';
@@ -22,17 +23,14 @@ const Contact = () => {
 
       <ContactTopInfoBar />
       <ContactCompactHero />
+      <ContactStatsBar />
 
       {/* Two-column: details + form */}
       <section className="bg-gray-50 py-8">
         <div className="container-custom">
-          <div className="grid lg:grid-cols-5 gap-6">
-            <div className="lg:col-span-2">
-              <ContactDetailsCard />
-            </div>
-            <div className="lg:col-span-3">
-              <ContactLeadForm />
-            </div>
+          <div className="grid lg:grid-cols-[1fr_1.55fr] gap-6 items-start">
+            <ContactDetailsCard />
+            <ContactLeadForm />
           </div>
         </div>
       </section>
@@ -50,7 +48,7 @@ const Contact = () => {
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d2610899.6512577063!2d19.995502000000002!3d50.278735!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x471655f810639623%3A0xc3bcd72bdd0d6aa!2sStakerpol%20Paleciak%20elektryczny%20Bt%20Swe%20200d!5e0!3m2!1spl!2sus!4v1749466251552!5m2!1spl!2sus"
               width="100%"
-              height="320"
+              height="240"
               style={{ border: 0 }}
               allowFullScreen
               loading="lazy"
