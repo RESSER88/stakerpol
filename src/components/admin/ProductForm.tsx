@@ -4,23 +4,26 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, HelpCircle } from 'lucide-react';
+import { AlertCircle, HelpCircle, Sparkles } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Product } from '@/types';
 import { useSupabaseFAQ, FAQ } from '@/hooks/useSupabaseFAQ';
 import { FEATURES } from '@/config/featureFlags';
+import BenefitsEditor, { BenefitDraft } from './BenefitsEditor';
 
 interface ProductFormProps {
   product: Product;
-  onFieldChange: (field: string, value: string | string[]) => void;
+  onFieldChange: (field: string, value: any) => void;
   onSpecsFieldChange: (field: string, value: string) => void;
+  benefits?: BenefitDraft[];
+  onBenefitsChange?: (next: BenefitDraft[]) => void;
 }
 
 interface ValidationErrors {
   [key: string]: string;
 }
 
-const ProductForm = ({ product, onFieldChange, onSpecsFieldChange }: ProductFormProps) => {
+const ProductForm = ({ product, onFieldChange, onSpecsFieldChange, benefits = [], onBenefitsChange }: ProductFormProps) => {
   const [errors, setErrors] = useState<ValidationErrors>({});
   const { faqs } = useSupabaseFAQ();
   const [faqLang, setFaqLang] = useState('pl');
