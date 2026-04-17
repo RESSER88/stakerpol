@@ -20,6 +20,7 @@ import FAQSection from '@/components/ui/FAQSection';
 import FAQSchema from '@/components/seo/FAQSchema';
 import { FEATURES } from '@/config/featureFlags';
 import { useSupabaseFAQ } from '@/hooks/useSupabaseFAQ';
+import ProductTrustSection from '@/components/products/ProductTrustSection';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
