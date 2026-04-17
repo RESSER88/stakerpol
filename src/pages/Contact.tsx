@@ -1,144 +1,71 @@
-
 import Layout from '@/components/layout/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, Phone, Mail, Clock, Building } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useTranslation } from '@/utils/translations';
+import { MapPin } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+import ContactTopInfoBar from '@/components/contact/ContactTopInfoBar';
+import ContactHero from '@/components/contact/ContactHero';
+import ContactStatsBar from '@/components/contact/ContactStatsBar';
+import ContactDetailsCard from '@/components/contact/ContactDetailsCard';
+import ContactLeadForm from '@/components/contact/ContactLeadForm';
+import ContactConversionCards from '@/components/contact/ContactConversionCards';
+import ContactMobileStickyBar from '@/components/contact/ContactMobileStickyBar';
 
 const Contact = () => {
-  const { language } = useLanguage();
-  const t = useTranslation(language);
-
   return (
     <Layout>
       <Helmet>
         <title>Kontakt – Stakerpol | Wózki widłowe BT Toyota</title>
-        <meta name="description" content="Skontaktuj się ze Stakerpol: wózki widłowe BT Toyota, serwis i części. Godziny: Pon-Pt 8:00–17:00. Adres: ul. Międzyleśna 115, 32-095 Celiny." />
+        <meta name="description" content="Skontaktuj się ze Stakerpol: wózki widłowe BT Toyota, serwis i części. Godziny: Pon-Pt 8:00–17:00. Adres: ul. Szewska 6, 32-043 Skała." />
         <link rel="canonical" href="https://stakerpol.pl/contact" />
         <meta property="og:title" content="Kontakt – Stakerpol" />
-        <meta property="og:description" content="Wózki widłowe BT Toyota – kontakt, adres i godziny otwarcia. Celiny, ul. Międzyleśna 115." />
+        <meta property="og:description" content="Wózki widłowe BT Toyota – kontakt, doradztwo, serwis. Odpowiadamy tego samego dnia." />
         <meta property="og:type" content="website" />
       </Helmet>
-      <section className="bg-white py-12">
+
+      <ContactTopInfoBar />
+      <ContactHero />
+      <ContactStatsBar />
+
+      {/* Two-column: details + form */}
+      <section className="bg-gray-50 py-16">
         <div className="container-custom">
-          <div className="text-center mb-12">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 text-stakerpol-navy">
-              {t('contact')}
-            </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              {t('contactUs')}
-            </p>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Contact Information */}
-            <div className="space-y-6">
-              {/* Main Contact */}
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-5 w-5" />
-                    {t('contact')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <Phone className="h-5 w-5 text-stakerpol-orange" />
-                    <div>
-                      <p className="font-semibold">+48 694 133 592</p>
-                      <p className="text-sm text-gray-600">Michał Seweryn</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-5 w-5 text-stakerpol-orange" />
-                    <div>
-                      <p className="font-semibold">info@stakerpol.pl</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <Clock className="h-5 w-5 text-stakerpol-orange mt-1" />
-                    <div>
-                      <p className="font-semibold">{t('businessHours')}</p>
-                      <p className="text-sm text-gray-600">{t('mondayToFriday')}</p>
-                      <p className="text-sm text-gray-600">{t('weekend')}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Warehouse Address */}
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Building className="h-5 w-5" />
-                    {t('warehouseAddress')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-start gap-3">
-                    <MapPin className="h-5 w-5 text-stakerpol-orange mt-1" />
-                    <div>
-                      <p className="font-semibold">ul. Międzyleśna 115</p>
-                      <p className="text-sm text-gray-600">32-095 Celiny</p>
-                      <p className="text-sm text-gray-600 mt-2">{t('warehouseHours')}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Billing Address */}
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Building className="h-5 w-5" />
-                    {t('billingAddress')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-start gap-3">
-                    <MapPin className="h-5 w-5 text-stakerpol-orange mt-1" />
-                    <div>
-                      <p className="font-semibold">FHU Stakerpol</p>
-                      <p className="font-semibold">Michał Seweryn</p>
-                      <p className="text-sm text-gray-600">32-043 Skała</p>
-                      <p className="text-sm text-gray-600">ul. Szewska 6</p>
-                      <p className="text-sm text-gray-600 mt-2">NIP: PL6492111954</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+          <div className="grid lg:grid-cols-5 gap-8">
+            <div className="lg:col-span-2">
+              <ContactDetailsCard />
             </div>
-
-            {/* Map */}
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  {t('ourLocation')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="relative w-full h-[600px] rounded-b-lg overflow-hidden">
-                  <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d2610899.6512577063!2d19.995502000000002!3d50.278735!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x471655f810639623%3A0xc3bcd72bdd0d6aa!2sStakerpol%20Paleciak%20elektryczny%20Bt%20Swe%20200d!5e0!3m2!1spl!2sus!4v1749466251552!5m2!1spl!2sus"
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title={t('ourLocation')}
-                    className="rounded-b-lg"
-                  ></iframe>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="lg:col-span-3">
+              <ContactLeadForm />
+            </div>
           </div>
         </div>
       </section>
+
+      <ContactConversionCards />
+
+      {/* Map */}
+      <section className="bg-white py-12">
+        <div className="container-custom">
+          <div className="flex items-center gap-2 mb-4">
+            <MapPin className="text-stakerpol-orange" size={20} />
+            <h2 className="text-xl font-bold text-stakerpol-navy">Nasza lokalizacja</h2>
+          </div>
+          <div className="rounded-xl overflow-hidden shadow-sm border border-gray-200">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d2610899.6512577063!2d19.995502000000002!3d50.278735!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x471655f810639623%3A0xc3bcd72bdd0d6aa!2sStakerpol%20Paleciak%20elektryczny%20Bt%20Swe%20200d!5e0!3m2!1spl!2sus!4v1749466251552!5m2!1spl!2sus"
+              width="100%"
+              height="320"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Lokalizacja Stakerpol"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Mobile sticky bar at very bottom + spacing for it */}
+      <div className="md:hidden h-16" />
+      <ContactMobileStickyBar />
     </Layout>
   );
 };
