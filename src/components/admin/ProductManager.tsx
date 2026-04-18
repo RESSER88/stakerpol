@@ -28,6 +28,8 @@ interface ProductManagerProps {
   handleDelete: (product: Product) => void;
   addProduct: (product: Product, images: string[], benefits?: any[]) => void;
   updateProduct: (product: Product, images: string[], benefits?: any[]) => void;
+  addProductAsync: (product: any, images: string[], benefits?: any[]) => Promise<any>;
+  updateProductAsync: (product: any, images: string[], benefits?: any[]) => Promise<any>;
   onNavigate?: (section: AdminSection) => void;
 }
 
@@ -42,6 +44,8 @@ const ProductManager = ({
   handleAdd,
   handleCopy,
   handleDelete,
+  addProductAsync,
+  updateProductAsync,
   onNavigate,
 }: ProductManagerProps) => {
   const [refreshing, setRefreshing] = useState(false);
