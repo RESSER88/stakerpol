@@ -17,6 +17,7 @@ const ProductLeadCallback = ({ productId }: Props) => {
 
   return (
     <section
+      id="lead-form"
       className="text-white py-8 md:py-14 px-4"
       style={{ background: 'linear-gradient(135deg, hsl(var(--color-navy-brand)) 0%, hsl(222 64% 22%) 100%)' }}
     >

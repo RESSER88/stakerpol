@@ -28,6 +28,7 @@ import ProductAboutSection from '@/components/products/ProductAboutSection';
 import ProductLeadCallback from '@/components/products/ProductLeadCallback';
 import ProductStickyBar from '@/components/products/ProductStickyBar';
 import ProductProcessSteps from '@/components/products/ProductProcessSteps';
+import InlineContextualCTA from '@/components/products/InlineContextualCTA';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -211,6 +212,13 @@ const ProductDetail = () => {
               <h2 className="font-extrabold text-lg md:text-xl text-navy-brand">Pełna specyfikacja</h2>
             </div>
             <ProductInfo product={product} language={language} />
+            <InlineContextualCTA
+              variant="soft"
+              accentColor="red"
+              question="Nie masz pewności co do parametrów?"
+              actionLabel="Zadzwoń i zapytaj"
+              actionType="phone"
+            />
           </div>
         </div>
       </section>
@@ -219,7 +227,7 @@ const ProductDetail = () => {
       <ProductAboutSection product={product as any} />
 
       {/* CARD — Process steps (condensed) */}
-      <ProductProcessSteps />
+      <ProductProcessSteps modelName={product.model} />
 
       {/* DARK SECTION — Inline lead form */}
       <ProductLeadCallback productId={product.id} />
@@ -232,6 +240,12 @@ const ProductDetail = () => {
               Najczęstsze pytania
             </h2>
             <FAQSection title="" items={productFaqItems} />
+            <InlineContextualCTA
+              variant="line"
+              question="Nie znalazłeś odpowiedzi?"
+              actionLabel="Zadzwoń do nas"
+              actionType="phone"
+            />
           </div>
         </div>
       </section>

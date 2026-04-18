@@ -1,6 +1,11 @@
 import { ClipboardCheck, Wrench, BatteryCharging, SprayCan } from 'lucide-react';
+import InlineContextualCTA from './InlineContextualCTA';
 
-const ProductProcessSteps = () => {
+interface Props {
+  modelName?: string;
+}
+
+const ProductProcessSteps = ({ modelName }: Props = {}) => {
   const steps = [
     { num: '01', Icon: ClipboardCheck, title: 'Pełna diagnostyka', desc: 'Sprawdzamy układy hydrauliczne, elektryczne i mechaniczne.' },
     { num: '02', Icon: Wrench, title: 'Naprawa i wymiana', desc: 'Wymieniamy zużyte części na oryginalne lub równoważne.' },
@@ -35,6 +40,14 @@ const ProductProcessSteps = () => {
               </div>
             ))}
           </div>
+          <InlineContextualCTA
+            variant="soft"
+            accentColor="navy"
+            question="Chcesz wiedzieć więcej o tym, jak przygotowujemy wózki?"
+            actionLabel="Napisz do nas"
+            actionType="whatsapp"
+            modelName={modelName}
+          />
         </div>
       </div>
     </section>

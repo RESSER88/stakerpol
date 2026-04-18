@@ -1,6 +1,7 @@
 import { Product } from '@/types';
 import { useProductBenefits } from '@/hooks/useProductBenefits';
 import * as Icons from 'lucide-react';
+import InlineContextualCTA from './InlineContextualCTA';
 
 interface Props {
   product: Product;
@@ -75,6 +76,13 @@ const ProductAboutSection = ({ product }: Props) => {
               </div>
             )}
           </div>
+          <InlineContextualCTA
+            variant="line"
+            question="Chcesz zobaczyć ten model w naszym magazynie?"
+            actionLabel="Umów prezentację"
+            actionType="demo"
+            modelName={product.model}
+          />
         </div>
       </div>
     </section>
