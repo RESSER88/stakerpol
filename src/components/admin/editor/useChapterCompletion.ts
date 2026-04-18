@@ -22,9 +22,11 @@ export const useChapterCompletion = (
   const ch03 =
     !!product?.specs?.mastLiftingCapacity && product.specs.mastLiftingCapacity !== '0' &&
     !!product?.specs?.liftHeight && product.specs.liftHeight !== '0';
-  // placeholders for future chapters
-  const ch04 = false;
-  const ch05 = false;
+  const ch04 =
+    !!(product as any)?.priceDisplayMode &&
+    ((product as any).priceDisplayMode === 'inquiry_only' ||
+      ((product as any).netPrice != null && (product as any).netPrice !== ''));
+  const ch05 = !!product?.slogan?.trim() || !!product?.shortMarketingDescription?.trim();
   const ch06 = false;
 
   return [
@@ -56,17 +58,17 @@ export const useChapterCompletion = (
       id: 4,
       number: '04',
       title: 'Cena & Leasing',
-      description: 'Wkrótce',
+      description: 'Tryb ceny, leasing, gwarancja',
       complete: ch04,
-      enabled: false,
+      enabled: !isCreate || hasId,
     },
     {
       id: 5,
       number: '05',
       title: 'Marketing',
-      description: 'Wkrótce',
+      description: 'Slogan, zalety, FAQ',
       complete: ch05,
-      enabled: false,
+      enabled: !isCreate || hasId,
     },
     {
       id: 6,

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Product } from '@/types';
 import { toast } from 'sonner';
 import { X, MoreHorizontal, Copy, Trash2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +24,9 @@ import { useChapterCompletion } from './useChapterCompletion';
 import Chapter01_Images from './chapters/Chapter01_Images';
 import Chapter02_Basic from './chapters/Chapter02_Basic';
 import Chapter03_Technical from './chapters/Chapter03_Technical';
+import Chapter04_Pricing from './chapters/Chapter04_Pricing';
+import Chapter05_Marketing from './chapters/Chapter05_Marketing';
+import { BenefitDraft } from '../BenefitsEditor';
 
 interface Props {
   open: boolean;
@@ -49,6 +53,7 @@ const ProductEditorView = ({
 }: Props) => {
   const [product, setProduct] = useState<Product>(initialProduct);
   const [images, setImages] = useState<string[]>(initialImages);
+  const [benefits, setBenefits] = useState<BenefitDraft[]>([]);
   const [mode, setMode] = useState<'create' | 'edit'>(initialIsCreate ? 'create' : 'edit');
   const [activeChapter, setActiveChapter] = useState(initialIsCreate ? 2 : 1);
   const [saving, setSaving] = useState(false);
@@ -61,6 +66,25 @@ const ProductEditorView = ({
       const create = initialIsCreate;
       setMode(create ? 'create' : 'edit');
       setActiveChapter(create ? 2 : 1);
+      // load benefits for existing product
+      if (!create && initialProduct?.id) {
+        (async () => {
+          const { data } = await supabase
+            .from('product_benefits' as any)
+            .select('icon_name, title, description, sort_order')
+            .eq('product_id', initialProduct.id)
+            .order('sort_order', { ascending: true });
+          setBenefits(
+            ((data as any) || []).map((b: any) => ({
+              icon_name: b.icon_name || 'check',
+              title: b.title || '',
+              description: b.description || '',
+            }))
+          );
+        })();
+      } else {
+        setBenefits([]);
+      }
     }
   }, [open, initialProduct, initialImages, initialIsCreate]);
 
@@ -97,14 +121,14 @@ const ProductEditorView = ({
     }
   };
 
-  const saveImagesOrTechnical = async () => {
+  const saveAll = async () => {
     if (mode === 'create' || !product.id) {
       toast.error('Najpierw zapisz dane podstawowe (rozdział 02)');
       return;
     }
     setSaving(true);
     try {
-      await updateProductAsync(product, images, []);
+      await updateProductAsync(product, images, benefits);
       toast.success('✓ Zapisano');
     } catch (e: any) {
       toast.error('Nie udało się zapisać', { description: e?.message });
@@ -197,7 +221,7 @@ const ProductEditorView = ({
             <Chapter01_Images
               images={images}
               onChange={setImages}
-              onSave={saveImagesOrTechnical}
+              onSave={saveAll}
               saving={saving}
             />
           )}
@@ -214,14 +238,32 @@ const ProductEditorView = ({
             <Chapter03_Technical
               product={product}
               onChange={setProduct}
-              onSave={saveImagesOrTechnical}
+              onSave={saveAll}
               saving={saving}
             />
           )}
-          {activeChapter > 3 && (
+          {activeChapter === 4 && (
+            <Chapter04_Pricing
+              product={product}
+              onChange={setProduct}
+              onSave={saveAll}
+              saving={saving}
+            />
+          )}
+          {activeChapter === 5 && (
+            <Chapter05_Marketing
+              product={product}
+              onChange={setProduct}
+              benefits={benefits}
+              onBenefitsChange={setBenefits}
+              onSave={saveAll}
+              saving={saving}
+            />
+          )}
+          {activeChapter === 6 && (
             <div className="text-center py-16 text-editorial-muted">
               <p className="font-editorial text-lg mb-2">Wkrótce</p>
-              <p className="text-xs">Ten rozdział pojawi się w kolejnym etapie wdrożenia.</p>
+              <p className="text-xs">Rozdział SEO pojawi się w kolejnym etapie.</p>
             </div>
           )}
         </main>
