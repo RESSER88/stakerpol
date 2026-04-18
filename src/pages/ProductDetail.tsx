@@ -1,6 +1,6 @@
 
 import { useParams, Link } from 'react-router-dom';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import Layout from '@/components/layout/Layout';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -19,7 +19,6 @@ import FAQSection from '@/components/ui/FAQSection';
 import FAQSchema from '@/components/seo/FAQSchema';
 import { FEATURES } from '@/config/featureFlags';
 import { useSupabaseFAQ } from '@/hooks/useSupabaseFAQ';
-import ProductTrustSection from '@/components/products/ProductTrustSection';
 import ProductStatusBadges from '@/components/products/ProductStatusBadges';
 import ProductKeySpecsBar from '@/components/products/ProductKeySpecsBar';
 import ProductPriceBlock from '@/components/products/ProductPriceBlock';
@@ -28,24 +27,22 @@ import ProductTrustStrip from '@/components/products/ProductTrustStrip';
 import ProductAboutSection from '@/components/products/ProductAboutSection';
 import ProductLeadCallback from '@/components/products/ProductLeadCallback';
 import ProductStickyBar from '@/components/products/ProductStickyBar';
+import ProductProcessSteps from '@/components/products/ProductProcessSteps';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { language } = useLanguage();
   const t = useTranslation(language);
   const { products, isLoading } = usePublicSupabaseProducts();
-  
+
   const product = products.find((p) => p.slug === id || p.id === id);
-  
-  // Fetch translations for the current product and language
+
   const { translations, isLoading: translationsLoading } = useProductTranslationsDisplay(
-    product?.id || '', 
+    product?.id || '',
     language
   );
 
-  // Fetch SEO settings for dynamic JSON-LD schema
   const { seoSettings } = useProductSEO(product?.id || '');
-  // Dynamic FAQ: fetch from Supabase or fall back to static
   const { faqs: allFaqs, fetchFAQs } = useSupabaseFAQ();
 
   useEffect(() => {
@@ -53,17 +50,14 @@ const ProductDetail = () => {
       fetchFAQs(language);
     }
   }, [language]);
-  
+
   useEffect(() => {
-    // Scroll to top when component mounts or when ID changes
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [id]);
 
   const productFaqItems = useMemo(() => {
     if (!product) return [];
     if (FEATURES.PRODUCT_FAQ && allFaqs.length > 0) {
-      // allFaqs are already fetched filtered by language via fetchFAQs(language)
-      // Additionally filter by language here to be safe
       const langFiltered = allFaqs.filter(f => f.language === language);
       const typedProduct = product as any;
       if (typedProduct?.faqIds && typedProduct.faqIds.length > 0) {
@@ -114,9 +108,7 @@ const ProductDetail = () => {
     { name: product.model, url: `https://stakerpol.pl/products/${product.slug || product.id}` }
   ];
 
-  // Dynamic meta data
   const getMetaTitle = () => {
-    const brand = product.model?.includes('Toyota') || product.model?.includes('BT') ? 'Toyota' : 'Toyota';
     const serialNumber = product.specs?.serialNumber ? ` (${product.specs.serialNumber})` : '';
     const type = product.specs?.driveType === 'Elektryczny' ? 'Wózek elektryczny' : 'Wózek widłowy';
     return `${product.model}${serialNumber} - ${type} | Stakerpol`;
@@ -128,15 +120,12 @@ const ProductDetail = () => {
     if (product.specs?.mastLiftingCapacity) specs.push(`${product.specs.mastLiftingCapacity}kg udźwig`);
     if (product.specs?.productionYear) specs.push(`rok ${product.specs.productionYear}`);
     if (product.specs?.workingHours) specs.push(`${product.specs.workingHours}mth`);
-    
     const specsText = specs.length > 0 ? ` - ${specs.join(', ')}` : '';
     return `${product.shortDescription || product.model}${specsText}. Profesjonalna sprzedaż używanych wózków paletowych Toyota/BT. Sprawdź ofertę Stakerpol.`;
   };
 
   const getOgImage = () => {
-    if (product.images && product.images.length > 0) {
-      return product.images[0];
-    }
+    if (product.images && product.images.length > 0) return product.images[0];
     return product.image || '';
   };
 
@@ -157,27 +146,27 @@ const ProductDetail = () => {
         <meta name="twitter:description" content={getMetaDescription()} />
         <meta name="twitter:image" content={getOgImage()} />
         <link rel="canonical" href={`https://stakerpol.pl/${language}/products/${product.slug || product.id}`} />
-        
-        {/* Product Schema JSON-LD */}
         <script type="application/ld+json">
           {JSON.stringify(productSchemaData, null, 2)}
         </script>
       </Helmet>
       <BreadcrumbSchema items={breadcrumbItems} />
-      <section id="product-details" className="bg-white py-12">
-        <div className="container-custom">
+
+      {/* HERO — mobile (1 column) + desktop (2 columns inside max-w-1200) */}
+      <section id="product-details" className="bg-white pt-6 pb-8 md:pt-10 md:pb-10 px-4 md:px-6">
+        <div className="container-custom max-w-[1200px]">
           <ProductHeader />
-          
-          <div className="grid lg:grid-cols-2 gap-12">
-            <ProductImage 
-              image={product.image} 
-              alt={product.model} 
+
+          <div className="grid lg:grid-cols-[1.2fr_1fr] gap-6 lg:gap-8">
+            <ProductImage
+              image={product.image}
+              alt={product.model}
               images={product.images}
               productionYear={product.specs?.productionYear}
               availabilityStatus={(product as any).availabilityStatus}
               isFeatured={(product as any).isFeatured}
             />
-            <div className="space-y-4">
+            <div className="space-y-4 lg:py-2">
               <ProductStatusBadges product={product as any} />
               <div>
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2 text-stakerpol-navy leading-tight">
@@ -200,22 +189,55 @@ const ProductDetail = () => {
               <ProductKeySpecsBar product={product as any} />
               <ProductPriceBlock product={product as any} />
               <ProductCTAButtons product={product as any} />
-              <ProductTrustStrip warrantyMonths={(product as any).warrantyMonths || 3} />
-              <ProductInfo product={product} language={language} />
             </div>
           </div>
         </div>
       </section>
 
+      {/* TRUST STRIP — full-width banner between hero and cards */}
+      <section className="bg-surface-soft py-4 md:py-5 px-4 md:px-6">
+        <div className="container-custom max-w-[1200px]">
+          <ProductTrustStrip warrantyMonths={(product as any).warrantyMonths || 3} />
+        </div>
+      </section>
+
+      {/* CARD 01 — Full specifications (FIRST) */}
+      <section className="bg-white py-8 md:py-12 px-4 md:px-6">
+        <div className="container-custom max-w-[1200px]">
+          <div className="bg-white border border-border-line rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.03)] p-5 md:p-8">
+            <div className="flex items-baseline gap-2 mb-4">
+              <span className="font-mono font-bold text-[13px] text-red-accent">01</span>
+              <span className="text-ink-soft">·</span>
+              <h2 className="font-extrabold text-lg md:text-xl text-navy-brand">Pełna specyfikacja</h2>
+            </div>
+            <ProductInfo product={product} language={language} />
+          </div>
+        </div>
+      </section>
+
+      {/* CARD 02 — About this model (SECOND) */}
       <ProductAboutSection product={product as any} />
 
+      {/* CARD — Process steps (condensed) */}
+      <ProductProcessSteps />
+
+      {/* DARK SECTION — Inline lead form */}
       <ProductLeadCallback productId={product.id} />
 
-      <ProductTrustSection productModel={product.model} productSlug={product.slug || product.id} />
-
-      <FAQSection title="Najczęstsze pytania" items={productFaqItems} />
+      {/* CARD — FAQ */}
+      <section className="bg-surface-soft py-8 md:py-12 px-4 md:px-6">
+        <div className="container-custom max-w-[1200px]">
+          <div className="bg-white border border-border-line rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.03)] p-5 md:p-8">
+            <h2 className="text-xl md:text-2xl font-extrabold text-navy-brand mb-4">
+              Najczęstsze pytania
+            </h2>
+            <FAQSection title="" items={productFaqItems} />
+          </div>
+        </div>
+      </section>
       <FAQSchema items={productFaqItems} />
-      
+
+      {/* CARD — Related products (simplified) */}
       <RelatedProducts currentProductId={product.id} products={products} />
 
       <ProductStickyBar product={product as any} />

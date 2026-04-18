@@ -32,36 +32,50 @@ const ProductAboutSection = ({ product }: Props) => {
   if (!hasDescription && !hasBenefits) return null;
 
   return (
-    <section className="py-10 bg-white">
-      <div className="container-custom max-w-3xl">
-        <div className="flex items-baseline gap-2 mb-4">
-          <span className="font-mono font-bold text-[13px] text-red-accent">01</span>
-          <span className="text-ink-soft">·</span>
-          <h2 className="font-bold text-lg text-ink">O tym modelu</h2>
+    <section className="bg-surface-soft py-8 md:py-12 px-4 md:px-6">
+      <div className="container-custom max-w-[1200px]">
+        <div className="bg-white border border-border-line rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.03)] p-5 md:p-8">
+          <div className="grid md:grid-cols-2 md:gap-8">
+            {/* Left: heading + description */}
+            <div>
+              <div className="flex items-baseline gap-2 mb-4">
+                <span className="font-mono font-bold text-[13px] text-red-accent">02</span>
+                <span className="text-ink-soft">·</span>
+                <h2 className="font-extrabold text-lg md:text-xl text-navy-brand">O tym modelu</h2>
+              </div>
+              {hasDescription && (
+                <p className="text-sm md:text-base text-foreground/90 leading-relaxed">
+                  {product.shortMarketingDescription}
+                </p>
+              )}
+            </div>
+
+            {/* Right: benefits */}
+            {hasBenefits && (
+              <div className="mt-6 md:mt-0">
+                <h3 className="text-[13px] font-bold uppercase tracking-wide text-ink-soft mb-3">
+                  Kluczowe zalety
+                </h3>
+                <ul className="space-y-2">
+                  {benefits.slice(0, 3).map((b) => (
+                    <li
+                      key={b.id}
+                      className="flex items-start gap-3 bg-surface-soft border-l-[3px] border-red-accent rounded px-3 py-2.5"
+                    >
+                      {renderIcon(b.icon_name)}
+                      <div>
+                        <div className="font-bold text-sm">{b.title}</div>
+                        {b.description && (
+                          <div className="text-sm text-muted-foreground">{b.description}</div>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
-        {hasDescription && (
-          <p className="text-base text-foreground/90 leading-relaxed mb-5">
-            {product.shortMarketingDescription}
-          </p>
-        )}
-        {hasBenefits && (
-          <ul className="space-y-2">
-            {benefits.slice(0, 3).map((b) => (
-              <li
-                key={b.id}
-                className="flex items-start gap-3 bg-surface-soft border-l-[3px] border-red-accent rounded px-3 py-2.5"
-              >
-                {renderIcon(b.icon_name)}
-                <div>
-                  <div className="font-bold text-sm">{b.title}</div>
-                  {b.description && (
-                    <div className="text-sm text-muted-foreground">{b.description}</div>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
     </section>
   );
