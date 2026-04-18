@@ -137,6 +137,8 @@ const Admin = () => {
             handleDelete={handleDelete}
             addProduct={addProduct}
             updateProduct={updateProduct}
+            addProductAsync={addProductAsync}
+            updateProductAsync={updateProductAsync}
             onNavigate={setActiveSection}
           />
         );
