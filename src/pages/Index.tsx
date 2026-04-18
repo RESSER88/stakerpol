@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useMemo } from 'react';
-import { Button } from '@/components/ui/button';
+
 import Layout from '@/components/layout/Layout';
 import LocalBusinessSchema from '@/components/seo/LocalBusinessSchema';
 import { usePublicSupabaseProducts } from '@/hooks/usePublicSupabaseProducts';

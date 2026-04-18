@@ -5,7 +5,8 @@ import { COMPANY_PHONE_TEL, buildWhatsAppUrl } from '@/lib/contact';
 const HomeReadyToBuy = () => {
   return (
     <section
-      className="text-white py-12 md:py-16 px-6 md:px-8"
+      id="ready"
+      className="text-white py-12 md:py-16 px-6 md:px-8 scroll-mt-20"
       style={{
         background:
           'linear-gradient(135deg, hsl(var(--color-navy-brand)) 0%, hsl(222 64% 22%) 100%)',
