@@ -28,7 +28,7 @@ const Chapter04_Pricing = ({ product, onChange, onSave, saving }: Props) => {
             { value: 'show_price', label: 'Pokaż cenę' },
             { value: 'from_price', label: 'Cena od…' },
           ]}
-          hint="„Tylko zapytanie" ukrywa cenę netto na stronie produktu"
+          hint='Tryb "Tylko zapytanie" ukrywa cenę netto na stronie produktu'
         />
         <EditorialInput
           label="Cena netto"
