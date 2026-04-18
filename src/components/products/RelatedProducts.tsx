@@ -1,8 +1,7 @@
-
 import { Product } from '@/types';
-import ProductCard from '@/components/ui/ProductCard';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/utils/translations';
+import SimpleRelatedCard from './SimpleRelatedCard';
 
 interface RelatedProductsProps {
   currentProductId: string;
@@ -12,42 +11,23 @@ interface RelatedProductsProps {
 const RelatedProducts = ({ currentProductId, products }: RelatedProductsProps) => {
   const { language } = useLanguage();
   const t = useTranslation(language);
-  
-  const relatedProducts = products
-    .filter((p) => p.id !== currentProductId)
-    .slice(0, 3);
 
-  const handleProductClick = () => {
-    // Smooth scroll to product details section when a related product is clicked
-    setTimeout(() => {
-      const productDetailsSection = document.getElementById('product-details');
-      if (productDetailsSection) {
-        productDetailsSection.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
-        });
-      } else {
-        // Fallback to scroll to top
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }, 100);
-  };
+  const relatedProducts = products.filter((p) => p.id !== currentProductId).slice(0, 4);
+
+  if (relatedProducts.length === 0) return null;
 
   return (
-    <section className="bg-gray-50 py-12">
-      <div className="container-custom">
-        <h2 className="text-2xl font-bold mb-6 animate-fade-in">{t('relatedProducts')}</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {relatedProducts.map((product, index) => (
-            <div 
-              key={product.id} 
-              className="animate-fade-in" 
-              style={{ animationDelay: `${index * 100}ms` }}
-              onClick={handleProductClick}
-            >
-              <ProductCard product={product} />
-            </div>
-          ))}
+    <section className="bg-surface-soft py-10 md:py-12 px-4 md:px-6">
+      <div className="container-custom max-w-[1200px]">
+        <div className="bg-white border border-border-line rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.03)] p-5 md:p-8">
+          <h2 className="text-xl md:text-2xl font-extrabold text-navy-brand mb-5 md:text-center">
+            {t('relatedProducts')}
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+            {relatedProducts.map((product) => (
+              <SimpleRelatedCard key={product.id} product={product} />
+            ))}
+          </div>
         </div>
       </div>
     </section>
