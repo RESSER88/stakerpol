@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useMemo } from 'react';
-import { Button } from '@/components/ui/button';
+
 import Layout from '@/components/layout/Layout';
 import LocalBusinessSchema from '@/components/seo/LocalBusinessSchema';
 import { usePublicSupabaseProducts } from '@/hooks/usePublicSupabaseProducts';
@@ -9,7 +9,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/utils/translations';
 import { getRandomItems } from '@/utils/randomUtils';
 import { getMetaTitle } from '@/config/featureFlags';
-import HeroContactForm from '@/components/contact/HeroContactForm';
+import HomeHeroForm from '@/components/home/HomeHeroForm';
+import HomeHeroFormSection from '@/components/home/HomeHeroFormSection';
 import TrustStrip from '@/components/home/TrustStrip';
 import HomeFeaturedProducts from '@/components/home/HomeFeaturedProducts';
 import HomeAboutSection from '@/components/home/HomeAboutSection';
@@ -49,41 +50,57 @@ const Index = () => {
       </Helmet>
       <LocalBusinessSchema />
 
-      {/* Hero Section — bez zmian (Etap 2 zajmie się przebudową) */}
+      {/* Hero Section — 2-kolumnowy desktop, 1-kolumnowy mobile */}
       <section
-        className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-toyota-black text-white min-h-[600px] flex items-center"
+        className="relative text-white min-h-[480px] lg:min-h-[520px] flex items-center"
         style={{
-          backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0.1) 100%), url('/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.png')`,
+          backgroundImage: `
+            radial-gradient(ellipse at 25% 60%, hsl(var(--color-orange-cta) / 0.35), transparent 60%),
+            radial-gradient(ellipse at 80% 30%, hsl(var(--color-red-accent) / 0.28), transparent 60%),
+            linear-gradient(135deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.35) 100%),
+            url('/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.png')
+          `,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
         }}
       >
-        <div className="container-custom py-16 md:py-24">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6 md:pr-8 animate-fade-in">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+        <div className="container-custom max-w-[1200px] py-10 lg:py-12 px-5 lg:px-8 w-full">
+          <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 items-center">
+            <div className="space-y-4 lg:space-y-5 animate-fade-in">
+              <div className="font-mono text-[11px] lg:text-xs tracking-[0.14em] text-white/70 uppercase">
+                // Używane wózki Toyota · od 2008
+              </div>
+              <h1 className="text-2xl md:text-4xl lg:text-[clamp(28px,3.6vw,42px)] font-extrabold leading-[1.1] tracking-tight">
                 {t('heroTitle')}
               </h1>
-              <p className="text-lg text-gray-300 md:text-xl">
+              <p className="text-sm md:text-base lg:text-[15px] text-white/90 leading-[1.55] max-w-[480px]">
                 {t('heroSubtitle')}
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <Button className="cta-button text-lg" size="lg" asChild>
-                  <Link to="/products">{t('browseProducts')}</Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-2 border-white text-black bg-white hover:bg-gray-100 hover:text-black text-lg transition-all duration-300"
-                  size="lg"
-                  asChild
+              <div className="flex flex-col sm:flex-row gap-2.5 lg:gap-3 pt-2">
+                <Link
+                  to="/products"
+                  className="inline-flex items-center justify-center bg-orange-cta hover:opacity-90 text-white font-bold text-sm py-3.5 px-6 rounded-md transition-opacity"
                 >
-                  <Link to="/contact">{t('contact')}</Link>
-                </Button>
+                  {t('browseProducts')} →
+                </Link>
+                <a
+                  href="#ready"
+                  className="inline-flex items-center justify-center bg-transparent border border-white/30 hover:bg-white/10 text-white font-bold text-sm py-3.5 px-6 rounded-md transition-colors"
+                >
+                  {t('contact')}
+                </a>
               </div>
             </div>
+
+            {/* Formularz po prawej — tylko desktop */}
             <div className="hidden lg:block animate-fade-in">
-              <HeroContactForm />
+              <div
+                className="bg-white rounded-lg p-[22px] max-w-[360px] ml-auto"
+                style={{ boxShadow: '0 12px 30px -10px rgba(0,0,0,0.25)' }}
+              >
+                <HomeHeroForm isInHero />
+              </div>
             </div>
           </div>
         </div>
@@ -91,6 +108,9 @@ const Index = () => {
 
       {/* Trust strip */}
       <TrustStrip />
+
+      {/* Formularz jako osobna sekcja (mobile + tablet, ukryte na lg) */}
+      <HomeHeroFormSection />
 
       {/* 01 — Nasze wózki */}
       <HomeFeaturedProducts products={featuredProducts} isLoading={isLoading} />
