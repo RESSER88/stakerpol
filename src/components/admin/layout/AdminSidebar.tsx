@@ -1,5 +1,4 @@
-import { Zap, Package, Inbox, Download, Search, HelpCircle, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AdminSection } from './types';
 
@@ -9,51 +8,66 @@ interface Props {
   onSignOut: () => void;
 }
 
-const items: { id: AdminSection; label: string; icon: typeof Zap }[] = [
-  { id: 'start', label: 'Start', icon: Zap },
-  { id: 'products', label: 'Produkty', icon: Package },
-  { id: 'inquiries', label: 'Zapytania', icon: Inbox },
-  { id: 'export', label: 'Eksport', icon: Download },
-  { id: 'seo', label: 'SEO & Schema', icon: Search },
-  { id: 'faq', label: 'FAQ', icon: HelpCircle },
+const items: { id: AdminSection; num: string; label: string }[] = [
+  { id: 'start', num: '01', label: 'Start' },
+  { id: 'products', num: '02', label: 'Produkty' },
+  { id: 'inquiries', num: '03', label: 'Zapytania' },
+  { id: 'export', num: '04', label: 'Eksport' },
+  { id: 'seo', num: '05', label: 'SEO' },
+  { id: 'faq', num: '06', label: 'FAQ' },
 ];
 
 const AdminSidebar = ({ active, onChange, onSignOut }: Props) => {
   return (
-    <aside className="hidden lg:flex fixed top-0 left-0 h-screen w-[220px] bg-admin-dark text-white flex-col z-40">
-      <div className="px-6 py-5 flex items-center gap-2 border-b border-white/10">
-        <Zap className="h-6 w-6 text-admin-orange" />
-        <span className="text-xl font-bold">StakerPanel</span>
+    <aside className="hidden lg:flex fixed top-0 left-0 h-screen w-[240px] bg-white border-r border-editorial-line flex-col z-40">
+      <div className="px-8 py-8 border-b border-editorial-line">
+        <div className="text-[10px] font-bold tracking-[0.25em] text-editorial-muted">
+          STAKERPOL
+        </div>
+        <div className="font-editorial text-xl text-editorial-ink mt-1">
+          Panel
+        </div>
       </div>
       <nav className="flex-1 py-4">
         {items.map((item) => {
-          const Icon = item.icon;
           const isActive = active === item.id;
           return (
             <button
               key={item.id}
               onClick={() => onChange(item.id)}
               className={cn(
-                'w-full flex items-center gap-3 px-6 py-3 text-sm transition-colors text-left',
-                'hover:bg-white/5',
-                isActive && 'bg-white/10 border-l-4 border-admin-orange pl-5 font-medium'
+                'w-full flex items-baseline gap-4 px-8 py-3 text-left transition-colors group',
+                'hover:bg-editorial-line/30'
               )}
             >
-              <Icon className="h-4 w-4 shrink-0" />
-              <span>{item.label}</span>
+              <span
+                className={cn(
+                  'text-[10px] font-bold tracking-[0.2em] w-6',
+                  isActive ? 'text-editorial-accent' : 'text-editorial-muted'
+                )}
+              >
+                {item.num}
+              </span>
+              <span
+                className={cn(
+                  'font-editorial text-[15px]',
+                  isActive ? 'text-editorial-ink' : 'text-editorial-muted group-hover:text-editorial-ink'
+                )}
+              >
+                {item.label}
+              </span>
             </button>
           );
         })}
       </nav>
-      <div className="p-4 border-t border-white/10">
-        <Button
-          variant="ghost"
+      <div className="p-6 border-t border-editorial-line">
+        <button
           onClick={onSignOut}
-          className="w-full justify-start text-white hover:bg-white/10 hover:text-white"
+          className="w-full flex items-center gap-2 text-xs font-bold tracking-[0.15em] uppercase text-editorial-muted hover:text-editorial-ink transition-colors"
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-3.5 w-3.5" />
           Wyloguj
-        </Button>
+        </button>
       </div>
     </aside>
   );

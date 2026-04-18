@@ -1,4 +1,4 @@
-import { MoreVertical, Search, HelpCircle, LogOut } from 'lucide-react';
+import { MoreVertical, LogOut } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,21 +16,18 @@ interface Props {
 
 const AdminTopBar = ({ title, onChange, onSignOut }: Props) => {
   return (
-    <header className="lg:hidden sticky top-0 bg-admin-dark text-white px-4 h-14 flex items-center justify-between z-40">
-      <h1 className="text-base font-semibold truncate">{title}</h1>
+    <header className="lg:hidden sticky top-0 bg-white border-b border-editorial-line px-4 h-12 flex items-center justify-between z-40">
+      <div className="flex items-baseline gap-2">
+        <span className="text-[10px] font-bold tracking-[0.25em] text-editorial-muted">STAKERPOL</span>
+        <span className="font-editorial text-sm text-editorial-ink">· {title}</span>
+      </div>
       <DropdownMenu>
-        <DropdownMenuTrigger className="p-2 -mr-2 rounded-md hover:bg-white/10">
+        <DropdownMenuTrigger className="p-2 -mr-2 text-editorial-ink">
           <MoreVertical className="h-5 w-5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onChange('seo')}>
-            <Search className="h-4 w-4" />
-            SEO & Schema
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onChange('faq')}>
-            <HelpCircle className="h-4 w-4" />
-            FAQ
-          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onChange('seo')}>05 — SEO &amp; Schema</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onChange('faq')}>06 — FAQ</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={onSignOut}>
             <LogOut className="h-4 w-4" />
