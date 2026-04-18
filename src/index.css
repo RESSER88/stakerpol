@@ -50,6 +50,16 @@
     --color-amber-soft-fg: 35 100% 27%;
     --color-green-soft-bg: 140 50% 94%;
     --color-green-soft-fg: 140 83% 26%;
+
+    /* Admin panel tokens (HSL) */
+    --admin-orange: 24 95% 53%;
+    --admin-dark: 222 47% 11%;
+    --admin-bg: 210 40% 98%;
+    --admin-border: 214 32% 91%;
+    --admin-text: 222 47% 17%;
+    --admin-muted: 215 16% 47%;
+    --admin-green: 142 71% 45%;
+    --admin-red: 0 73% 51%;
   }
 
   .dark {

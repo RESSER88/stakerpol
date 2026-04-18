@@ -87,6 +87,16 @@ export default {
 				'green-soft': {
 					DEFAULT: 'hsl(var(--color-green-soft-bg))',
 					foreground: 'hsl(var(--color-green-soft-fg))',
+				},
+				admin: {
+					orange: 'hsl(var(--admin-orange))',
+					dark: 'hsl(var(--admin-dark))',
+					bg: 'hsl(var(--admin-bg))',
+					border: 'hsl(var(--admin-border))',
+					text: 'hsl(var(--admin-text))',
+					muted: 'hsl(var(--admin-muted))',
+					green: 'hsl(var(--admin-green))',
+					red: 'hsl(var(--admin-red))',
 				}
 			},
 			borderRadius: {
