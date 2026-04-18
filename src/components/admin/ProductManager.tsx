@@ -9,8 +9,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import ProductDetailsModal from './ProductDetailsModal';
 import ProductsListView from './products/ProductsListView';
+import ProductEditorView from './editor/ProductEditorView';
 import { Product } from '@/types';
 import { AdminSection } from './layout/types';
 
@@ -36,15 +36,12 @@ const ProductManager = ({
   setIsEditDialogOpen,
   selectedProduct,
   productImages,
-  setProductImages,
   products,
   defaultNewProduct,
   handleEdit,
   handleAdd,
   handleCopy,
   handleDelete,
-  addProduct,
-  updateProduct,
   onNavigate,
 }: ProductManagerProps) => {
   const [refreshing, setRefreshing] = useState(false);
@@ -58,22 +55,6 @@ const ProductManager = ({
     }, 500);
   };
 
-  const handleSave = (product: Product, images: string[], benefits: any[] = []) => {
-    const isEditingExisting =
-      selectedProduct &&
-      selectedProduct.id &&
-      !selectedProduct.model.includes('(kopia)') &&
-      products.some((p) => p.id === selectedProduct.id);
-
-    if (isEditingExisting) {
-      updateProduct(product, images, benefits);
-    } else {
-      addProduct(product, images, benefits);
-    }
-
-    setIsEditDialogOpen(false);
-  };
-
   const requestDelete = (p: Product) => setDeleteCandidate(p);
   const confirmDelete = () => {
     if (deleteCandidate) {
@@ -81,6 +62,13 @@ const ProductManager = ({
       setDeleteCandidate(null);
     }
   };
+
+  // isCreate = brak id LUB id puste i nie ma takiego produktu w liście
+  const isCreate =
+    !selectedProduct?.id ||
+    !products.some((p) => p.id === selectedProduct.id);
+
+  const initialProduct = selectedProduct || defaultNewProduct;
 
   return (
     <>
@@ -95,16 +83,16 @@ const ProductManager = ({
         refreshing={refreshing}
       />
 
-      <ProductDetailsModal
-        isOpen={isEditDialogOpen}
+      <ProductEditorView
+        open={isEditDialogOpen}
         onClose={() => setIsEditDialogOpen(false)}
-        selectedProduct={selectedProduct}
-        defaultNewProduct={defaultNewProduct}
-        productImages={productImages}
-        onImagesChange={setProductImages}
-        onSave={handleSave}
-        products={products}
-        onCopy={handleCopy}
+        initialProduct={initialProduct}
+        initialImages={productImages}
+        isCreate={isCreate}
+        onCopy={(p) => {
+          setIsEditDialogOpen(false);
+          setTimeout(() => handleCopy(p), 100);
+        }}
         onDelete={requestDelete}
       />
 

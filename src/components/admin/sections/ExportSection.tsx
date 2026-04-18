@@ -1,30 +1,61 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { FileText, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { Product } from '@/types';
 import { exportProductListToPDF, exportProductListToJPG } from '@/utils/listExporter';
 import { useToast } from '@/hooks/use-toast';
+import SectionHeader from '../editorial/SectionHeader';
 
 interface Props {
   products: Product[];
 }
+
+interface RowProps {
+  number: string;
+  title: string;
+  description: string;
+  count: number;
+  loading: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}
+
+const ExportRow = ({ number, title, description, count, loading, disabled, onClick }: RowProps) => (
+  <button
+    onClick={onClick}
+    disabled={disabled || loading}
+    className="group w-full flex items-center gap-6 py-6 border-b border-editorial-line text-left transition-colors hover:bg-editorial-line/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+  >
+    <span className="text-xs font-bold tracking-[0.2em] text-editorial-accent w-8 shrink-0">
+      {number}
+    </span>
+    <div className="flex-1 min-w-0">
+      <div className="font-editorial text-base text-editorial-ink">{title}</div>
+      <div className="text-xs text-editorial-muted mt-0.5 tracking-wide">
+        {description} · {count} {count === 1 ? 'produkt' : 'produktów'}
+      </div>
+    </div>
+    {loading ? (
+      <Loader2 className="h-4 w-4 animate-spin text-editorial-muted shrink-0" />
+    ) : (
+      <ArrowRight className="h-4 w-4 text-editorial-muted shrink-0 transition-transform group-hover:translate-x-1" />
+    )}
+  </button>
+);
 
 const ExportSection = ({ products }: Props) => {
   const [exportingPDF, setExportingPDF] = useState(false);
   const [exportingJPG, setExportingJPG] = useState(false);
   const { toast } = useToast();
 
+  const empty = products.length === 0;
+
   const handlePDF = async () => {
-    if (products.length === 0) {
-      toast({ title: 'Brak produktów', description: 'Nie ma produktów do eksportu', variant: 'destructive' });
-      return;
-    }
+    if (empty) return;
     setExportingPDF(true);
     try {
       await exportProductListToPDF(products);
-      toast({ title: 'Sukces!', description: `Stan magazynu PDF (${products.length} produktów)` });
-    } catch (e) {
+      toast({ title: '✓ Zapisano', description: `Stan magazynu PDF (${products.length} produktów)` });
+    } catch {
       toast({ title: 'Błąd eksportu', description: 'Nie udało się wygenerować PDF', variant: 'destructive' });
     } finally {
       setExportingPDF(false);
@@ -32,15 +63,12 @@ const ExportSection = ({ products }: Props) => {
   };
 
   const handleJPG = async () => {
-    if (products.length === 0) {
-      toast({ title: 'Brak produktów', description: 'Nie ma produktów do eksportu', variant: 'destructive' });
-      return;
-    }
+    if (empty) return;
     setExportingJPG(true);
     try {
       await exportProductListToJPG(products);
-      toast({ title: 'Sukces!', description: `Stan magazynu JPG (${products.length} produktów)` });
-    } catch (e) {
+      toast({ title: '✓ Zapisano', description: `Stan magazynu JPG (${products.length} produktów)` });
+    } catch {
       toast({ title: 'Błąd eksportu', description: 'Nie udało się wygenerować JPG', variant: 'destructive' });
     } finally {
       setExportingJPG(false);
@@ -48,46 +76,35 @@ const ExportSection = ({ products }: Props) => {
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2 max-w-3xl">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-md bg-admin-orange/10 text-admin-orange">
-              <FileText className="h-5 w-5" />
-            </div>
-            <div>
-              <CardTitle className="text-base">Eksport PDF</CardTitle>
-              <CardDescription>Stan magazynu jako dokument PDF</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={handlePDF} disabled={exportingPDF || products.length === 0} className="w-full">
-            {exportingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-            Pobierz PDF ({products.length})
-          </Button>
-        </CardContent>
-      </Card>
+    <div className="max-w-2xl">
+      <SectionHeader number="—" title="Eksport stanu magazynu" />
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-md bg-admin-green/10 text-admin-green">
-              <ImageIcon className="h-5 w-5" />
-            </div>
-            <div>
-              <CardTitle className="text-base">Eksport JPG</CardTitle>
-              <CardDescription>Stan magazynu jako obraz JPG</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={handleJPG} disabled={exportingJPG || products.length === 0} className="w-full" variant="outline">
-            {exportingJPG ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
-            Pobierz JPG ({products.length})
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="border-t border-editorial-line">
+        <ExportRow
+          number="01"
+          title="Pobierz jako PDF"
+          description="Dokument do druku i archiwizacji"
+          count={products.length}
+          loading={exportingPDF}
+          disabled={empty}
+          onClick={handlePDF}
+        />
+        <ExportRow
+          number="02"
+          title="Pobierz jako JPG"
+          description="Obraz do publikacji w mediach społecznościowych"
+          count={products.length}
+          loading={exportingJPG}
+          disabled={empty}
+          onClick={handleJPG}
+        />
+      </div>
+
+      {empty && (
+        <p className="text-xs text-editorial-muted mt-6 italic">
+          Brak produktów do eksportu.
+        </p>
+      )}
     </div>
   );
 };
