@@ -1,12 +1,10 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, RefreshCw, Download } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 import ProductList from './ProductList';
 import ProductDetailsModal from './ProductDetailsModal';
-import ExportFormatModal from './ExportFormatModal';
 import { Product } from '@/types';
-import { exportProductListToPDF, exportProductListToJPG } from '@/utils/listExporter';
 import { useToast } from '@/hooks/use-toast';
 
 interface ProductManagerProps {
