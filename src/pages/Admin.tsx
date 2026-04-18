@@ -129,6 +129,7 @@ const Admin = () => {
             handleDelete={handleDelete}
             addProduct={addProduct}
             updateProduct={updateProduct}
+            onNavigate={setActiveSection}
           />
         );
       case 'inquiries':
