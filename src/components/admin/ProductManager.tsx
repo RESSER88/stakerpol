@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,6 +64,7 @@ const ProductManager = ({
   const confirmDelete = () => {
     if (deleteCandidate) {
       handleDelete(deleteCandidate);
+      toast.success('✓ Usunięto');
       setDeleteCandidate(null);
     }
   };
