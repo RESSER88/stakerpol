@@ -104,28 +104,40 @@ export type Database = {
       leads: {
         Row: {
           created_at: string
+          email: string | null
           id: string
+          message: string | null
+          name: string | null
           page_url: string | null
           phone: string
           product_id: string | null
+          rodo_accepted: boolean
           source: string
           user_agent: string | null
         }
         Insert: {
           created_at?: string
+          email?: string | null
           id?: string
+          message?: string | null
+          name?: string | null
           page_url?: string | null
           phone: string
           product_id?: string | null
+          rodo_accepted?: boolean
           source?: string
           user_agent?: string | null
         }
         Update: {
           created_at?: string
+          email?: string | null
           id?: string
+          message?: string | null
+          name?: string | null
           page_url?: string | null
           phone?: string
           product_id?: string | null
+          rodo_accepted?: boolean
           source?: string
           user_agent?: string | null
         }
