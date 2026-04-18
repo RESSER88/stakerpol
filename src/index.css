@@ -60,6 +60,15 @@
     --admin-muted: 215 16% 47%;
     --admin-green: 142 71% 45%;
     --admin-red: 0 73% 51%;
+
+    /* Editorial admin tokens (HSL) */
+    --editorial-ink: 222 47% 11%;
+    --editorial-muted: 215 16% 47%;
+    --editorial-line: 220 13% 91%;
+    --editorial-accent: 24 95% 53%;
+    --editorial-ok: 142 71% 45%;
+    --editorial-bad: 0 73% 51%;
+    --editorial-bg: 0 0% 100%;
   }
 
   .dark {

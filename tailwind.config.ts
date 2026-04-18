@@ -97,6 +97,15 @@ export default {
 					muted: 'hsl(var(--admin-muted))',
 					green: 'hsl(var(--admin-green))',
 					red: 'hsl(var(--admin-red))',
+				},
+				editorial: {
+					ink: 'hsl(var(--editorial-ink))',
+					muted: 'hsl(var(--editorial-muted))',
+					line: 'hsl(var(--editorial-line))',
+					accent: 'hsl(var(--editorial-accent))',
+					ok: 'hsl(var(--editorial-ok))',
+					bad: 'hsl(var(--editorial-bad))',
+					bg: 'hsl(var(--editorial-bg))',
 				}
 			},
 			borderRadius: {
@@ -191,6 +200,7 @@ export default {
 				'sans': ['Montserrat', 'system-ui', 'sans-serif'],
 				'archivo': ['Archivo', 'Montserrat', 'system-ui', 'sans-serif'],
 				'mono': ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+				'editorial': ['Georgia', 'Cambria', '"Times New Roman"', 'serif'],
 			}
 		}
 	},
