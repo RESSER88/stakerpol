@@ -221,7 +221,7 @@ const ProductEditorView = ({
             <Chapter01_Images
               images={images}
               onChange={setImages}
-              onSave={saveImagesOrTechnical}
+              onSave={saveAll}
               saving={saving}
             />
           )}
@@ -238,14 +238,32 @@ const ProductEditorView = ({
             <Chapter03_Technical
               product={product}
               onChange={setProduct}
-              onSave={saveImagesOrTechnical}
+              onSave={saveAll}
               saving={saving}
             />
           )}
-          {activeChapter > 3 && (
+          {activeChapter === 4 && (
+            <Chapter04_Pricing
+              product={product}
+              onChange={setProduct}
+              onSave={saveAll}
+              saving={saving}
+            />
+          )}
+          {activeChapter === 5 && (
+            <Chapter05_Marketing
+              product={product}
+              onChange={setProduct}
+              benefits={benefits}
+              onBenefitsChange={setBenefits}
+              onSave={saveAll}
+              saving={saving}
+            />
+          )}
+          {activeChapter === 6 && (
             <div className="text-center py-16 text-editorial-muted">
               <p className="font-editorial text-lg mb-2">Wkrótce</p>
-              <p className="text-xs">Ten rozdział pojawi się w kolejnym etapie wdrożenia.</p>
+              <p className="text-xs">Rozdział SEO pojawi się w kolejnym etapie.</p>
             </div>
           )}
         </main>
