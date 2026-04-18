@@ -26,6 +26,7 @@ import Chapter02_Basic from './chapters/Chapter02_Basic';
 import Chapter03_Technical from './chapters/Chapter03_Technical';
 import Chapter04_Pricing from './chapters/Chapter04_Pricing';
 import Chapter05_Marketing from './chapters/Chapter05_Marketing';
+import Chapter06_SEO from './chapters/Chapter06_SEO';
 import { BenefitDraft } from '../BenefitsEditor';
 
 interface Props {
