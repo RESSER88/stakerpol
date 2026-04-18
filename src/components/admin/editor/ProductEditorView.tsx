@@ -261,12 +261,7 @@ const ProductEditorView = ({
               saving={saving}
             />
           )}
-          {activeChapter === 6 && (
-            <div className="text-center py-16 text-editorial-muted">
-              <p className="font-editorial text-lg mb-2">Wkrótce</p>
-              <p className="text-xs">Rozdział SEO pojawi się w kolejnym etapie.</p>
-            </div>
-          )}
+          {activeChapter === 6 && <Chapter06_SEO product={product} />}
         </main>
       </div>
 
