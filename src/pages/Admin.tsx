@@ -17,7 +17,7 @@ import { Product } from '@/types';
 
 const Admin = () => {
   const { user, loading: authLoading, isAdmin, adminLoading, signOut } = useSupabaseAuth();
-  const { products, addProduct, updateProduct, deleteProduct } = useSupabaseProducts();
+  const { products, addProduct, updateProduct, deleteProduct, addProductAsync, updateProductAsync } = useSupabaseProducts() as any;
 
   const [activeSection, setActiveSection] = useState<AdminSection>('start');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -137,6 +137,8 @@ const Admin = () => {
             handleDelete={handleDelete}
             addProduct={addProduct}
             updateProduct={updateProduct}
+            addProductAsync={addProductAsync}
+            updateProductAsync={updateProductAsync}
             onNavigate={setActiveSection}
           />
         );

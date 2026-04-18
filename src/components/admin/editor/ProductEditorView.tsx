@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Product } from '@/types';
-import { useSupabaseProducts } from '@/hooks/useSupabaseProducts';
 import { toast } from 'sonner';
 import { X, MoreHorizontal, Copy, Trash2 } from 'lucide-react';
 import {
@@ -33,6 +32,8 @@ interface Props {
   isCreate: boolean;
   onCopy?: (p: Product) => void;
   onDelete?: (p: Product) => void;
+  addProductAsync: (product: any, images: string[], benefits?: any[]) => Promise<any>;
+  updateProductAsync: (product: any, images: string[], benefits?: any[]) => Promise<any>;
 }
 
 const ProductEditorView = ({
@@ -43,8 +44,9 @@ const ProductEditorView = ({
   isCreate: initialIsCreate,
   onCopy,
   onDelete,
+  addProductAsync,
+  updateProductAsync,
 }: Props) => {
-  const { addProductAsync, updateProductAsync } = useSupabaseProducts() as any;
   const [product, setProduct] = useState<Product>(initialProduct);
   const [images, setImages] = useState<string[]>(initialImages);
   const [mode, setMode] = useState<'create' | 'edit'>(initialIsCreate ? 'create' : 'edit');
