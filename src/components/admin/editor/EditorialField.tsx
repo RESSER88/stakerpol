@@ -21,7 +21,7 @@ export const FieldWrap = ({ label, required, hint, children, className }: FieldW
 );
 
 const baseInput =
-  'w-full bg-transparent border-0 border-b border-editorial-line px-0 py-2 text-sm text-editorial-ink placeholder:text-editorial-muted/50 focus:outline-none focus:border-editorial-ink transition-colors';
+  'w-full bg-editorial-line/20 border border-editorial-line rounded-none px-3 py-2.5 text-sm text-editorial-ink placeholder:text-editorial-muted/50 focus:outline-none focus:border-editorial-ink focus:bg-editorial-line/10 transition-colors';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
