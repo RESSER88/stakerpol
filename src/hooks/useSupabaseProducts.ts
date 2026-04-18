@@ -364,11 +364,7 @@ export const useSupabaseProducts = () => {
       queryClient.invalidateQueries({ queryKey: ['supabase-products'] });
       queryClient.invalidateQueries({ queryKey: ['public-products'] });
       
-      toast({
-        title: "✅ Produkt usunięty pomyślnie",
-        description: "Produkt został usunięty z bazy danych i zniknie ze strony w ciągu kilku sekund.",
-        duration: 5000
-      });
+      // Toast handled by ProductManager / ProductEditorView ("✓ Usunięto")
     },
     onError: (error: any) => {
       console.error('Delete product error:', error);
