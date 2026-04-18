@@ -35,7 +35,14 @@ const SimpleRelatedCard = ({ product }: Props) => {
         <h3 className="font-bold text-sm text-ink mb-1 truncate">{product.model}</h3>
         {meta.length > 0 && (
           <div className="font-mono text-[11px] text-ink-soft truncate">
-            {meta.join(' · ')}
+            {meta.map((m, i) => (
+              <span key={i}>
+                {m}
+                {i < meta.length - 1 && (
+                  <span className="opacity-70 mx-1">·</span>
+                )}
+              </span>
+            ))}
           </div>
         )}
       </div>
