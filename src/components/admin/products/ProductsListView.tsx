@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Product } from '@/types';
 import { Search, Plus, Download, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import ProductCardMobile from './ProductCardMobile';
-import ProductsTableDesktop from './ProductsTableDesktop';
+import { cn } from '@/lib/utils';
+import StatusDot from '../editorial/StatusDot';
 
 interface Props {
   products: Product[];
@@ -20,12 +19,12 @@ type StatusFilter = 'all' | 'available' | 'sold';
 
 const FILTERS: { key: StatusFilter; label: string }[] = [
   { key: 'all', label: 'Wszystkie' },
-  { key: 'available', label: 'Dostępny' },
-  { key: 'sold', label: 'Sprzedany' },
+  { key: 'available', label: 'Dostępne' },
+  { key: 'sold', label: 'Sprzedane' },
 ];
 
 const ProductsListView = ({
-  products, onEdit, onCopy, onDelete, onAdd, onExport, onRefresh, refreshing
+  products, onEdit, onAdd, onExport, onRefresh, refreshing,
 }: Props) => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<StatusFilter>('all');
@@ -37,131 +36,133 @@ const ProductsListView = ({
       if (!q) return true;
       return (
         p.model.toLowerCase().includes(q) ||
-        p.shortDescription.toLowerCase().includes(q) ||
+        (p.shortDescription || '').toLowerCase().includes(q) ||
         (p.specs.serialNumber || '').toLowerCase().includes(q)
       );
     });
   }, [products, search, filter]);
 
   return (
-    <div className="space-y-4 pb-24 lg:pb-0">
-      {/* Toolbar — desktop */}
-      <div className="hidden lg:flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 flex-1 max-w-2xl">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-admin-muted" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Szukaj po modelu, nr seryjnym..."
-              className="w-full h-10 pl-10 pr-3 rounded-lg border border-admin-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-admin-orange/30 focus:border-admin-orange"
-            />
-          </div>
-          <div className="flex gap-1 bg-white border border-admin-border rounded-lg p-1">
-            {FILTERS.map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key)}
-                className={`px-3 h-8 rounded-md text-xs font-medium transition-colors ${
-                  filter === f.key
-                    ? 'bg-admin-orange text-white'
-                    : 'text-admin-muted hover:text-admin-text'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {onRefresh && (
-            <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing}>
-              <RefreshCw className={`h-4 w-4 mr-1.5 ${refreshing ? 'animate-spin' : ''}`} />
-              Odśwież
-            </Button>
-          )}
-          {onExport && (
-            <Button variant="outline" size="sm" onClick={onExport}>
-              <Download className="h-4 w-4 mr-1.5" />
-              Eksport
-            </Button>
-          )}
-          <Button size="sm" onClick={onAdd} className="bg-admin-orange hover:bg-admin-orange/90 text-white">
-            <Plus className="h-4 w-4 mr-1.5" />
-            Dodaj produkt
-          </Button>
-        </div>
-      </div>
+    <div className="max-w-5xl mx-auto pb-24 lg:pb-12">
+      {/* Header */}
+      <header className="mb-6">
+        <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-editorial-muted mb-2">
+          {filtered.length} {filtered.length === 1 ? 'pozycja' : filtered.length < 5 ? 'pozycje' : 'pozycji'}
+        </p>
+        <h1 className="font-editorial text-3xl lg:text-4xl text-editorial-ink">Katalog</h1>
+        <div className="mt-6 border-b border-editorial-line" />
+      </header>
 
-      {/* Toolbar — mobile */}
-      <div className="lg:hidden space-y-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-admin-muted" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Szukaj produktów..."
-            className="w-full h-11 pl-10 pr-3 rounded-xl border border-admin-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-admin-orange/30 focus:border-admin-orange"
-          />
-        </div>
-        <div className="flex gap-2 overflow-x-auto -mx-1 px-1">
+      {/* Toolbar: filters + search + actions */}
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        <div className="flex">
           {FILTERS.map((f) => (
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
-              className={`shrink-0 px-3 h-8 rounded-full text-xs font-medium border transition-colors ${
+              className={cn(
+                'px-3 h-8 text-[11px] font-bold tracking-[0.15em] uppercase transition-colors',
                 filter === f.key
-                  ? 'bg-admin-orange border-admin-orange text-white'
-                  : 'bg-white border-admin-border text-admin-muted'
-              }`}
+                  ? 'bg-editorial-ink text-white'
+                  : 'text-editorial-muted hover:text-editorial-ink'
+              )}
             >
               {f.label}
             </button>
           ))}
         </div>
+        <div className="relative flex-1 min-w-[180px]">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-editorial-muted" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Szukaj…"
+            className="w-full h-8 pl-7 pr-3 border-b border-editorial-line bg-transparent text-sm text-editorial-ink placeholder:text-editorial-muted focus:outline-none focus:border-editorial-ink"
+          />
+        </div>
+        <div className="hidden lg:flex items-center gap-1">
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              disabled={refreshing}
+              className="px-3 h-8 text-[11px] font-bold tracking-[0.15em] uppercase text-editorial-muted hover:text-editorial-ink transition-colors inline-flex items-center gap-1.5"
+            >
+              <RefreshCw className={cn('h-3 w-3', refreshing && 'animate-spin')} />
+              Odśwież
+            </button>
+          )}
+          {onExport && (
+            <button
+              onClick={onExport}
+              className="px-3 h-8 text-[11px] font-bold tracking-[0.15em] uppercase text-editorial-muted hover:text-editorial-ink transition-colors inline-flex items-center gap-1.5"
+            >
+              <Download className="h-3 w-3" />
+              Eksport
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Desktop table */}
-      <div className="hidden lg:block">
-        <ProductsTableDesktop
-          products={filtered}
-          onEdit={onEdit}
-          onCopy={onCopy}
-          onDelete={onDelete}
-        />
+      {/* List */}
+      {filtered.length === 0 ? (
+        <p className="text-center py-16 text-sm text-editorial-muted font-editorial italic">
+          Brak produktów
+        </p>
+      ) : (
+        <ul className="border-t border-editorial-line">
+          {filtered.map((p, idx) => {
+            const num = String(idx + 1).padStart(2, '0');
+            const meta: string[] = [];
+            if (p.specs.serialNumber) meta.push(`#${p.specs.serialNumber}`);
+            if (p.specs.productionYear) meta.push(p.specs.productionYear);
+            if (p.specs.workingHours) meta.push(`${p.specs.workingHours} mh`);
+            if (p.specs.mastLiftingCapacity || p.specs.capacity)
+              meta.push(`${p.specs.mastLiftingCapacity || p.specs.capacity} kg`);
+            if (p.specs.liftHeight) meta.push(`${p.specs.liftHeight} mm`);
+
+            return (
+              <li key={p.id} className="border-b border-editorial-line">
+                <button
+                  onClick={() => onEdit(p)}
+                  className="w-full flex items-start gap-4 py-4 text-left group"
+                >
+                  <span className="text-[10px] font-bold tracking-[0.2em] text-editorial-accent w-7 pt-1 shrink-0">
+                    {num}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {p.isFeatured && (
+                        <span className="text-[9px] font-bold tracking-[0.2em] uppercase text-editorial-accent">
+                          ★ Polecany
+                        </span>
+                      )}
+                      <span className="font-editorial text-[15px] text-editorial-ink group-hover:text-editorial-accent transition-colors">
+                        {p.model}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-editorial-muted mt-1 leading-relaxed">
+                      {meta.join(' · ') || '—'}
+                    </div>
+                  </div>
+                  <StatusDot status={p.availabilityStatus} className="mt-2 shrink-0" />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <div className="mt-4 text-[11px] text-editorial-muted text-center">
+        Wyświetlono {filtered.length} z {products.length}
       </div>
 
-      {/* Mobile cards */}
-      <div className="lg:hidden space-y-3">
-        {filtered.length === 0 ? (
-          <div className="text-center py-10 text-admin-muted text-sm bg-white rounded-xl border border-admin-border">
-            Brak produktów
-          </div>
-        ) : (
-          filtered.map((p) => (
-            <ProductCardMobile
-              key={p.id}
-              product={p}
-              onEdit={onEdit}
-              onCopy={onCopy}
-              onDelete={onDelete}
-            />
-          ))
-        )}
-      </div>
-
-      <div className="text-xs text-admin-muted text-center">
-        Wyświetlono {filtered.length} z {products.length} produktów
-      </div>
-
-      {/* Mobile sticky FAB */}
+      {/* Sticky add button */}
       <button
         onClick={onAdd}
-        className="lg:hidden fixed bottom-20 right-4 z-30 h-14 px-5 rounded-full bg-admin-orange text-white font-semibold shadow-lg shadow-admin-orange/30 inline-flex items-center gap-2 active:scale-95 transition-transform"
+        className="fixed lg:sticky bottom-16 lg:bottom-4 left-4 right-4 lg:left-auto lg:right-auto lg:mt-6 lg:max-w-xs lg:mx-auto lg:flex z-30 inline-flex items-center justify-center gap-2 h-11 border border-editorial-ink bg-white/95 backdrop-blur text-editorial-ink hover:bg-editorial-ink hover:text-white text-[11px] font-bold tracking-[0.2em] uppercase transition-colors"
       >
-        <Plus className="h-5 w-5" />
+        <Plus className="h-3.5 w-3.5" />
         Dodaj produkt
       </button>
     </div>

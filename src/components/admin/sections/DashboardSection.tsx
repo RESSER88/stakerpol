@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Package, Inbox, CheckCircle2, Plus, Download, List, HelpCircle, ArrowRight, Pencil } from 'lucide-react';
+import { ArrowRight, Package } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import type { AdminSection } from '../layout/types';
 import type { Product } from '@/types';
+import StatusDot from '../editorial/StatusDot';
 
 interface Props {
   productCount: number;
@@ -31,138 +29,147 @@ const DashboardSection = ({ productCount, products, onNavigate, onAddProduct, on
     load();
   }, []);
 
-  const availableCount = products.filter(p => {
-    // Default: treat all as available unless we have explicit info
-    return true;
-  }).length;
+  const availableCount = products.filter(
+    (p) => (p.availabilityStatus || 'available') === 'available'
+  ).length;
 
   const greeting = (() => {
     const h = new Date().getHours();
-    if (h < 12) return 'Dzień dobry';
-    if (h < 18) return 'Miłego dnia';
-    return 'Dobry wieczór';
+    if (h < 12) return { pre: 'Dzień', accent: 'dobry.' };
+    if (h < 18) return { pre: 'Miłego', accent: 'dnia.' };
+    return { pre: 'Dobry', accent: 'wieczór.' };
   })();
 
-  // Last 2 edited products by updated_at
+  const today = new Date().toLocaleDateString('pl-PL', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
   const recentlyEdited = [...products]
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 2);
 
   const stats = [
-    { label: 'Produkty w katalogu', value: productCount, icon: Package, accent: 'text-admin-orange' },
-    { label: 'Nowe zapytania', value: newLeadsCount, icon: Inbox, accent: 'text-admin-green' },
-    { label: 'Dostępnych', value: availableCount, icon: CheckCircle2, accent: 'text-admin-orange' },
+    { label: 'Produkty', value: productCount },
+    { label: 'Nowe zapytania', value: loading ? '…' : newLeadsCount },
+    { label: 'Dostępnych', value: availableCount },
   ];
 
-  const quickActions = [
-    { label: 'Dodaj produkt', icon: Plus, onClick: onAddProduct },
-    { label: 'Eksport magazynu', icon: Download, onClick: () => onNavigate('export') },
-    { label: 'Lista produktów', icon: List, onClick: () => onNavigate('products') },
-    { label: 'Zarządzaj FAQ', icon: HelpCircle, onClick: () => onNavigate('faq') },
+  const quickActions: { label: string; onClick: () => void }[] = [
+    { label: 'Dodaj produkt', onClick: onAddProduct },
+    { label: 'Eksport magazynu', onClick: () => onNavigate('export') },
+    { label: 'Lista produktów', onClick: () => onNavigate('products') },
+    { label: 'Zarządzaj FAQ', onClick: () => onNavigate('faq') },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Hero / greeting */}
-      <div className="rounded-2xl bg-admin-dark p-6 lg:p-8 -mx-4 lg:mx-0 lg:rounded-2xl">
-        <h1 className="text-xl lg:text-2xl font-bold text-white mb-1">{greeting} 👋</h1>
-        <p className="text-sm text-white/60 mb-5">Oto co dzieje się dziś w Twoim panelu</p>
-
-        <div className="grid grid-cols-3 gap-3">
-          {stats.map((s) => {
-            const Icon = s.icon;
-            return (
-              <div key={s.label} className="bg-white/5 backdrop-blur rounded-xl p-3 lg:p-4 border border-white/10">
-                <Icon className={`h-4 w-4 mb-2 ${s.accent}`} />
-                <div className="text-xl lg:text-3xl font-bold text-white leading-tight">
-                  {loading && s.label === 'Nowe zapytania' ? '…' : s.value}
-                </div>
-                <div className="text-[10px] lg:text-xs text-white/60 mt-1 leading-tight">{s.label}</div>
-              </div>
-            );
-          })}
-        </div>
-
+    <div className="max-w-3xl mx-auto space-y-12">
+      {/* Greeting */}
+      <header>
+        <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-editorial-muted mb-4">
+          {today}
+        </p>
+        <h1 className="font-editorial text-4xl lg:text-5xl text-editorial-ink leading-tight">
+          {greeting.pre}{' '}
+          <em className="text-editorial-accent not-italic font-normal italic">
+            {greeting.accent}
+          </em>
+        </h1>
         {newLeadsCount > 0 && (
           <button
             onClick={() => onNavigate('inquiries')}
-            className="mt-4 w-full flex items-center justify-between gap-2 bg-admin-green/20 hover:bg-admin-green/30 border border-admin-green/40 rounded-xl px-4 py-3 transition-colors text-left"
+            className="mt-6 inline-flex items-center gap-2 text-sm text-editorial-ink hover:text-editorial-accent transition-colors group"
           >
-            <div className="flex items-center gap-2 min-w-0">
-              <Inbox className="h-4 w-4 text-admin-green shrink-0" />
-              <span className="text-sm text-white font-medium truncate">
-                Masz {newLeadsCount} {newLeadsCount === 1 ? 'nowe zapytanie' : 'nowych zapytań'}
-              </span>
-            </div>
-            <ArrowRight className="h-4 w-4 text-admin-green shrink-0" />
+            <span className="h-1.5 w-1.5 rounded-full bg-editorial-ok animate-pulse" />
+            Masz {newLeadsCount} {newLeadsCount === 1 ? 'nowe zapytanie' : 'nowych zapytań'}
+            <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
           </button>
         )}
-      </div>
+      </header>
+
+      {/* Stats — vertical lines */}
+      <section className="grid grid-cols-3 border-y border-editorial-line py-8">
+        {stats.map((s, i) => (
+          <div
+            key={s.label}
+            className={
+              i > 0
+                ? 'pl-4 lg:pl-8 border-l border-editorial-line'
+                : 'pr-4 lg:pr-8'
+            }
+          >
+            <div className="font-editorial text-3xl lg:text-4xl text-editorial-ink">
+              {s.value}
+            </div>
+            <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-editorial-muted mt-2">
+              {s.label}
+            </div>
+          </div>
+        ))}
+      </section>
 
       {/* Quick actions */}
-      <div>
-        <h2 className="text-sm font-semibold text-admin-text mb-3">Szybkie akcje</h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {quickActions.map((a) => {
-            const Icon = a.icon;
-            return (
-              <button
-                key={a.label}
-                onClick={a.onClick}
-                className="bg-white border border-admin-border rounded-xl p-4 flex flex-col items-start gap-2 hover:border-admin-orange hover:shadow-md transition-all text-left"
-              >
-                <div className="h-9 w-9 rounded-lg bg-admin-orange/10 flex items-center justify-center">
-                  <Icon className="h-4 w-4 text-admin-orange" />
-                </div>
-                <span className="text-sm font-medium text-admin-text">{a.label}</span>
-              </button>
-            );
-          })}
+      <section>
+        <div className="flex items-baseline gap-3 mb-2">
+          <span className="text-xs font-bold tracking-[0.2em] text-editorial-accent">01</span>
+          <h2 className="font-editorial text-lg text-editorial-ink">— Szybkie akcje</h2>
         </div>
-      </div>
+        <ul className="border-t border-editorial-line">
+          {quickActions.map((a) => (
+            <li key={a.label} className="border-b border-editorial-line">
+              <button
+                onClick={a.onClick}
+                className="w-full flex items-center justify-between py-4 text-left group"
+              >
+                <span className="font-editorial text-base text-editorial-ink group-hover:text-editorial-accent transition-colors">
+                  {a.label}
+                </span>
+                <ArrowRight className="h-4 w-4 text-editorial-muted group-hover:text-editorial-accent group-hover:translate-x-1 transition-all" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {/* Recently edited */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-admin-text">Ostatnio edytowane</h2>
-          <Button variant="ghost" size="sm" onClick={() => onNavigate('products')}>
-            Wszystkie produkty <ArrowRight className="h-3 w-3 ml-1" />
-          </Button>
-        </div>
-        {recentlyEdited.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center text-admin-muted text-sm">Brak produktów</CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      {recentlyEdited.length > 0 && (
+        <section>
+          <div className="flex items-baseline gap-3 mb-2">
+            <span className="text-xs font-bold tracking-[0.2em] text-editorial-accent">02</span>
+            <h2 className="font-editorial text-lg text-editorial-ink">— Ostatnio edytowane</h2>
+          </div>
+          <ul className="border-t border-editorial-line">
             {recentlyEdited.map((p) => (
-              <Card key={p.id} className="overflow-hidden">
-                <CardContent className="p-3 flex items-center gap-3">
-                  <div className="h-16 w-16 rounded-lg bg-admin-bg overflow-hidden shrink-0 flex items-center justify-center">
+              <li key={p.id} className="border-b border-editorial-line">
+                <button
+                  onClick={() => onEditProduct(p)}
+                  className="w-full flex items-center gap-4 py-4 text-left group"
+                >
+                  <div className="h-12 w-12 bg-editorial-line/40 overflow-hidden shrink-0 flex items-center justify-center">
                     {p.image ? (
                       <img src={p.image} alt={p.model} className="h-full w-full object-cover" loading="lazy" />
                     ) : (
-                      <Package className="h-6 w-6 text-admin-muted" />
+                      <Package className="h-5 w-5 text-editorial-muted" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-admin-text truncate">{p.model}</div>
-                    <div className="text-xs text-admin-muted">
-                      {p.specs?.serialNumber || '—'} · {p.specs?.productionYear || '—'}
+                    <div className="font-editorial text-base text-editorial-ink group-hover:text-editorial-accent transition-colors truncate">
+                      {p.model}
                     </div>
-                    <div className="text-[10px] text-admin-muted mt-1">
-                      Edytowano {new Date(p.updatedAt).toLocaleDateString('pl-PL')}
+                    <div className="text-xs text-editorial-muted mt-0.5">
+                      {p.specs?.serialNumber || '—'} · {new Date(p.updatedAt).toLocaleDateString('pl-PL')}
                     </div>
                   </div>
-                  <Button size="icon" variant="ghost" onClick={() => onEditProduct(p)} aria-label="Edytuj">
-                    <Pencil className="h-4 w-4 text-admin-orange" />
-                  </Button>
-                </CardContent>
-              </Card>
+                  <StatusDot status={p.availabilityStatus} />
+                  <ArrowRight className="h-4 w-4 text-editorial-muted group-hover:text-editorial-accent transition-colors" />
+                </button>
+              </li>
             ))}
-          </div>
-        )}
-      </div>
+          </ul>
+        </section>
+      )}
     </div>
   );
 };
