@@ -93,6 +93,8 @@ const ProductManager = ({
         initialProduct={initialProduct}
         initialImages={productImages}
         isCreate={isCreate}
+        addProductAsync={addProductAsync}
+        updateProductAsync={updateProductAsync}
         onCopy={(p) => {
           setIsEditDialogOpen(false);
           setTimeout(() => handleCopy(p), 100);
