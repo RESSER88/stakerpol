@@ -74,9 +74,9 @@ export const useChapterCompletion = (
       id: 6,
       number: '06',
       title: 'SEO',
-      description: 'Wkrótce',
+      description: 'Schema.org, GTIN, MPN',
       complete: ch06,
-      enabled: false,
+      enabled: !isCreate || hasId,
     },
   ];
 };
