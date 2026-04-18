@@ -17,7 +17,8 @@ const HomeReadyToBuy = () => {
           Gotowy na zakup?
         </h2>
         <p className="text-sm md:text-base text-white/85 mt-3">
-          Skontaktuj się — pomożemy dobrać wózek do Twojego magazynu.
+          Skontaktuj się — pomożemy dobrać wózek do Twojego magazynu.{' '}
+          <strong className="text-white">Odpowiadamy tego samego dnia.</strong>
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center items-stretch sm:items-center mt-6">
           <a
@@ -39,6 +40,9 @@ const HomeReadyToBuy = () => {
             WhatsApp
           </a>
         </div>
+        <p className="text-[11px] text-white/70 mt-4">
+          Odpowiadamy tego samego dnia · pon-pt 8:00-17:00
+        </p>
       </div>
     </section>
   );

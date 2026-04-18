@@ -113,7 +113,7 @@ const HomeHeroForm = ({ isInHero = false }: HomeHeroFormProps) => {
     <form onSubmit={handleSubmit} noValidate>
       <h3 className="text-base font-extrabold text-navy-brand">Zapytaj o wózek</h3>
       <p className="text-xs text-ink-soft mt-1 mb-3.5">
-        Opisz czego szukasz — oddzwonimy.
+        Opisz potrzebę — odpowiemy w ciągu 30 minut. <strong className="text-ink">Bez zobowiązań.</strong>
       </p>
 
       <div className="space-y-2.5">

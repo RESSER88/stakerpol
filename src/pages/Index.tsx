@@ -67,17 +67,29 @@ const Index = () => {
       >
         <div className="container-custom max-w-[1200px] py-10 lg:py-12 px-5 lg:px-8 w-full">
           <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 items-center">
-            <div className="space-y-4 lg:space-y-5 animate-fade-in">
-              <div className="font-mono text-[11px] lg:text-xs tracking-[0.14em] text-white/70 uppercase">
+            <div className="space-y-4 lg:space-y-5">
+              <div
+                className="font-mono text-[11px] lg:text-xs tracking-[0.14em] text-white/70 uppercase animate-fade-in"
+                style={{ animationDelay: '0ms', animationFillMode: 'both' }}
+              >
                 // Używane wózki Toyota · od 2008
               </div>
-              <h1 className="text-2xl md:text-4xl lg:text-[clamp(28px,3.6vw,42px)] font-extrabold leading-[1.1] tracking-tight">
+              <h1
+                className="text-2xl md:text-4xl lg:text-[clamp(28px,3.6vw,42px)] font-extrabold leading-[1.1] tracking-tight animate-fade-in"
+                style={{ animationDelay: '0ms', animationFillMode: 'both' }}
+              >
                 {t('heroTitle')}
               </h1>
-              <p className="text-sm md:text-base lg:text-[15px] text-white/90 leading-[1.55] max-w-[480px]">
+              <p
+                className="text-sm md:text-base lg:text-[15px] text-white/90 leading-[1.55] max-w-[480px] animate-fade-in"
+                style={{ animationDelay: '100ms', animationFillMode: 'both' }}
+              >
                 {t('heroSubtitle')}
               </p>
-              <div className="flex flex-col sm:flex-row gap-2.5 lg:gap-3 pt-2">
+              <div
+                className="flex flex-col sm:flex-row gap-2.5 lg:gap-3 pt-2 animate-fade-in"
+                style={{ animationDelay: '200ms', animationFillMode: 'both' }}
+              >
                 <Link
                   to="/products"
                   className="inline-flex items-center justify-center bg-orange-cta hover:opacity-90 text-white font-bold text-sm py-3.5 px-6 rounded-md transition-opacity"
@@ -94,7 +106,10 @@ const Index = () => {
             </div>
 
             {/* Formularz po prawej — tylko desktop */}
-            <div className="hidden lg:block animate-fade-in">
+            <div
+              className="hidden lg:block animate-fade-in"
+              style={{ animationDelay: '300ms', animationFillMode: 'both' }}
+            >
               <div
                 className="bg-white rounded-lg p-[22px] max-w-[360px] ml-auto"
                 style={{ boxShadow: '0 12px 30px -10px rgba(0,0,0,0.25)' }}

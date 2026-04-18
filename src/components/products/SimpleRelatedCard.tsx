@@ -19,7 +19,7 @@ const SimpleRelatedCard = ({ product }: Props) => {
   return (
     <Link
       to={`/products/${slugOrId}`}
-      className="group block bg-white border border-border-line rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+      className="group block bg-white border border-border-line rounded-lg overflow-hidden cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-8px_rgba(0,0,0,0.15)]"
     >
       <div className="relative bg-surface-soft">
         <div className="aspect-[3/4]">
@@ -35,7 +35,14 @@ const SimpleRelatedCard = ({ product }: Props) => {
         <h3 className="font-bold text-sm text-ink mb-1 truncate">{product.model}</h3>
         {meta.length > 0 && (
           <div className="font-mono text-[11px] text-ink-soft truncate">
-            {meta.join(' · ')}
+            {meta.map((m, i) => (
+              <span key={i}>
+                {m}
+                {i < meta.length - 1 && (
+                  <span className="opacity-70 mx-1">·</span>
+                )}
+              </span>
+            ))}
           </div>
         )}
       </div>
