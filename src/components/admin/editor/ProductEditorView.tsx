@@ -187,7 +187,7 @@ const ProductEditorView = ({
       </header>
 
       {/* Body */}
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 grid gap-6 md:grid-cols-[260px_1fr]">
+      <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 pb-32 md:pb-12 grid gap-6 md:grid-cols-[260px_1fr]">
         <aside>
           <ChaptersList chapters={chapters} active={activeChapter} onSelect={handleSelectChapter} />
         </aside>
