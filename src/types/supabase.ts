@@ -44,6 +44,9 @@ export const mapSupabaseProductToProduct = (supabaseProduct: SupabaseProduct, im
     warrantyMonths: (supabaseProduct as any).warranty_months ?? 3,
     isFeatured: (supabaseProduct as any).is_featured ?? false,
     slogan: (supabaseProduct as any).slogan || '',
+    priceDisplayMode: (supabaseProduct as any).price_display_mode || 'inquiry_only',
+    netPrice: (supabaseProduct as any).net_price ?? null,
+    priceCurrency: (supabaseProduct as any).price_currency || 'PLN',
     specs: {
       productionYear: supabaseProduct.production_year?.toString() || '',
       serialNumber: supabaseProduct.serial_number || '',
@@ -104,6 +107,10 @@ export const mapProductToSupabaseInsert = (product: any): SupabaseProductInsert 
       ? Number(product.warrantyMonths) : 3,
     is_featured: !!product.isFeatured,
     slogan: product.slogan || null,
+    price_display_mode: product.priceDisplayMode || 'inquiry_only',
+    net_price: product.netPrice != null && product.netPrice !== ''
+      ? Number(product.netPrice) : null,
+    price_currency: product.priceCurrency || 'PLN',
   } as any;
 };
 
