@@ -3,45 +3,50 @@ import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+// Polish phone format: optional +48, then 9 digits starting 5-9, with optional spaces/dashes
 const phoneSchema = z
   .string()
   .trim()
-  .regex(/^[+]?[0-9\s-]{9,15}$/, { message: 'Podaj poprawny numer telefonu' });
+  .max(20, { message: 'Numer jest za długi' })
+  .regex(/^(\+48\s?)?[5-9]\d{2}[\s-]?\d{3}[\s-]?\d{3}$/, {
+    message: 'Podaj poprawny numer telefonu',
+  });
 
 export const useLeadSubmit = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const submit = async (phone: string, productId?: string) => {
+    setError(null);
     const parsed = phoneSchema.safeParse(phone);
     if (!parsed.success) {
-      toast({
-        title: 'Błędny numer',
-        description: parsed.error.errors[0]?.message || 'Sprawdź numer telefonu',
-        variant: 'destructive',
-      });
+      const msg = parsed.error.errors[0]?.message || 'Podaj poprawny numer telefonu';
+      setError(msg);
       return false;
     }
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('leads' as any).insert({
+      const { error: dbError } = await supabase.from('leads' as any).insert({
         phone: parsed.data,
         product_id: productId || null,
         source: 'product_page_inline',
         page_url: typeof window !== 'undefined' ? window.location.href : null,
         user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
       } as any);
-      if (error) throw error;
+      if (dbError) throw dbError;
       toast({
         title: '✅ Dziękujemy!',
         description: 'Oddzwonimy w ciągu 30 minut w godzinach pracy.',
       });
       return true;
     } catch (e: any) {
-      console.error('Lead submit error:', e);
+      console.error('Lead submit error');
+      const msg = 'Coś poszło nie tak. Spróbuj zadzwonić: 694 133 592';
+      setError(msg);
       toast({
         title: 'Nie udało się wysłać',
-        description: e?.message || 'Spróbuj ponownie za chwilę.',
+        description: msg,
         variant: 'destructive',
       });
       return false;
@@ -50,5 +55,5 @@ export const useLeadSubmit = () => {
     }
   };
 
-  return { submit, isSubmitting };
+  return { submit, isSubmitting, error, clearError: () => setError(null) };
 };
