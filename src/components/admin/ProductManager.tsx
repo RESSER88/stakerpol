@@ -1,4 +1,14 @@
 import { useState } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import ProductDetailsModal from './ProductDetailsModal';
 import ProductsListView from './products/ProductsListView';
 import { Product } from '@/types';
@@ -38,6 +48,7 @@ const ProductManager = ({
   onNavigate,
 }: ProductManagerProps) => {
   const [refreshing, setRefreshing] = useState(false);
+  const [deleteCandidate, setDeleteCandidate] = useState<Product | null>(null);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -48,10 +59,11 @@ const ProductManager = ({
   };
 
   const handleSave = (product: Product, images: string[], benefits: any[] = []) => {
-    const isEditingExisting = selectedProduct &&
+    const isEditingExisting =
+      selectedProduct &&
       selectedProduct.id &&
       !selectedProduct.model.includes('(kopia)') &&
-      products.some(p => p.id === selectedProduct.id);
+      products.some((p) => p.id === selectedProduct.id);
 
     if (isEditingExisting) {
       updateProduct(product, images, benefits);
@@ -62,13 +74,21 @@ const ProductManager = ({
     setIsEditDialogOpen(false);
   };
 
+  const requestDelete = (p: Product) => setDeleteCandidate(p);
+  const confirmDelete = () => {
+    if (deleteCandidate) {
+      handleDelete(deleteCandidate);
+      setDeleteCandidate(null);
+    }
+  };
+
   return (
     <>
       <ProductsListView
         products={products}
         onEdit={handleEdit}
         onCopy={handleCopy}
-        onDelete={handleDelete}
+        onDelete={requestDelete}
         onAdd={handleAdd}
         onExport={onNavigate ? () => onNavigate('export') : undefined}
         onRefresh={handleRefresh}
@@ -84,7 +104,29 @@ const ProductManager = ({
         onImagesChange={setProductImages}
         onSave={handleSave}
         products={products}
+        onCopy={handleCopy}
+        onDelete={requestDelete}
       />
+
+      <AlertDialog open={!!deleteCandidate} onOpenChange={(o) => !o && setDeleteCandidate(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-editorial">Usunąć produkt?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Czy na pewno chcesz usunąć produkt „{deleteCandidate?.model}"? Tej operacji nie można cofnąć.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-editorial-bad hover:bg-editorial-bad/90 text-white"
+            >
+              Usuń
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
