@@ -23,8 +23,8 @@ const Index = () => {
 
   // 4 wyróżnione lub losowe produkty dostępne
   const featuredProducts = useMemo(() => {
-    const available = products.filter((p) => p.availability !== 'sold');
-    const featured = available.filter((p) => (p as any).is_featured);
+    const available = products.filter((p: any) => p.availabilityStatus !== 'sold');
+    const featured = available.filter((p: any) => p.is_featured);
     if (featured.length >= 4) return featured.slice(0, 4);
     return getRandomItems(available, 4);
   }, [products]);
