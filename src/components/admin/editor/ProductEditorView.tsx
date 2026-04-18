@@ -121,14 +121,14 @@ const ProductEditorView = ({
     }
   };
 
-  const saveImagesOrTechnical = async () => {
+  const saveAll = async () => {
     if (mode === 'create' || !product.id) {
       toast.error('Najpierw zapisz dane podstawowe (rozdział 02)');
       return;
     }
     setSaving(true);
     try {
-      await updateProductAsync(product, images, []);
+      await updateProductAsync(product, images, benefits);
       toast.success('✓ Zapisano');
     } catch (e: any) {
       toast.error('Nie udało się zapisać', { description: e?.message });
