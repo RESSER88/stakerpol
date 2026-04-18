@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Product } from '@/types';
-import { useSupabaseProducts } from '@/hooks/useSupabaseProducts';
 import { toast } from 'sonner';
 import { X, MoreHorizontal, Copy, Trash2 } from 'lucide-react';
 import {
