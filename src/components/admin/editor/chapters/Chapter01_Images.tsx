@@ -19,7 +19,7 @@ const Chapter01_Images = ({ images, onChange, onSave, saving }: Props) => {
         maxImages={10}
         useSupabaseStorage
       />
-      <div className="sticky bottom-0 bg-editorial-bg pt-4 pb-2 border-t border-editorial-line flex justify-end">
+      <div className="sticky bottom-0 z-20 bg-editorial-bg pt-4 pb-4 border-t border-editorial-line flex justify-end -mx-4 md:mx-0 px-4 md:px-0">
         <EditorialButton onClick={onSave} disabled={saving}>
           {saving ? 'Zapisuję…' : 'Zapisz zmiany'}
         </EditorialButton>

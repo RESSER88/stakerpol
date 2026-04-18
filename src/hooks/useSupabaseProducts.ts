@@ -205,12 +205,7 @@ export const useSupabaseProducts = () => {
       // Force immediate refresh of both admin and public queries
       queryClient.invalidateQueries({ queryKey: ['supabase-products'] });
       queryClient.invalidateQueries({ queryKey: ['public-products'] });
-      
-      toast({
-        title: "✅ Produkt dodany pomyślnie",
-        description: "Nowy produkt został zapisany w bazie danych i będzie widoczny na stronie w ciągu kilku sekund.",
-        duration: 5000
-      });
+      // Toast handled by ProductEditorView ("✓ Zapisano")
     },
     onError: (error: any) => {
       console.error('Add product error:', error);
@@ -316,12 +311,7 @@ export const useSupabaseProducts = () => {
       // Force immediate refresh of both admin and public queries
       queryClient.invalidateQueries({ queryKey: ['supabase-products'] });
       queryClient.invalidateQueries({ queryKey: ['public-products'] });
-      
-      toast({
-        title: "✅ Produkt zaktualizowany pomyślnie",
-        description: "Zmiany zostały zapisane w bazie danych i będą widoczne na stronie w ciągu kilku sekund.",
-        duration: 5000
-      });
+      // Toast handled by ProductEditorView ("✓ Zapisano")
     },
     onError: (error: any) => {
       console.error('Update product error:', error);
