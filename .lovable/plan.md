@@ -1,133 +1,88 @@
 
-## Plan: Iteracja 2 — Hero, CTA i panel admin (strona produktu)
 
-### A. Migracja SQL (do akceptacji przed wdrożeniem)
+## Cel
+Przebudowa `/admin` na nowoczesny panel z mobile bottom-nav i desktop sidebarem. Zachowuję pełną logikę Supabase, autentykację, ProductManager, FAQManager, SEOManagerTool. Dodaję 2 nowe sekcje (Start, Zapytania) i wyodrębniam Eksport.
 
-```sql
--- Enum dostępności
-CREATE TYPE public.availability_status AS ENUM ('available', 'reserved', 'sold');
+## Architektura nawigacji
 
--- Nowe kolumny w products
-ALTER TABLE public.products
-  ADD COLUMN availability_status public.availability_status NOT NULL DEFAULT 'available',
-  ADD COLUMN condition_label text,
-  ADD COLUMN short_marketing_description text,
-  ADD COLUMN leasing_monthly_from_pln numeric,
-  ADD COLUMN warranty_months integer NOT NULL DEFAULT 3,
-  ADD COLUMN is_featured boolean NOT NULL DEFAULT false,
-  ADD COLUMN slogan text;
+**Sekcje (z ikonami Lucide):**
+- `Zap` Start — dashboard (statystyki: liczba produktów, leadów dziś/7 dni, ostatnie 5 zapytań)
+- `Package` Produkty — istniejący `ProductManager` (bez wbudowanego przycisku Eksport — przeniesiony)
+- `Inbox` Zapytania — nowa lista z `leads` + `price_inquiries` (filtr po `source`, sortowanie po `created_at`)
+- `Download` Eksport — wyodrębniony eksport stanu magazynu (PDF/JPG) z `ExportFormatModal`
+- `Search` SEO (desktop only) — `SEOManagerTool`
+- `HelpCircle` FAQ (desktop only) — `FAQManager`
 
--- Tabela zalet produktu
-CREATE TABLE public.product_benefits (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  product_id uuid NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
-  icon_name text NOT NULL DEFAULT 'check',
-  title text NOT NULL,
-  description text,
-  sort_order integer NOT NULL DEFAULT 0,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-CREATE INDEX idx_product_benefits_product ON public.product_benefits(product_id, sort_order);
-ALTER TABLE public.product_benefits ENABLE ROW LEVEL SECURITY;
+Mobile: 4 ikony (Start / Produkty / Zapytania / Eksport). SEO i FAQ schowane w "Więcej" w top barze (ikona MoreVertical → dropdown) — żeby nie tracić dostępu na mobile.
 
-CREATE POLICY "Anyone can view product benefits"
-  ON public.product_benefits FOR SELECT USING (true);
-CREATE POLICY "Only admins can insert product benefits"
-  ON public.product_benefits FOR INSERT TO authenticated
-  WITH CHECK (has_role(auth.uid(), 'admin'));
-CREATE POLICY "Only admins can update product benefits"
-  ON public.product_benefits FOR UPDATE TO authenticated
-  USING (has_role(auth.uid(), 'admin')) WITH CHECK (has_role(auth.uid(), 'admin'));
-CREATE POLICY "Only admins can delete product benefits"
-  ON public.product_benefits FOR DELETE TO authenticated
-  USING (has_role(auth.uid(), 'admin'));
-
--- Tabela leadów (inline formularz)
-CREATE TABLE public.leads (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  phone text NOT NULL,
-  product_id uuid REFERENCES public.products(id) ON DELETE SET NULL,
-  source text NOT NULL DEFAULT 'product_page_inline',
-  page_url text,
-  user_agent text,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Public can submit leads"
-  ON public.leads FOR INSERT WITH CHECK (true);
-CREATE POLICY "Only admins can view leads"
-  ON public.leads FOR SELECT USING (has_role(auth.uid(), 'admin'));
-CREATE POLICY "Only admins can update leads"
-  ON public.leads FOR UPDATE USING (has_role(auth.uid(), 'admin'));
-CREATE POLICY "Only admins can delete leads"
-  ON public.leads FOR DELETE USING (has_role(auth.uid(), 'admin'));
+## Tokeny CSS
+W `src/index.css` dodaję zmienne (HSL-friendly, by zachować Tailwind):
 ```
+--admin-orange: 24 95% 53%;   /* #F97316 */
+--admin-dark: 222 47% 11%;    /* #0F172A */
+--admin-bg: 210 40% 98%;      /* #F8FAFC */
+--admin-border: 214 32% 91%;  /* #E2E8F0 */
+--admin-text: 222 47% 17%;    /* #1E293B */
+--admin-muted: 215 16% 47%;   /* #64748B */
+--admin-green: 142 71% 45%;   /* #16A34A */
+--admin-red: 0 73% 51%;       /* #DC2626 */
+```
+W `tailwind.config.ts` mapuję jako `admin.orange`, `admin.dark` itd. (nie ruszam istniejących `stakerpol-*`).
 
-Mapowanie pól z briefu — wszystkie nowe (brak istniejących odpowiedników), brak konfliktu z obecnymi kolumnami.
+## Pliki
 
-### B. Panel administracyjny — `ProductForm.tsx`
+**Nowe:**
+- `src/components/admin/layout/AdminLayout.tsx` — `<div>` z conditional rendering: desktop sidebar (`hidden lg:flex w-[220px] fixed`) + main `lg:ml-[220px]` + mobile top bar + mobile bottom nav (`lg:hidden fixed bottom-0`)
+- `src/components/admin/layout/AdminSidebar.tsx` — desktop sidebar: logo "StakerPanel", lista linków NavLink z aktywnym stanem (border-left pomarańczowy), przycisk Wyloguj na dole
+- `src/components/admin/layout/AdminTopBar.tsx` — mobile top bar `bg-admin-dark` z białym tytułem (z context/route) + dropdown MoreVertical (SEO/FAQ/Wyloguj)
+- `src/components/admin/layout/AdminBottomNav.tsx` — fixed bottom, 4 zakładki, aktywna z `text-admin-orange` + górną krechą 2px pomarańczową
+- `src/components/admin/layout/AdminPageHeader.tsx` — desktop: breadcrumb (Panel / [sekcja]) + slot na actions po prawej
+- `src/components/admin/sections/DashboardSection.tsx` — Start: 4 karty KPI (produkty, leady dziś, leady 7 dni, niska dostępność), tabela 5 ostatnich leadów, link „Zobacz wszystkie"
+- `src/components/admin/sections/InquiriesSection.tsx` — Zapytania: tabela leadów z `leads` (kolumny: data, imię, telefon, email, źródło, wiadomość, akcje: tel:/mailto:), filtr po `source` (`home_hero_form` / `product_lead` / inne), sortowanie desc po `created_at`, paginacja 20/str
+- `src/components/admin/sections/ExportSection.tsx` — Eksport: 2 karty (PDF stanu magazynu, JPG), reuse logiki z `ProductManager` (`exportProductListToPDF/JPG`)
 
-Dodaję 5 nowych sekcji do istniejącego formularza edytora produktu:
+**Edytowane:**
+- `src/pages/Admin.tsx` — refaktor: zamiast Tabs używa stanu `activeSection` (lub query param `?section=`) i renderuje `AdminLayout` + odpowiednią sekcję. Cała logika auth/products bez zmian — przekazana jako prop do `ProductManager` w sekcji „produkty".
+- `src/components/admin/ProductManager.tsx` — usuwam wbudowany przycisk „Eksport stan magazyn" i `ExportFormatModal` (przeniesione do `ExportSection`). Pozostaje Odśwież + Dodaj Produkt.
+- `src/index.css` — dodanie tokenów `--admin-*`
+- `tailwind.config.ts` — dodanie `colors.admin.{orange,dark,bg,border,text,muted,green,red}`
 
-1. **Status i dostępność** — dropdown `availability_status` (3 opcje), dropdown `condition_label` (4 opcje), checkbox `is_featured`
-2. **Opis marketingowy** — textarea `short_marketing_description`, input `slogan`
-3. **Zalety produktu** — repeater (osobny `BenefitsEditor.tsx`): max 3 wpisy, każdy = ikona (select Lucide z whitelistą: check/battery/shield/zap/award/wrench/truck/clock), tytuł, opis. CRUD przez `product_benefits` (osobny zapis po `productId`).
-4. **Cena i leasing** — input numeryczny `leasing_monthly_from_pln` (nullable)
-5. **Gwarancja** — input numeryczny `warranty_months` (default 3)
+## Routing / aktywna sekcja
+Używam stanu lokalnego w `Admin.tsx` (`activeSection: 'start' | 'products' | 'inquiries' | 'export' | 'seo' | 'faq'`), domyślnie `'start'`. Każdy przycisk nav ustawia stan. Mapping tytułu top bara po `activeSection`. Brak zmian w React Router.
 
-Zapis: rozszerzenie `useSupabaseProducts.addProduct/updateProduct` o nowe pola + osobny upsert/delete dla `product_benefits` po zapisie produktu.
+## Zapytania — query Supabase
+```ts
+supabase.from('leads')
+  .select('id, created_at, name, phone, email, message, source, page_url')
+  .order('created_at', { ascending: false })
+  .range(page*20, page*20+19)
+```
+RLS już jest (admin czyta wszystko przez `has_role`). Jeśli brak policy SELECT dla admina — dodam migrację.
 
-### C. Frontend — strona produktu
+## Layout — szczegóły CSS
 
-Refaktor podzielony na nowe komponenty (mniejsze, kompozycyjne):
+Desktop:
+- Sidebar: `fixed top-0 left-0 h-screen w-[220px] bg-admin-dark text-white flex flex-col`
+- Logo: `px-6 py-5 text-xl font-bold` ("StakerPanel" + ikona Zap pomarańczowa)
+- Linki: `flex items-center gap-3 px-6 py-3 hover:bg-white/5`, aktywny: `bg-white/10 border-l-4 border-admin-orange`
+- Main: `lg:ml-[220px] min-h-screen bg-admin-bg`
+- Page header: `bg-white border-b border-admin-border px-8 py-4 flex items-center justify-between`
 
-**Nowe komponenty:**
-1. `ProductStatusBadges.tsx` — 2-3 badge nad tytułem
-2. `ProductKeySpecsBar.tsx` — pasek 4 parametrów (reuse logiki z karty `/products`)
-3. `ProductPriceBlock.tsx` — cena netto + leasing (warunkowo)
-4. `ProductCTAButtons.tsx` — 3 CTA (Zadzwoń, Wyślij zapytanie, WhatsApp)
-5. `ProductTrustStrip.tsx` — 4-ikonowy pasek (zastępuje obecny `ProductTrustSection` w hero, dawne karty przeniesione niżej)
-6. `ProductAboutSection.tsx` — „01 · O tym modelu" + opis + 3 zalety
-7. `ProductLeadCallback.tsx` — inline formularz „Zostaw numer" (zod walidacja PL phone, insert do `leads`)
-8. `ProductStickyBar.tsx` — sticky bottom bar (mobile only)
-9. `ProductImageBadges.tsx` — chipy ROK / Dostępny na zdjęciu (rozszerzenie `ProductImage.tsx`)
+Mobile:
+- Top bar: `lg:hidden sticky top-0 bg-admin-dark text-white px-4 h-14 flex items-center justify-between z-40`
+- Content: `pb-20` (miejsce na bottom nav)
+- Bottom nav: `lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-admin-border h-16 grid grid-cols-4 z-40`
+- Każda zakładka: kolumna ikona + label 11px; aktywna: `text-admin-orange` + `border-t-2 border-admin-orange -mt-px`
 
-**Zmiany w istniejących plikach:**
-- `ProductDetail.tsx` — nowy układ hero: status badges → tytuł (sam `model`) → slogan → key specs bar → price block → CTA (3 przyciski) → trust strip → about section → lead callback → (zachowane sekcje: specyfikacja, proces, FAQ, related) → sticky bar
-- `ProductInfo.tsx` — usuwam obecne 2 CTA (przenosi się do `ProductCTAButtons`); zostawiam tylko nagłówek „Specifications" + `ModernSpecificationsTable`
-- `ProductImage.tsx` — overlay chipów (top-left ROK, top-right availability pill) na głównym zdjęciu galerii
-- `FAQSection.tsx` (lub miejsce użycia w `ProductDetail.tsx`) — tytuł hardcoded „Najczęstsze pytania" zamiast `FAQ – ${product.model}`
-- Tytuł H1 — używam `product.model` 1:1 (już tak jest w `ProductDetail.tsx`); brief mówi „usuń frazy typu Używany jak nowy" — to są w nazwach modeli w bazie, **nie modyfikuję danych w DB** — dopisuję notkę dla użytkownika, że trzeba poprawić nazwy produktów ręcznie w panelu (lub zaakceptować, że tytuł = `model` + uzupełnić `slogan`)
+## Kolejność implementacji
+1. Tokeny CSS + tailwind
+2. AdminLayout + Sidebar + TopBar + BottomNav + PageHeader (puste sekcje)
+3. Refaktor `Admin.tsx` na nowy layout, podpięcie istniejących `ProductManager`/`SEOManagerTool`/`FAQManager`
+4. `DashboardSection` (zapytania COUNT z Supabase)
+5. `InquiriesSection`
+6. `ExportSection` + usunięcie eksportu z `ProductManager`
+7. Migracja RLS dla `leads` jeśli admin nie może SELECT (sprawdzę po refaktorze)
 
-**Hooki:**
-- `useProductBenefits(productId)` — fetch z `product_benefits` order by `sort_order`
-- `useLeadSubmit()` — insert do `leads` z walidacją zod
+## Co zostaje bez zmian
+- `useSupabaseAuth`, `AdminLogin`, ścieżki `/admin`, RLS produktów, ProductDetailsModal, formularze, eksport util `listExporter.ts`, klient Supabase.
 
-### D. Tłumaczenia
-+ ~25 kluczy × 5 języków w `src/utils/translations/products.ts`:
-- `aboutThisModel`, `keySpecs`, `priceNet`, `priceInquiry`, `leasingFrom`, `leasingMonthly`, `callNow`, `sendInquiry`, `whatsappContact`, `leaveNumberTitle`, `leaveNumberDesc`, `phonePlaceholder`, `requestCallback`, `sameDayResponse`, `availableNow`, `reserved`, `sold`, `featured`, `afterReview`, `inspectionCheck`, `warrantyMonths`, `nationwideDelivery`, `leasingAvailable`, `mostPopularQuestions`, `validPhoneRequired`
-
-### E. Pliki (lista finalna)
-
-**Migracja:** 1 plik SQL  
-**Backend hooks:** `src/hooks/useProductBenefits.ts` (nowy), `src/hooks/useLeadSubmit.ts` (nowy), `src/hooks/useSupabaseProducts.ts` (rozszerzenie)  
-**Admin:** `src/components/admin/ProductForm.tsx` (rozszerzenie), `src/components/admin/BenefitsEditor.tsx` (nowy)  
-**Frontend (nowe):** `ProductStatusBadges.tsx`, `ProductKeySpecsBar.tsx`, `ProductPriceBlock.tsx`, `ProductCTAButtons.tsx`, `ProductTrustStrip.tsx`, `ProductAboutSection.tsx`, `ProductLeadCallback.tsx`, `ProductStickyBar.tsx` (wszystkie w `src/components/products/`)  
-**Frontend (zmiany):** `src/pages/ProductDetail.tsx`, `src/components/products/ProductInfo.tsx`, `src/components/products/ProductImage.tsx`  
-**Typy:** `src/types/index.ts` (dodanie nowych pól do `Product`), `src/types/supabase.ts` regeneruje się automatycznie  
-**Tłumaczenia:** `src/utils/translations/products.ts`
-
-### F. Edge cases (potwierdzone wymagania briefu)
-- `leasing_monthly_from_pln` null → cała prawa strona price block ukryta
-- `product_benefits` pusta → cała sekcja zalet ukryta (ale akapit `short_marketing_description` zostaje, jeśli jest)
-- `availability_status = 'reserved'` → chip żółty „Zarezerwowany", `'sold'` → chip szary „Sprzedany", trust strip i CTA bez zmian
-- `is_featured = false` → trzeci badge ukryty
-- Tytuł modelu zawiera dziś frazy typu „Używany jak nowy…" — **decyzja**: tytuł renderujemy jako `product.model` (jest), a użytkownik powinien w panelu admin uprościć nazwy + dopisać `slogan`. Bez ingerencji w istniejące dane w DB.
-- Numer telefonu CTA: brief mówi `603507783`, projekt obecnie używa `694133592` (`ProductInfo.tsx`) — **stosuję `694133592`** dla spójności, chyba że potwierdzisz zmianę.
-
-### G. Bez zmian
-- Sekcja pogrupowanej specyfikacji (`ModernSpecificationsTable`)
-- `ProductTrustSection` — przenoszę użycie niżej (pod about section), zamiast usuwać
-- FAQ content, `RelatedProducts`, `ProductHeader` (breadcrumb), `CallToAction` w stopce
-- Tabele `products` (poza dodanymi kolumnami), RLS na istniejących tabelach
