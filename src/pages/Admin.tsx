@@ -112,7 +112,15 @@ const Admin = () => {
   const renderSection = () => {
     switch (activeSection) {
       case 'start':
-        return <DashboardSection productCount={products.length} onNavigate={setActiveSection} />;
+        return (
+          <DashboardSection
+            productCount={products.length}
+            products={products}
+            onNavigate={setActiveSection}
+            onAddProduct={() => { setActiveSection('products'); handleAdd(); }}
+            onEditProduct={(p) => { setActiveSection('products'); handleEdit(p); }}
+          />
+        );
       case 'products':
         return (
           <ProductManager

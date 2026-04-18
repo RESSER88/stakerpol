@@ -113,6 +113,7 @@ export type Database = {
           product_id: string | null
           rodo_accepted: boolean
           source: string
+          status: string
           user_agent: string | null
         }
         Insert: {
@@ -126,6 +127,7 @@ export type Database = {
           product_id?: string | null
           rodo_accepted?: boolean
           source?: string
+          status?: string
           user_agent?: string | null
         }
         Update: {
@@ -139,6 +141,7 @@ export type Database = {
           product_id?: string | null
           rodo_accepted?: boolean
           source?: string
+          status?: string
           user_agent?: string | null
         }
         Relationships: [
