@@ -81,12 +81,10 @@ const Admin = () => {
   };
 
   const handleDelete = async (product: Product) => {
-    if (window.confirm(`Czy na pewno chcesz usunąć produkt "${product.model}"?`)) {
-      try {
-        await deleteProduct(product.id);
-      } catch (error) {
-        console.error('Error deleting product:', error);
-      }
+    try {
+      await deleteProduct(product.id);
+    } catch (error) {
+      console.error('Error deleting product:', error);
     }
   };
 
