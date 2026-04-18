@@ -169,7 +169,7 @@ const ProductDetail = () => {
             <div className="space-y-4 lg:py-2">
               <ProductStatusBadges product={product as any} />
               <div>
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2 text-stakerpol-navy leading-tight">
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2 text-navy-brand leading-tight">
                   {product.model}
                 </h1>
                 {(product as any).slogan && (
@@ -177,10 +177,10 @@ const ProductDetail = () => {
                     {(product as any).slogan}
                   </p>
                 )}
-                <p className="text-base md:text-lg text-gray-700 leading-relaxed mt-3">
+                <p className="text-base md:text-lg text-foreground/80 leading-relaxed mt-3">
                   {translations.shortDescription || product.shortDescription}
                   {translationsLoading && language !== 'pl' && (
-                    <span className="ml-2 text-sm text-gray-500">
+                    <span className="ml-2 text-sm text-muted-foreground">
                       <Loader2 className="h-3 w-3 animate-spin inline" />
                     </span>
                   )}
