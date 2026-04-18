@@ -27,7 +27,7 @@ export const useChapterCompletion = (
     ((product as any).priceDisplayMode === 'inquiry_only' ||
       ((product as any).netPrice != null && (product as any).netPrice !== ''));
   const ch05 = !!product?.slogan?.trim() || !!product?.shortMarketingDescription?.trim();
-  const ch06 = false;
+  const ch06 = hasId; // available once product saved
 
   return [
     {
@@ -74,9 +74,9 @@ export const useChapterCompletion = (
       id: 6,
       number: '06',
       title: 'SEO',
-      description: 'Wkrótce',
+      description: 'Schema.org, GTIN, MPN',
       complete: ch06,
-      enabled: false,
+      enabled: !isCreate || hasId,
     },
   ];
 };
