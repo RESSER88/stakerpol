@@ -19,7 +19,7 @@ const SimpleRelatedCard = ({ product }: Props) => {
   return (
     <Link
       to={`/products/${slugOrId}`}
-      className="group block bg-white border border-border-line rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+      className="group block bg-white border border-border-line rounded-lg overflow-hidden cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-8px_rgba(0,0,0,0.15)]"
     >
       <div className="relative bg-surface-soft">
         <div className="aspect-[3/4]">

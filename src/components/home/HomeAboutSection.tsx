@@ -41,33 +41,42 @@ const HomeAboutSection = () => {
           Sprawdzone wózki Toyota BT. Realna oszczędność. Pewność działania.
         </p>
         <p className="text-sm md:text-base text-ink-soft mt-4 max-w-3xl leading-relaxed">
-          Od 2008 roku pomagamy firmom usprawniać ich magazyny bez przepłacania za
-          nowy sprzęt. Jako rodzinna firma wiemy, że za każdą decyzją zakupową stoi
-          człowiek — dlatego stawiamy na partnerstwo, pasję i profesjonalizm.
-          Specjalizujemy się w używanych wózkach paletowych Toyota BT SWE — cenimy
-          je za niezawodność, niską eksploatację i trwałość.
+          Od 2008 roku pomagamy firmom usprawniać magazyny bez przepłacania za nowy
+          sprzęt. Jako rodzinna firma wiemy, że za każdą decyzją zakupową stoi
+          człowiek — dlatego stawiamy na partnerstwo i profesjonalizm.
+          Specjalizujemy się w używanych paleciakach Toyota BT — cenimy je za
+          niezawodność i niską eksploatację.
         </p>
 
         {/* Statystyki */}
         <div className="grid grid-cols-3 gap-3 md:gap-6 mt-8 md:mt-10 bg-white border border-border-line rounded-lg py-5 md:py-8 px-3 md:px-6">
-          {stats.map((s) => (
-            <div key={s.label} className="text-center">
-              <div className="font-mono font-extrabold text-orange-cta text-2xl md:text-4xl leading-none">
-                {s.value}
+          {stats.map((s) => {
+            const isLong = s.value.length > 4;
+            return (
+              <div key={s.label} className="text-center flex flex-col justify-center">
+                <div
+                  className={`font-mono font-extrabold text-orange-cta leading-none ${
+                    isLong
+                      ? 'text-base md:text-2xl'
+                      : 'text-2xl md:text-4xl'
+                  }`}
+                >
+                  {s.value}
+                </div>
+                <div className="text-[10px] md:text-[11px] uppercase tracking-[0.08em] text-ink-soft mt-2">
+                  {s.label}
+                </div>
               </div>
-              <div className="text-[10px] md:text-[11px] uppercase tracking-[0.08em] text-ink-soft mt-2">
-                {s.label}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* 3 zalety */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mt-6 md:mt-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mt-6 md:mt-8 pt-6 md:pt-8 border-t border-border-line">
           {benefits.map((b) => (
             <div
               key={b.title}
-              className="bg-white border border-border-line rounded p-4 md:p-5"
+              className="bg-white border border-border-line rounded p-4 md:p-5 flex flex-col hover:bg-surface-soft transition-colors"
             >
               <div className="w-[38px] h-[38px] rounded-full bg-surface-soft flex items-center justify-center mb-3">
                 <b.Icon className="w-5 h-5 text-red-accent" />
