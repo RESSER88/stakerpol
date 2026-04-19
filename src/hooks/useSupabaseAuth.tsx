@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -24,36 +24,80 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
   const { toast } = useToast();
+  const checkedRoleForUserRef = useRef<string | null>(null);
+  const roleCheckInFlightRef = useRef<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
+    const authStorageKeyPrefix = (() => {
+      try {
+        const url = new URL(import.meta.env.VITE_SUPABASE_URL);
+        return `sb-${url.hostname.split('.')[0]}-auth-token`;
+      } catch {
+        return 'sb-auth-token';
+      }
+    })();
+
+    const clearStoredAuthSession = () => {
+      [window.localStorage, window.sessionStorage].forEach((storage) => {
+        const keysToRemove = Object.keys(storage).filter((key) => key.startsWith(authStorageKeyPrefix));
+        keysToRemove.forEach((key) => storage.removeItem(key));
+      });
+    };
+
+    const hasStoredAuthSession = () => {
+      return [window.localStorage, window.sessionStorage].some((storage) =>
+        Object.keys(storage).some((key) => key.startsWith(authStorageKeyPrefix))
+      );
+    };
+
+    const resetAuthState = () => {
+      setSession(null);
+      setUser(null);
+      setIsAdmin(false);
+      setAdminLoading(false);
+      checkedRoleForUserRef.current = null;
+      roleCheckInFlightRef.current = null;
+    };
+
     const checkAdminRole = async (userId: string) => {
+      if (checkedRoleForUserRef.current === userId || roleCheckInFlightRef.current === userId) {
+        return;
+      }
+
+      roleCheckInFlightRef.current = userId;
       setAdminLoading(true);
       const timeoutId = window.setTimeout(() => {
-        if (!mounted) return;
+        if (!mounted || roleCheckInFlightRef.current !== userId) return;
         logger.warn('⏱️ Admin role check timed out, falling back');
         setIsAdmin(false);
         setAdminLoading(false);
-      }, 5000);
+      }, 10000);
 
       try {
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', userId)
-          .maybeSingle();
+        const { data, error } = await supabase.rpc('has_role', {
+          _user_id: userId,
+          _role: 'admin',
+        });
+
         if (!mounted) return;
-        if (!error && data) {
-          setIsAdmin(data.role === 'admin');
-        } else {
+
+        if (error) {
+          logger.warn('⚠️ User role check failed:', error.message);
           setIsAdmin(false);
+        } else {
+          setIsAdmin(Boolean(data));
+          checkedRoleForUserRef.current = userId;
         }
       } catch (e) {
         logger.error('❌ Error checking admin role:', e);
         if (mounted) setIsAdmin(false);
       } finally {
         clearTimeout(timeoutId);
+        if (roleCheckInFlightRef.current === userId) {
+          roleCheckInFlightRef.current = null;
+        }
         if (mounted) setAdminLoading(false);
       }
     };
@@ -66,13 +110,13 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(newSession?.user ?? null);
 
       if (newSession?.user) {
-        // Defer to avoid deadlocks; fire-and-forget
-        setTimeout(() => {
-          if (mounted) checkAdminRole(newSession.user.id);
-        }, 0);
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || checkedRoleForUserRef.current !== newSession.user.id) {
+          setTimeout(() => {
+            if (mounted) void checkAdminRole(newSession.user.id);
+          }, 0);
+        }
       } else {
-        setIsAdmin(false);
-        setAdminLoading(false);
+        resetAuthState();
       }
 
       setLoading(false);
@@ -85,12 +129,18 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(existing);
         setUser(existing.user);
         setTimeout(() => {
-          if (mounted) checkAdminRole(existing.user.id);
+          if (mounted) void checkAdminRole(existing.user.id);
         }, 0);
+      } else if (hasStoredAuthSession()) {
+        logger.warn('🧹 Clearing stale Supabase auth session from storage');
+        clearStoredAuthSession();
+        resetAuthState();
       }
       setLoading(false);
     }).catch((e) => {
       logger.error('❌ getSession error:', e);
+      clearStoredAuthSession();
+      resetAuthState();
       if (mounted) setLoading(false);
     });
 
@@ -103,6 +153,8 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
+      checkedRoleForUserRef.current = null;
+      roleCheckInFlightRef.current = null;
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         toast({ title: 'Błąd logowania', description: error.message, variant: 'destructive' });
@@ -141,6 +193,8 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
+      checkedRoleForUserRef.current = null;
+      roleCheckInFlightRef.current = null;
       if (error) {
         toast({ title: 'Błąd wylogowania', description: error.message, variant: 'destructive' });
       } else {
