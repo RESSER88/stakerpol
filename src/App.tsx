@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import usePageTracking from "./hooks/usePageTracking";
 import { HelmetProvider } from 'react-helmet-async';
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { SupabaseAuthProvider } from "./hooks/useSupabaseAuth";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
@@ -69,7 +70,9 @@ const App = () => {
               <Toaster />
               <Sonner />
               <BrowserRouter>
-                <AppRoutes />
+                <SupabaseAuthProvider>
+                  <AppRoutes />
+                </SupabaseAuthProvider>
               </BrowserRouter>
             </HelmetProvider>
           </TooltipProvider>
