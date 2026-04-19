@@ -1,7 +1,7 @@
 import { Product } from '@/types';
 import SectionHeader from '../../editorial/SectionHeader';
 import EditorialButton from '../../editorial/EditorialButton';
-import { EditorialInput, EditorialSelect } from '../EditorialField';
+import { EditorialInput, EditorialSelect, EditorialTextarea } from '../EditorialField';
 
 interface Props {
   product: Product;
@@ -17,6 +17,7 @@ const Chapter02_Basic = ({ product, onChange, onSave, saving, isCreate }: Props)
     onChange({ ...product, specs: { ...product.specs, [k]: v } });
 
   const valid = !!product.model?.trim() && !!product.specs?.serialNumber?.trim();
+  const shortDesc = (product as any).shortDescription || '';
 
   return (
     <div className="space-y-6">
@@ -43,6 +44,19 @@ const Chapter02_Basic = ({ product, onChange, onSave, saving, isCreate }: Props)
           onChange={(e) => setSpec('serialNumber', e.target.value)}
           placeholder="np. 12345678"
         />
+      </div>
+
+      <EditorialTextarea
+        label="Krótki opis"
+        rows={2}
+        maxLength={300}
+        value={shortDesc}
+        onChange={(e) => set({ ...(product as any), shortDescription: e.target.value.slice(0, 300) } as any)}
+        placeholder="1–2 zdania o produkcie (max 300 znaków)"
+        hint={`${shortDesc.length}/300`}
+      />
+
+      <div className="grid gap-6 md:grid-cols-2">
         <EditorialInput
           label="Rok produkcji"
           type="number"

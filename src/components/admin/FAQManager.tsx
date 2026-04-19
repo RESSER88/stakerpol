@@ -101,42 +101,38 @@ const FAQManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle>Zarządzanie FAQ</CardTitle>
-              <CardDescription>
-                Dodawaj, edytuj i zarządzaj pytaniami FAQ w różnych językach
-              </CardDescription>
-            </div>
-            {FEATURES.SHOW_FAQ_MIGRATION && (
-              <Button
-                onClick={() => setShowMigrationConfirm(true)}
-                disabled={migrationLoading}
-                variant="outline"
-                className="flex items-center space-x-2"
-              >
-                <Download className="h-4 w-4" />
-                <span>{migrationLoading ? 'Migracja...' : 'Migruj FAQ z kodu'}</span>
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <FAQList
-            faqs={faqs}
-            onEdit={handleEdit}
-            onDelete={(id) => deleteFAQ(id).then(() => loadFAQs())}
-            onHardDelete={handleHardDelete}
-            onToggleActive={handleToggleActive}
-            onAdd={handleAdd}
-            selectedLanguage={selectedLanguage}
-            onLanguageChange={setSelectedLanguage}
-            loading={loading}
-          />
-        </CardContent>
-      </Card>
+      <div className="border-b border-editorial-line pb-3 mb-4 flex items-end justify-between gap-4">
+        <div>
+          <h1 className="font-editorial text-2xl text-editorial-ink tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+            Zarządzanie FAQ
+          </h1>
+          <p className="text-xs text-editorial-muted mt-1 italic">
+            Pytania i odpowiedzi we wszystkich językach
+          </p>
+        </div>
+        {FEATURES.SHOW_FAQ_MIGRATION && (
+          <button
+            onClick={() => setShowMigrationConfirm(true)}
+            disabled={migrationLoading}
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-[11px] font-bold tracking-[0.2em] uppercase text-editorial-muted border border-editorial-line hover:text-editorial-ink hover:border-editorial-ink transition-colors disabled:opacity-50"
+          >
+            <Download className="h-3 w-3" />
+            {migrationLoading ? 'Migracja…' : 'Migruj z kodu'}
+          </button>
+        )}
+      </div>
+
+      <FAQList
+        faqs={faqs}
+        onEdit={handleEdit}
+        onDelete={(id) => deleteFAQ(id).then(() => loadFAQs())}
+        onHardDelete={handleHardDelete}
+        onToggleActive={handleToggleActive}
+        onAdd={handleAdd}
+        selectedLanguage={selectedLanguage}
+        onLanguageChange={setSelectedLanguage}
+        loading={loading}
+      />
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-2xl">

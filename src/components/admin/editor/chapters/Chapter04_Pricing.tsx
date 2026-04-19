@@ -26,7 +26,6 @@ const Chapter04_Pricing = ({ product, onChange, onSave, saving }: Props) => {
           options={[
             { value: 'inquiry_only', label: 'Tylko zapytanie' },
             { value: 'show_price', label: 'Pokaż cenę' },
-            { value: 'from_price', label: 'Cena od…' },
           ]}
           hint='Tryb "Tylko zapytanie" ukrywa cenę netto na stronie produktu'
         />

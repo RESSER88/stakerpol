@@ -26,7 +26,7 @@ import Chapter02_Basic from './chapters/Chapter02_Basic';
 import Chapter03_Technical from './chapters/Chapter03_Technical';
 import Chapter04_Pricing from './chapters/Chapter04_Pricing';
 import Chapter05_Marketing from './chapters/Chapter05_Marketing';
-import Chapter06_SEO from './chapters/Chapter06_SEO';
+import PDFQuoteGenerator from '../PDFQuoteGenerator';
 import { BenefitDraft } from '../BenefitsEditor';
 
 interface Props {
@@ -169,14 +169,18 @@ const ProductEditorView = ({
 
           <div className="hidden md:flex items-center gap-3 text-xs text-editorial-muted">
             <span className="font-bold text-editorial-ink">{completedCount}</span>
-            <span>/ 6 rozdziałów</span>
+            <span>/ 5 rozdziałów</span>
             <div className="w-24 h-px bg-editorial-line relative overflow-hidden">
               <div
                 className="absolute inset-y-0 left-0 bg-editorial-ink transition-all"
-                style={{ width: `${(completedCount / 6) * 100}%` }}
+                style={{ width: `${(completedCount / 5) * 100}%` }}
               />
             </div>
           </div>
+
+          {mode === 'edit' && product.id && (
+            <PDFQuoteGenerator product={product} />
+          )}
 
           {mode === 'edit' && product.id && (
             <DropdownMenu>
@@ -206,7 +210,7 @@ const ProductEditorView = ({
         <div className="md:hidden h-px bg-editorial-line">
           <div
             className="h-full bg-editorial-ink transition-all"
-            style={{ width: `${(completedCount / 6) * 100}%` }}
+            style={{ width: `${(completedCount / 5) * 100}%` }}
           />
         </div>
       </header>
@@ -261,7 +265,6 @@ const ProductEditorView = ({
               saving={saving}
             />
           )}
-          {activeChapter === 6 && <Chapter06_SEO product={product} />}
         </main>
       </div>
 
