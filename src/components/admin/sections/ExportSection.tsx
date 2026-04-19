@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { Product } from '@/types';
 import { exportProductListToPDF, exportProductListToJPG } from '@/utils/listExporter';
+import { exportProductListToXLSX } from '@/utils/xlsxExporter';
 import { useToast } from '@/hooks/use-toast';
 import SectionHeader from '../editorial/SectionHeader';
 
@@ -45,6 +46,7 @@ const ExportRow = ({ number, title, description, count, loading, disabled, onCli
 const ExportSection = ({ products }: Props) => {
   const [exportingPDF, setExportingPDF] = useState(false);
   const [exportingJPG, setExportingJPG] = useState(false);
+  const [exportingXLSX, setExportingXLSX] = useState(false);
   const { toast } = useToast();
 
   const empty = products.length === 0;
@@ -75,6 +77,19 @@ const ExportSection = ({ products }: Props) => {
     }
   };
 
+  const handleXLSX = async () => {
+    if (empty) return;
+    setExportingXLSX(true);
+    try {
+      exportProductListToXLSX(products);
+      toast({ title: '✓ Zapisano', description: `Stan magazynu XLSX (${products.length} produktów)` });
+    } catch {
+      toast({ title: 'Błąd eksportu', description: 'Nie udało się wygenerować XLSX', variant: 'destructive' });
+    } finally {
+      setExportingXLSX(false);
+    }
+  };
+
   return (
     <div className="max-w-2xl">
       <SectionHeader number="—" title="Eksport stanu magazynu" />
@@ -97,6 +112,15 @@ const ExportSection = ({ products }: Props) => {
           loading={exportingJPG}
           disabled={empty}
           onClick={handleJPG}
+        />
+        <ExportRow
+          number="03"
+          title="Pobierz jako XLSX"
+          description="Arkusz Excel ze stanem magazynu"
+          count={products.length}
+          loading={exportingXLSX}
+          disabled={empty}
+          onClick={handleXLSX}
         />
       </div>
 
