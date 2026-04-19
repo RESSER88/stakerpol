@@ -13,6 +13,7 @@ interface SpecRow {
   label: string;
   value: string | undefined;
   unit?: string;
+  raw?: boolean;
 }
 
 interface SpecGroupData {
@@ -34,10 +35,10 @@ const formatPL = (raw: string | undefined): string => {
   return trimmed;
 };
 
-const formatValue = (value: string | undefined, unit?: string): string => {
-  const formatted = formatPL(value);
-  if (!formatted) return '';
-  return unit ? `${formatted} ${unit}` : formatted;
+const formatValue = (value: string | undefined, unit?: string, raw?: boolean): string => {
+  const base = raw ? (value || '').trim() : formatPL(value);
+  if (!base) return '';
+  return unit ? `${base} ${unit}` : base;
 };
 
 const SpecGroup = ({ title, icon: Icon, rows }: SpecGroupData) => {
@@ -62,7 +63,7 @@ const SpecGroup = ({ title, icon: Icon, rows }: SpecGroupData) => {
               {row.label}
             </span>
             <span className="text-[12.5px] font-bold text-[#0E0E0E] text-right ml-3" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-              {formatValue(row.value, row.unit)}
+              {formatValue(row.value, row.unit, row.raw)}
             </span>
           </div>
         ))}
@@ -112,7 +113,7 @@ const ModernSpecificationsTable = ({ product, language }: ModernSpecificationsTa
       rows: [
         { label: t('productionYear'), value: product.specs.productionYear },
         { label: t('workingHours'), value: product.specs.workingHours, unit: 'mth' },
-        { label: t('serialNumber'), value: product.specs.serialNumber },
+        { label: t('serialNumber'), value: product.specs.serialNumber, raw: true },
         { label: t('condition'), value: product.specs.condition },
       ],
     },
