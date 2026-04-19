@@ -53,17 +53,9 @@ export const useSupabaseAuth = () => {
                 const userIsAdmin = data.role === 'admin';
                 logger.log('🛡️ User role check result:', data.role, '| isAdmin:', userIsAdmin);
                 setIsAdmin(userIsAdmin);
-                
-                // Auto-redirect admin users to admin panel after successful sign in
-                if (userIsAdmin && event === 'SIGNED_IN') {
-                  logger.log('🚀 Admin user signed in, redirecting to /admin');
-                  // Use setTimeout to avoid redirect conflicts
-                  setTimeout(() => {
-                    if (window.location.pathname !== '/admin') {
-                      window.location.href = '/admin';
-                    }
-                  }, 300);
-                }
+                // NOTE: Do NOT trigger window.location redirects here. The Admin
+                // page renders itself when isAdmin === true. Hard reloads here
+                // cause an auth loop (SIGNED_IN → reload → SIGNED_IN → 429).
               } else {
                 logger.log('⚠️ User role check failed:', error?.message || 'No role found');
                 setIsAdmin(false);
