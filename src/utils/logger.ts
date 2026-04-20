@@ -18,9 +18,7 @@ export const logger = {
   },
   
   error: (...args: any[]) => {
-    if (isDevelopment) {
-      console.error(...args);
-    }
+    console.error(...args);  // błędy zawsze widoczne
   },
   
   info: (...args: any[]) => {
