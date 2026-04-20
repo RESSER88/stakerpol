@@ -13,10 +13,11 @@ import { AdminSection } from '@/components/admin/layout/types';
 import DashboardSection from '@/components/admin/sections/DashboardSection';
 import InquiriesSection from '@/components/admin/sections/InquiriesSection';
 import ExportSection from '@/components/admin/sections/ExportSection';
+import PermissionDenied from '@/components/ui/PermissionDenied';
 import { Product } from '@/types';
 
 const Admin = () => {
-  const { user, loading: authLoading, isAdmin, adminLoading, signOut } = useSupabaseAuth();
+  const { user, loading: authLoading, isAdmin, adminLoading, adminError, signOut } = useSupabaseAuth();
   const { products, addProduct, updateProduct, deleteProduct, addProductAsync, updateProductAsync } = useSupabaseProducts() as any;
 
   const [activeSection, setActiveSection] = useState<AdminSection>('start');
@@ -115,6 +116,7 @@ const Admin = () => {
       </div>
     );
   }
+  if (adminError) return <PermissionDenied message={adminError} />;
   if (!isAdmin) return <Navigate to="/" replace />;
 
   const renderSection = () => {
