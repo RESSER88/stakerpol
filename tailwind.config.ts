@@ -115,20 +115,12 @@ export default {
 			},
 			keyframes: {
 				'accordion-down': {
-					from: {
-						height: '0'
-					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
-					}
+					from: { gridTemplateRows: '0fr', opacity: '0' },
+					to: { gridTemplateRows: '1fr', opacity: '1' },
 				},
 				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
-					},
-					to: {
-						height: '0'
-					}
+					from: { gridTemplateRows: '1fr', opacity: '1' },
+					to: { gridTemplateRows: '0fr', opacity: '0' },
 				},
 				'fade-in': {
 					'0%': {
