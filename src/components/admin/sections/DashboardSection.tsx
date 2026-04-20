@@ -149,7 +149,7 @@ const DashboardSection = ({ productCount, products, onNavigate, onAddProduct, on
                 >
                   <div className="h-12 w-12 bg-editorial-line/40 overflow-hidden shrink-0 flex items-center justify-center">
                     {p.image ? (
-                      <img src={p.image} alt={p.model} className="h-full w-full object-cover" loading="lazy" />
+                      <img src={p.image} alt={p.model} width={48} height={48} className="h-full w-full object-cover" loading="lazy" />
                     ) : (
                       <Package className="h-5 w-5 text-editorial-muted" />
                     )}

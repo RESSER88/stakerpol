@@ -162,6 +162,8 @@ const ProductImage = ({ image, alt, images, productionYear, availabilityStatus, 
             <img 
               src={currentImage} 
               alt={alt} 
+              width={800}
+              height={600}
               className="max-w-full max-h-full object-contain animate-scale-in"
               loading="eager"
               style={{ touchAction: 'pinch-zoom' }}

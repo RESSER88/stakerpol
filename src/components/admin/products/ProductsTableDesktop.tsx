@@ -92,7 +92,7 @@ const ProductsTableDesktop = ({ products, onEdit, onCopy, onDelete }: Props) => 
                 <TableCell>
                   <div className="w-12 h-12 rounded-md bg-admin-bg overflow-hidden border border-admin-border">
                     {product.image ? (
-                      <img src={product.image} alt={product.model} className="w-full h-full object-cover" loading="lazy" />
+                      <img src={product.image} alt={product.model} width={48} height={48} className="w-full h-full object-cover" loading="lazy" />
                     ) : null}
                   </div>
                 </TableCell>

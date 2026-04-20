@@ -164,6 +164,9 @@ const ImageUpload = ({
                 <img
                   src={preview}
                   alt={`Podgląd ${index + 1}`}
+                  width={300}
+                  height={400}
+                  loading="lazy"
                   className="w-full h-full object-cover"
                 />
               </div>
