@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MoveVertical, Calendar, Clock, Package } from 'lucide-react';
 import { Product } from '@/types';
@@ -20,7 +20,7 @@ const formatPL = (val: string | number | undefined | null): string => {
   return new Intl.NumberFormat('pl-PL').format(num as number);
 };
 
-const ProductCard = ({ product, priority = false }: ProductCardProps) => {
+const ProductCard = memo(({ product, priority = false }: ProductCardProps) => {
   const { language } = useLanguage();
   const t = useTranslation(language);
   const [inquiryOpen, setInquiryOpen] = useState(false);
@@ -155,6 +155,8 @@ const ProductCard = ({ product, priority = false }: ProductCardProps) => {
       />
     </>
   );
-};
+});
+
+ProductCard.displayName = 'ProductCard';
 
 export default ProductCard;
