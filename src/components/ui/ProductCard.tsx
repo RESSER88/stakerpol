@@ -41,6 +41,8 @@ const ProductCard = ({ product, priority = false }: ProductCardProps) => {
               alt={product.model}
               aspectRatio="3:4"
               priority={priority}
+              width={300}
+              height={400}
               className="h-full w-full object-cover"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             />

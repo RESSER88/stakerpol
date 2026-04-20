@@ -11,6 +11,8 @@ interface LazyImageProps {
   onError?: () => void;
   generateThumbnail?: boolean;
   priority?: boolean;
+  width?: number;
+  height?: number;
 }
 
 const LazyImage = ({ 
@@ -21,7 +23,9 @@ const LazyImage = ({
   onLoad,
   onError,
   generateThumbnail = false,
-  priority = false
+  priority = false,
+  width,
+  height
 }: LazyImageProps) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(priority);
@@ -170,6 +174,8 @@ const LazyImage = ({
           ref={imgRef}
           src={imgSrc}
           alt={alt}
+          {...(width !== undefined ? { width } : {})}
+          {...(height !== undefined ? { height } : {})}
           onLoad={handleLoad}
           onError={handleError}
           className={cn(
