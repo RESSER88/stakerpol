@@ -308,6 +308,8 @@ const ProductImageManager = ({
                   <img
                     src={preview}
                     alt={`Zdjęcie produktu ${index + 1}`}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-contain"
                   />
                   
