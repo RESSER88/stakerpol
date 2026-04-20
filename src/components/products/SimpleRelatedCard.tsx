@@ -23,7 +23,7 @@ const SimpleRelatedCard = ({ product }: Props) => {
     >
       <div className="relative bg-surface-soft">
         <div className="aspect-[3/4]">
-          <LazyImage src={img} alt={product.model} aspectRatio="3:4" className="transition-transform duration-300 group-hover:scale-105" />
+          <LazyImage src={img} alt={product.model} aspectRatio="3:4" width={300} height={400} className="transition-transform duration-300 group-hover:scale-105" />
         </div>
         {product.specs?.productionYear && (
           <div className="absolute top-2 left-2 z-10 font-mono font-bold bg-ink text-white text-[10px] px-2 py-[3px] rounded-[3px] tracking-wider">

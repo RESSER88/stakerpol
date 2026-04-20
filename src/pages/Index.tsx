@@ -46,7 +46,7 @@ const Index = () => {
         <meta name="twitter:image" content="/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.png" />
         <link rel="canonical" href={`https://stakerpol.pl/${language}`} />
         <meta name="keywords" content="wózki widłowe, toyota, bt, elektryczne, spalinowe, paleciaki, magazynowe, używane, serwis, stakerpol" />
-        <link rel="preload" as="image" href="/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.png" />
+        <link rel="preload" as="image" href="/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.png" fetchpriority="high" type="image/png" />
       </Helmet>
       <LocalBusinessSchema />
 

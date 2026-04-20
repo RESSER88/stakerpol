@@ -85,6 +85,8 @@ const ProductImage = ({ image, alt, images, productionYear, availabilityStatus, 
             src={currentImage}
             alt={alt}
             aspectRatio="3:4"
+            width={800}
+            height={600}
             className="transition-transform duration-300 group-hover:scale-105"
           />
 
@@ -145,6 +147,8 @@ const ProductImage = ({ image, alt, images, productionYear, availabilityStatus, 
                 src={img}
                 alt={`${alt} - zdjęcie ${index + 1}`}
                 aspectRatio="3:4"
+                width={120}
+                height={120}
                 className="transition-transform duration-300"
               />
             </button>

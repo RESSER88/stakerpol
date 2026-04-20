@@ -11,6 +11,8 @@ interface OptimizedImageProps {
   onError?: () => void;
   priority?: boolean;
   sizes?: string;
+  width?: number;
+  height?: number;
 }
 
 const OptimizedImage = ({ 
@@ -21,7 +23,9 @@ const OptimizedImage = ({
   onLoad,
   onError,
   priority = false,
-  sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+  sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw",
+  width,
+  height
 }: OptimizedImageProps) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(priority);
@@ -154,6 +158,8 @@ const OptimizedImage = ({
           ref={imgRef}
           src={imgSrc}
           alt={alt}
+          {...(width !== undefined ? { width } : {})}
+          {...(height !== undefined ? { height } : {})}
           onLoad={handleLoad}
           onError={handleError}
           className={cn(
