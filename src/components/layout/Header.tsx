@@ -24,24 +24,24 @@ const Header = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <span className="text-2xl font-bold text-toyota-orange tracking-tight">Stakerpol</span>
+            <span className="text-2xl font-bold text-stakerpol-orange tracking-tight">Stakerpol</span>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="font-medium hover:text-toyota-orange transition-colors">
+            <Link to="/" className="font-medium hover:text-stakerpol-orange transition-colors">
               {t('home')}
             </Link>
-            <Link to="/products" className="font-medium hover:text-toyota-orange transition-colors">
+            <Link to="/products" className="font-medium hover:text-stakerpol-orange transition-colors">
               {t('electricTrolleys')}
             </Link>
-            <Link to="/testimonials" className="font-medium hover:text-toyota-orange transition-colors">
+            <Link to="/testimonials" className="font-medium hover:text-stakerpol-orange transition-colors">
               {t('testimonials')}
             </Link>
-            <Link to="/faq" className="font-medium hover:text-toyota-orange transition-colors">
+            <Link to="/faq" className="font-medium hover:text-stakerpol-orange transition-colors">
               FAQ
             </Link>
-            <Link to="/contact" className="font-medium hover:text-toyota-orange transition-colors">
+            <Link to="/contact" className="font-medium hover:text-stakerpol-orange transition-colors">
               {t('contact')}
             </Link>
             <LanguageSwitcher />
@@ -59,7 +59,7 @@ const Header = () => {
             <LanguageSwitcher />
             <button
               onClick={toggleMenu}
-              className="text-gray-800 hover:text-toyota-orange transition-all"
+              className="text-gray-800 hover:text-stakerpol-orange transition-all"
               aria-label="Toggle menu"
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -73,35 +73,35 @@ const Header = () => {
             <nav className="flex flex-col space-y-4">
               <Link 
                 to="/" 
-                className="font-medium py-2 hover:text-toyota-orange transition-colors"
+                className="font-medium py-2 hover:text-stakerpol-orange transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {t('home')}
               </Link>
               <Link 
                 to="/products" 
-                className="font-medium py-2 hover:text-toyota-orange transition-colors"
+                className="font-medium py-2 hover:text-stakerpol-orange transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {t('electricTrolleys')}
               </Link>
               <Link 
                 to="/testimonials" 
-                className="font-medium py-2 hover:text-toyota-orange transition-colors"
+                className="font-medium py-2 hover:text-stakerpol-orange transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {t('testimonials')}
               </Link>
               <Link 
                 to="/faq" 
-                className="font-medium py-2 hover:text-toyota-orange transition-colors"
+                className="font-medium py-2 hover:text-stakerpol-orange transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 FAQ
               </Link>
               <Link 
                 to="/contact" 
-                className="font-medium py-2 hover:text-toyota-orange transition-colors"
+                className="font-medium py-2 hover:text-stakerpol-orange transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {t('contact')}
