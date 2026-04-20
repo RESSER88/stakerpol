@@ -65,7 +65,7 @@ const Index = () => {
           backgroundRepeat: 'no-repeat',
         }}
       >
-        <div className="container-custom max-w-[1200px] py-10 lg:py-12 px-5 lg:px-8 w-full">
+        <div className="container-custom max-w-[1200px] py-10 lg:py-20 px-5 lg:px-8 w-full">
           <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 items-center">
             <div className="space-y-4 lg:space-y-5">
               <div
@@ -111,10 +111,10 @@ const Index = () => {
               style={{ animationDelay: '300ms', animationFillMode: 'both' }}
             >
               <div
-                className="bg-white rounded-lg p-[22px] max-w-[360px] ml-auto"
-                style={{ boxShadow: '0 12px 30px -10px rgba(0,0,0,0.25)' }}
+                className="rounded-lg p-[26px] max-w-[360px] ml-auto bg-black/55 backdrop-blur-md border border-white/15"
+                style={{ boxShadow: '0 18px 40px -12px rgba(0,0,0,0.55)' }}
               >
-                <HomeHeroForm isInHero />
+                <HomeHeroForm isInHero variant="dark" />
               </div>
             </div>
           </div>
