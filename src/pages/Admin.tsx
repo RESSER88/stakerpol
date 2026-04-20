@@ -117,7 +117,7 @@ const Admin = () => {
     );
   }
   if (adminError) return <PermissionDenied message={adminError} />;
-  if (!isAdmin) return <Navigate to="/" replace />;
+  if (!isAdmin && !adminLoading) return <Navigate to="/" replace />;
 
   const renderSection = () => {
     switch (activeSection) {
