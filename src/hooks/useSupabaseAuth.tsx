@@ -10,6 +10,7 @@ interface AuthContextValue {
   loading: boolean;
   isAdmin: boolean;
   adminLoading: boolean;
+  adminError: string | null;
   signIn: (email: string, password: string) => Promise<any>;
   signUp: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<any>;
@@ -23,6 +24,7 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
+  const [adminError, setAdminError] = useState<string | null>(null);
   const { toast } = useToast();
   const checkedRoleForUserRef = useRef<string | null>(null);
   const roleCheckInFlightRef = useRef<string | null>(null);
@@ -57,52 +59,72 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setIsAdmin(false);
       setAdminLoading(false);
+      setAdminError(null);
       checkedRoleForUserRef.current = null;
       roleCheckInFlightRef.current = null;
     };
 
-    const checkAdminRole = async (userId: string) => {
-      if (checkedRoleForUserRef.current === userId || roleCheckInFlightRef.current === userId) {
+    const finishRoleCheck = (userId: string) => {
+      if (roleCheckInFlightRef.current === userId) {
+        roleCheckInFlightRef.current = null;
+      }
+      if (mounted) {
+        setAdminLoading(false);
+      }
+    };
+
+    const checkAdminRole = async (userId: string, force = false) => {
+      if (!force && checkedRoleForUserRef.current === userId) {
+        setAdminError(null);
+        setAdminLoading(false);
+        return;
+      }
+
+      if (roleCheckInFlightRef.current === userId) {
         return;
       }
 
       roleCheckInFlightRef.current = userId;
+      setAdminError(null);
       setAdminLoading(true);
-      const timeoutId = window.setTimeout(() => {
-        if (!mounted || roleCheckInFlightRef.current !== userId) return;
-        logger.warn('⏱️ Admin role check timed out, falling back');
-        setIsAdmin(false);
-        setAdminLoading(false);
-      }, 10000);
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        window.setTimeout(() => reject(new Error('timeout')), 5000);
+      });
 
       try {
-        const { data, error } = await supabase.rpc('has_role', {
+        const rolePromise = supabase.rpc('has_role', {
           _user_id: userId,
           _role: 'admin',
         });
+
+        const { data, error } = await Promise.race([rolePromise, timeoutPromise]);
 
         if (!mounted) return;
 
         if (error) {
           logger.warn('⚠️ User role check failed:', error.message);
           setIsAdmin(false);
+          setAdminError('Nie udało się zweryfikować roli administratora. Spróbuj odświeżyć stronę lub zalogować się ponownie.');
         } else {
           setIsAdmin(Boolean(data));
           checkedRoleForUserRef.current = userId;
+          setAdminError(Boolean(data) ? null : 'To konto nie ma uprawnień administratora.');
         }
-      } catch (e) {
+      } catch (e: any) {
         logger.error('❌ Error checking admin role:', e);
-        if (mounted) setIsAdmin(false);
+        if (!mounted) return;
+        setIsAdmin(false);
+        setAdminError(
+          e?.message === 'timeout'
+            ? 'Weryfikacja roli administratora trwa zbyt długo. Spróbuj ponownie za chwilę.'
+            : 'Wystąpił błąd podczas weryfikacji roli administratora.'
+        );
       } finally {
-        clearTimeout(timeoutId);
-        if (roleCheckInFlightRef.current === userId) {
-          roleCheckInFlightRef.current = null;
-        }
-        if (mounted) setAdminLoading(false);
+        finishRoleCheck(userId);
       }
     };
 
-    // Set up listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       if (!mounted) return;
       logger.log('🔐 Auth event:', event, newSession?.user?.email);
@@ -110,11 +132,14 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(newSession?.user ?? null);
 
       if (newSession?.user) {
-        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || checkedRoleForUserRef.current !== newSession.user.id) {
-          setAdminLoading(true);
+        const shouldForceCheck = event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED';
+        if (shouldForceCheck || checkedRoleForUserRef.current !== newSession.user.id) {
           setTimeout(() => {
-            if (mounted) void checkAdminRole(newSession.user.id);
+            if (mounted) void checkAdminRole(newSession.user.id, shouldForceCheck);
           }, 0);
+        } else {
+          setAdminError(null);
+          setAdminLoading(false);
         }
       } else {
         resetAuthState();
@@ -123,13 +148,11 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     });
 
-    // THEN check existing session
     supabase.auth.getSession().then(({ data: { session: existing } }) => {
       if (!mounted) return;
       if (existing) {
         setSession(existing);
         setUser(existing.user);
-        setAdminLoading(true);
         setTimeout(() => {
           if (mounted) void checkAdminRole(existing.user.id);
         }, 0);
@@ -155,6 +178,7 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
+      setAdminError(null);
       checkedRoleForUserRef.current = null;
       roleCheckInFlightRef.current = null;
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -211,7 +235,7 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, session, loading, isAdmin, adminLoading, signIn, signUp, signOut }}
+      value={{ user, session, loading, isAdmin, adminLoading, adminError, signIn, signUp, signOut }}
     >
       {children}
     </AuthContext.Provider>
