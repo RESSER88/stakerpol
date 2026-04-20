@@ -6,7 +6,7 @@ const HeroContactForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await submit();
+    await submit({ source: 'homepage' });
   };
 
   const inputCls = (err?: string) =>
