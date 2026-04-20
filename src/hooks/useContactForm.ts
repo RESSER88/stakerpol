@@ -73,7 +73,7 @@ export function useContactForm() {
       const { error } = await supabase.from('leads').insert({
         name: formData.name,
         email: isEmail ? formData.contact : null,
-        phone: isEmail ? '000000000' : formData.contact,
+        phone: formData.contact,
         message: formData.message,
         source,
         page_url: window.location.href,
