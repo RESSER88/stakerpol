@@ -52,23 +52,23 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Company Info */}
           <div className="animate-fade-in">
-            <h3 className="text-xl font-bold mb-4 text-toyota-orange">Stakerpol</h3>
+            <h3 className="text-xl font-bold mb-4 text-stakerpol-orange">Stakerpol</h3>
             <p className="mb-4">{companyInfo.description}</p>
             <div className="flex items-center space-x-2 mb-3 group">
-              <Phone size={16} className="text-toyota-orange group-hover:animate-pulse-light" />
-              <a href="tel:+48694133592" className="hover:text-toyota-orange transition-colors" onClick={() => trackPhoneClick('footer')}>+48 694 133 592</a>
+              <Phone size={16} className="text-stakerpol-orange group-hover:animate-pulse-light" />
+              <a href="tel:+48694133592" className="hover:text-stakerpol-orange transition-colors" onClick={() => trackPhoneClick('footer')}>+48 694 133 592</a>
             </div>
             <div className="flex items-center space-x-2 mb-3 group">
-              <Mail size={16} className="text-toyota-orange group-hover:animate-pulse-light" />
-              <a href="mailto:info@stakerpol.pl" className="hover:text-toyota-orange transition-colors" onClick={() => trackEmailClick('footer')}>info@stakerpol.pl</a>
+              <Mail size={16} className="text-stakerpol-orange group-hover:animate-pulse-light" />
+              <a href="mailto:info@stakerpol.pl" className="hover:text-stakerpol-orange transition-colors" onClick={() => trackEmailClick('footer')}>info@stakerpol.pl</a>
             </div>
             <div className="flex items-start space-x-2 group">
-              <MapPin size={16} className="mt-1 flex-shrink-0 text-toyota-orange group-hover:animate-pulse-light" />
+              <MapPin size={16} className="mt-1 flex-shrink-0 text-stakerpol-orange group-hover:animate-pulse-light" />
               <a
                 href="https://maps.app.goo.gl/1CHQFHvBnjvtvtR49"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-toyota-orange transition-colors"
+                className="hover:text-stakerpol-orange transition-colors"
               >
                 {companyInfo.address}
               </a>
@@ -77,29 +77,29 @@ const Footer = () => {
           
           {/* Quick Links */}
           <div className="animate-fade-in delay-100">
-            <h3 className="text-xl font-bold mb-4 text-toyota-orange">Menu</h3>
+            <h3 className="text-xl font-bold mb-4 text-stakerpol-orange">Menu</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/" onClick={handleLinkClick} className="hover:text-toyota-orange transition-colors inline-flex items-center group">
-                  <span className="w-1 h-1 bg-toyota-orange rounded-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                <Link to="/" onClick={handleLinkClick} className="hover:text-stakerpol-orange transition-colors inline-flex items-center group">
+                  <span className="w-1 h-1 bg-stakerpol-orange rounded-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                   {t('home')}
                 </Link>
               </li>
               <li>
-                <Link to="/products" onClick={handleLinkClick} className="hover:text-toyota-orange transition-colors inline-flex items-center group">
-                  <span className="w-1 h-1 bg-toyota-orange rounded-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                <Link to="/products" onClick={handleLinkClick} className="hover:text-stakerpol-orange transition-colors inline-flex items-center group">
+                  <span className="w-1 h-1 bg-stakerpol-orange rounded-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                   {t('products')}
                 </Link>
               </li>
               <li>
-                <Link to="/testimonials" onClick={handleLinkClick} className="hover:text-toyota-orange transition-colors inline-flex items-center group">
-                  <span className="w-1 h-1 bg-toyota-orange rounded-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                <Link to="/testimonials" onClick={handleLinkClick} className="hover:text-stakerpol-orange transition-colors inline-flex items-center group">
+                  <span className="w-1 h-1 bg-stakerpol-orange rounded-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                   {t('testimonials')}
                 </Link>
               </li>
               <li>
-                <Link to="/contact" onClick={handleLinkClick} className="hover:text-toyota-orange transition-colors inline-flex items-center group">
-                  <span className="w-1 h-1 bg-toyota-orange rounded-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                <Link to="/contact" onClick={handleLinkClick} className="hover:text-stakerpol-orange transition-colors inline-flex items-center group">
+                  <span className="w-1 h-1 bg-stakerpol-orange rounded-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                   {t('contact')}
                 </Link>
               </li>
