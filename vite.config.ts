@@ -28,6 +28,7 @@ export default defineConfig(({ mode }) => ({
           vendor: ['react', 'react-dom'],
           router: ['react-router-dom'],
           ui: ['@radix-ui/react-accordion', '@radix-ui/react-dialog', '@radix-ui/react-select'],
+          icons: ['lucide-react'],
           supabase: ['@supabase/supabase-js'],
           utils: ['date-fns', 'clsx', 'tailwind-merge']
         }
