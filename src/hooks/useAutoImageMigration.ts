@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { logger } from '@/utils/logger';
 
 interface AutoMigrationStats {
   totalImages: number;
@@ -65,7 +66,7 @@ export const useAutoImageMigration = (isAdmin: boolean, products: any[]) => {
     });
 
     try {
-      console.log('🔄 Auto-migration starting...');
+      logger.log('🔄 Auto-migration starting...');
       
       // Ensure bucket exists
       const { error: bucketError } = await supabase.storage.createBucket('product-images', { 
@@ -75,7 +76,7 @@ export const useAutoImageMigration = (isAdmin: boolean, products: any[]) => {
       });
       
       if (bucketError && !bucketError.message.includes('already exists')) {
-        console.warn('Bucket creation warning:', bucketError);
+        logger.warn('Bucket creation warning:', bucketError);
       }
 
       // Execute migration
@@ -105,7 +106,7 @@ export const useAutoImageMigration = (isAdmin: boolean, products: any[]) => {
         throw new Error(data?.error || 'Migration failed');
       }
     } catch (error: any) {
-      console.error('Auto-migration error:', error);
+      logger.error('Auto-migration error:', error);
       toast({
         title: "⚠️ Błąd migracji",
         description: `Błąd: ${error.message}. Spróbuj ponownie w zakładce "Migracja zdjęć".`,
