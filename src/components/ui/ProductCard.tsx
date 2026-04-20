@@ -5,7 +5,7 @@ import { Product } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/utils/translations';
 import OptimizedImage from '@/components/ui/OptimizedImage';
-import PriceInquiryModal from '@/components/products/PriceInquiryModal';
+import InquiryModal from '@/components/contact/InquiryModal';
 import { trackPhoneClick } from '@/utils/analytics';
 
 interface ProductCardProps {
@@ -143,10 +143,13 @@ const ProductCard = ({ product, priority = false }: ProductCardProps) => {
         </div>
       </div>
 
-      <PriceInquiryModal
+      <InquiryModal
         isOpen={inquiryOpen}
         onClose={() => setInquiryOpen(false)}
-        product={product}
+        source="product_list"
+        productId={product.id}
+        productModel={product.model}
+        serialNumber={product.specs?.serialNumber}
       />
     </>
   );
