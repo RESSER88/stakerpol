@@ -46,7 +46,7 @@ const Index = () => {
         <meta name="twitter:image" content="/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.png" />
         <link rel="canonical" href={`https://stakerpol.pl/${language}`} />
         <meta name="keywords" content="wózki widłowe, toyota, bt, elektryczne, spalinowe, paleciaki, magazynowe, używane, serwis, stakerpol" />
-        <link rel="preload" as="image" href="/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.png" fetchPriority="high" type="image/png" />
+        <link rel="preload" as="image" href="/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.webp" fetchPriority="high" type="image/webp" />
       </Helmet>
       <LocalBusinessSchema />
 
@@ -58,7 +58,7 @@ const Index = () => {
             radial-gradient(ellipse at 25% 60%, hsl(var(--color-orange-cta) / 0.35), transparent 60%),
             radial-gradient(ellipse at 80% 30%, hsl(var(--color-red-accent) / 0.28), transparent 60%),
             linear-gradient(135deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.35) 100%),
-            url('/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.png')
+            url('/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.webp')
           `,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
