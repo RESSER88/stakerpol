@@ -79,9 +79,11 @@ const ProductAboutSection = ({ product }: Props) => {
           <InlineContextualCTA
             variant="line"
             question="Chcesz zobaczyć ten model w naszym magazynie?"
-            actionLabel="Umów prezentację"
+            actionLabel="Umów wizytę"
             actionType="demo"
             modelName={product.model}
+            productId={product.id}
+            serialNumber={product.specs?.serialNumber}
           />
         </div>
       </div>

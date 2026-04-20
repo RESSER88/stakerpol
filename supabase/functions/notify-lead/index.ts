@@ -16,13 +16,29 @@ interface LeadPayload {
   product_model: string;
   production_year?: string | null;
   serial_number?: string | null;
+  name?: string | null;
   phone?: string | null;
+  email?: string | null;
+  source?: string | null;
   language: string;
   message?: string | null;
   page_url?: string | null;
   user_agent?: string | null;
   created_at?: string;
 }
+
+const formatPlDateTime = (iso?: string) => {
+  try {
+    const d = iso ? new Date(iso) : new Date();
+    return new Intl.DateTimeFormat("pl-PL", {
+      dateStyle: "short",
+      timeStyle: "short",
+      timeZone: "Europe/Warsaw",
+    }).format(d);
+  } catch {
+    return new Date().toISOString();
+  }
+};
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -32,14 +48,14 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const lead: LeadPayload = await req.json();
 
-    // Send optional webhook
+    // Optional webhook
     if (webhookUrl) {
       try {
         await fetch(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            type: "price_inquiry",
+            type: lead.source === "visit_request" ? "visit_request" : "price_inquiry",
             timestamp: new Date().toISOString(),
             lead,
           }),
@@ -49,24 +65,52 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Send email via Resend if configured
     if (Deno.env.get("RESEND_API_KEY")) {
       const to = "info@stakerpol.pl";
-      const subject = lead.product_model === 'Zapytanie ogólne'
-        ? 'Nowe zapytanie ze strony'
+      const isVisit = lead.source === "visit_request";
+
+      const phoneClean = (lead.phone || "").replace(/\s+/g, "");
+      const phoneHref = phoneClean ? `tel:${phoneClean}` : "#";
+      const sentAt = formatPlDateTime(lead.created_at);
+
+      const subject = isVisit
+        ? `Klient chce przyjechać — zadzwoń: ${lead.phone || "(brak numeru)"}`
+        : lead.product_model === "Zapytanie ogólne"
+        ? "Nowe zapytanie ze strony"
         : `Nowe zapytanie cenowe: ${lead.product_model}`;
-      const html = `
-        <h2>Nowe zapytanie cenowe</h2>
-        <p><strong>Model:</strong> ${lead.product_model}</p>
-        ${lead.production_year ? `<p><strong>Rok:</strong> ${lead.production_year}</p>` : ""}
-        ${lead.serial_number ? `<p><strong>Nr seryjny:</strong> ${lead.serial_number}</p>` : ""}
-        ${lead.phone ? `<p><strong>Telefon:</strong> ${lead.phone}</p>` : ""}
-        <p><strong>Język:</strong> ${lead.language}</p>
-        ${lead.message ? `<p><strong>Wiadomość:</strong><br/>${(lead.message || "").replace(/\n/g, "<br/>")}</p>` : ""}
-        ${lead.page_url ? `<p><strong>Strona:</strong> <a href="${lead.page_url}">${lead.page_url}</a></p>` : ""}
-        ${lead.user_agent ? `<p><strong>UA:</strong> ${lead.user_agent}</p>` : ""}
-        ${lead.id ? `<p><strong>ID rekordu:</strong> ${lead.id}</p>` : ""}
-      `;
+
+      const productLine = [lead.product_model, lead.serial_number].filter(Boolean).join(" — nr ");
+
+      const html = isVisit
+        ? `
+            <h2 style="margin:0 0 12px;font-family:Arial,sans-serif;color:#0E0E0E;">Klient chce przyjechać zobaczyć wózek</h2>
+            <table style="font-family:Arial,sans-serif;font-size:14px;color:#0E0E0E;border-collapse:collapse;">
+              <tr><td style="padding:4px 8px;"><strong>Imię:</strong></td><td style="padding:4px 8px;">${lead.name || "—"}</td></tr>
+              <tr><td style="padding:4px 8px;"><strong>Telefon:</strong></td><td style="padding:4px 8px;"><a href="${phoneHref}" style="color:#C8102E;font-weight:bold;">${lead.phone || "—"}</a></td></tr>
+              <tr><td style="padding:4px 8px;"><strong>Produkt:</strong></td><td style="padding:4px 8px;">${productLine || "—"}</td></tr>
+              <tr><td style="padding:4px 8px;"><strong>Data zapytania:</strong></td><td style="padding:4px 8px;">${sentAt}</td></tr>
+              ${lead.page_url ? `<tr><td style="padding:4px 8px;"><strong>Strona:</strong></td><td style="padding:4px 8px;"><a href="${lead.page_url}">${lead.page_url}</a></td></tr>` : ""}
+              ${lead.id ? `<tr><td style="padding:4px 8px;"><strong>ID rekordu:</strong></td><td style="padding:4px 8px;">${lead.id}</td></tr>` : ""}
+            </table>
+            <p style="margin-top:16px;font-family:Arial,sans-serif;font-size:13px;color:#5B5B5B;">
+              Zadzwoń jak najszybciej, klient czeka na ustalenie terminu wizyty.
+            </p>
+          `
+        : `
+            <h2>Nowe zapytanie cenowe</h2>
+            <p><strong>Model:</strong> ${lead.product_model}</p>
+            ${lead.production_year ? `<p><strong>Rok:</strong> ${lead.production_year}</p>` : ""}
+            ${lead.serial_number ? `<p><strong>Nr seryjny:</strong> ${lead.serial_number}</p>` : ""}
+            ${lead.name ? `<p><strong>Imię:</strong> ${lead.name}</p>` : ""}
+            ${lead.phone ? `<p><strong>Telefon:</strong> <a href="${phoneHref}">${lead.phone}</a></p>` : ""}
+            ${lead.email ? `<p><strong>E-mail:</strong> ${lead.email}</p>` : ""}
+            <p><strong>Język:</strong> ${lead.language}</p>
+            ${lead.source ? `<p><strong>Źródło:</strong> ${lead.source}</p>` : ""}
+            ${lead.message ? `<p><strong>Wiadomość:</strong><br/>${(lead.message || "").replace(/\n/g, "<br/>")}</p>` : ""}
+            ${lead.page_url ? `<p><strong>Strona:</strong> <a href="${lead.page_url}">${lead.page_url}</a></p>` : ""}
+            ${lead.user_agent ? `<p><strong>UA:</strong> ${lead.user_agent}</p>` : ""}
+            ${lead.id ? `<p><strong>ID rekordu:</strong> ${lead.id}</p>` : ""}
+          `;
 
       try {
         const emailResponse = await resend.emails.send({
