@@ -27,7 +27,7 @@ const schema = z.object({
 
 type FieldErrors = Partial<Record<'name' | 'email' | 'phone' | 'message' | 'rodo' | '_form', string>>;
 
-const HomeHeroForm = ({ isInHero = false }: HomeHeroFormProps) => {
+const HomeHeroForm = ({ isInHero = false, variant = 'light' }: HomeHeroFormProps) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -37,8 +37,11 @@ const HomeHeroForm = ({ isInHero = false }: HomeHeroFormProps) => {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const inputBase =
-    'w-full bg-white border border-border-line rounded text-[13px] text-ink placeholder:text-ink-soft px-3 py-2.5 focus:outline-none focus:border-orange-cta focus:ring-2 focus:ring-orange-cta/20 transition-colors disabled:opacity-60';
+  const isDark = variant === 'dark';
+
+  const inputBase = isDark
+    ? 'w-full bg-white/10 border border-white/25 rounded text-[13px] text-white placeholder:text-white/60 px-3 py-2.5 focus:outline-none focus:border-orange-cta focus:ring-2 focus:ring-orange-cta/30 focus:bg-white/15 transition-colors disabled:opacity-60'
+    : 'w-full bg-white border border-border-line rounded text-[13px] text-ink placeholder:text-ink-soft px-3 py-2.5 focus:outline-none focus:border-orange-cta focus:ring-2 focus:ring-orange-cta/20 transition-colors disabled:opacity-60';
 
   const errClass = (field: keyof FieldErrors) =>
     errors[field] ? 'border-red-accent focus:border-red-accent focus:ring-red-accent/20' : '';
@@ -111,9 +114,9 @@ const HomeHeroForm = ({ isInHero = false }: HomeHeroFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <h3 className="text-base font-extrabold text-navy-brand">Zapytaj o wózek</h3>
-      <p className="text-xs text-ink-soft mt-1 mb-3.5">
-        Opisz potrzebę — odpowiemy w ciągu 30 minut. <strong className="text-ink">Bez zobowiązań.</strong>
+      <h3 className={isDark ? 'text-base font-extrabold text-white' : 'text-base font-extrabold text-navy-brand'}>Zapytaj o wózek</h3>
+      <p className={isDark ? 'text-xs text-white/75 mt-1 mb-3.5' : 'text-xs text-ink-soft mt-1 mb-3.5'}>
+        Opisz potrzebę — odpowiemy w ciągu 30 minut. <strong className={isDark ? 'text-white' : 'text-ink'}>Bez zobowiązań.</strong>
       </p>
 
       <div className="space-y-2.5">
@@ -191,11 +194,11 @@ const HomeHeroForm = ({ isInHero = false }: HomeHeroFormProps) => {
             disabled={submitting}
             className="mt-0.5 w-3.5 h-3.5 accent-orange-cta cursor-pointer flex-shrink-0"
           />
-          <span className="text-[11px] text-ink-soft leading-[1.4]">
+          <span className={isDark ? 'text-[11px] text-white/75 leading-[1.4]' : 'text-[11px] text-ink-soft leading-[1.4]'}>
             Akceptuję{' '}
             <a
               href="/privacy"
-              className="underline hover:text-orange-cta transition-colors"
+              className={isDark ? 'underline hover:text-orange-cta text-white transition-colors' : 'underline hover:text-orange-cta transition-colors'}
             >
               politykę prywatności
             </a>
