@@ -15,27 +15,27 @@ const Footer = () => {
       case 'en':
         return {
           description: 'Professional sales and service of BT Toyota pallet trucks.',
-          address: 'ul. Międzyleśna 115, 32-095 Celiny, Poland'
+          address: 'Warehouse: ul. Międzyleśna 115, 32-095 Celiny, Poland'
         };
       case 'cs':
         return {
           description: 'Profesionální prodej a servis vysokozdvižných vozíků BT Toyota.',
-          address: 'ul. Międzyleśna 115, 32-095 Celiny, Polsko'
+          address: 'Sklad: ul. Międzyleśna 115, 32-095 Celiny, Polsko'
         };
       case 'sk':
         return {
           description: 'Profesionálny predaj a servis paletových vozíkov BT Toyota.',
-          address: 'ul. Międzyleśna 115, 32-095 Celiny, Poľsko'
+          address: 'Sklad: ul. Międzyleśna 115, 32-095 Celiny, Poľsko'
         };
       case 'de':
         return {
           description: 'Professioneller Verkauf und Service von BT Toyota Palettenhubwagen.',
-          address: 'ul. Międzyleśna 115, 32-095 Celiny, Polen'
+          address: 'Lager: ul. Międzyleśna 115, 32-095 Celiny, Polen'
         };
       default:
         return {
           description: 'Profesjonalna sprzedaż i serwis wózków paletowych BT Toyota.',
-          address: 'ul. Międzyleśna 115, 32-095 Celiny, Polska'
+          address: 'Magazyn: ul. Międzyleśna 115, 32-095 Celiny, Polska'
         };
     }
   };
@@ -64,7 +64,14 @@ const Footer = () => {
             </div>
             <div className="flex items-start space-x-2 group">
               <MapPin size={16} className="mt-1 flex-shrink-0 text-toyota-orange group-hover:animate-pulse-light" />
-              <p>{companyInfo.address}</p>
+              <a
+                href="https://maps.app.goo.gl/1CHQFHvBnjvtvtR49"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-toyota-orange transition-colors"
+              >
+                {companyInfo.address}
+              </a>
             </div>
           </div>
           
