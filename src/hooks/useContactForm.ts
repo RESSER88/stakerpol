@@ -9,7 +9,10 @@ interface ContactFormData {
 }
 
 interface SubmitOptions {
-  source?: 'homepage' | 'contact_page' | 'floating_widget';
+  source?: 'homepage' | 'contact_page' | 'floating_widget' | 'product_page' | 'product_list';
+  productId?: string;
+  productModel?: string;
+  serialNumber?: string;
 }
 
 interface ContactFormErrors {
@@ -55,17 +58,22 @@ export function useContactForm() {
     if (value && errors.consent) setErrors(prev => ({ ...prev, consent: undefined }));
   };
 
-  const submit = async ({ source = 'homepage' }: SubmitOptions = {}) => {
+  const submit = async ({ source = 'homepage', productId, productModel, serialNumber }: SubmitOptions = {}) => {
     // Honeypot: silently block bots
     if (honeypot) return false;
     if (!validate()) return false;
     setStatus('loading');
     try {
       const isEmail = validateEmail(formData.contact);
+      const productInfo = productModel || serialNumber
+        ? `\n\n--- Produkt ---\n${productModel ? `Model: ${productModel}\n` : ''}${serialNumber ? `Nr seryjny: ${serialNumber}\n` : ''}${productId ? `ID: ${productId}` : ''}`
+        : '';
+      const fullMessage = `Imię: ${formData.name}\n${isEmail ? 'Email' : 'Telefon'}: ${formData.contact}\n\nTreść:\n${formData.message}${productInfo}`;
+      const isUuid = productId ? /^[0-9a-f-]{36}$/i.test(productId) : false;
       const payload = {
-        product_model: 'Zapytanie ogólne',
+        product_model: productModel || 'Zapytanie ogólne',
         language: 'pl',
-        message: `Imię: ${formData.name}\n${isEmail ? 'Email' : 'Telefon'}: ${formData.contact}\n\nTreść:\n${formData.message}`,
+        message: fullMessage,
         phone: isEmail ? null : formData.contact,
         page_url: window.location.href,
         user_agent: navigator.userAgent,
@@ -74,8 +82,9 @@ export function useContactForm() {
         name: formData.name,
         email: isEmail ? formData.contact : null,
         phone: formData.contact,
-        message: formData.message,
+        message: fullMessage,
         source,
+        product_id: isUuid ? productId : null,
         page_url: window.location.href,
         user_agent: navigator.userAgent,
         rodo_accepted: consent,
