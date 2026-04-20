@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '@/types';
 import LazyImage from '@/components/ui/LazyImage';
@@ -6,7 +7,7 @@ interface Props {
   product: Product;
 }
 
-const SimpleRelatedCard = ({ product }: Props) => {
+const SimpleRelatedCard = memo(({ product }: Props) => {
   const meta: string[] = [];
   if (product.specs?.productionYear) meta.push(`${product.specs.productionYear}`);
   if (product.specs?.workingHours) meta.push(`${product.specs.workingHours} mth`);
@@ -48,6 +49,8 @@ const SimpleRelatedCard = ({ product }: Props) => {
       </div>
     </Link>
   );
-};
+});
+
+SimpleRelatedCard.displayName = 'SimpleRelatedCard';
 
 export default SimpleRelatedCard;
