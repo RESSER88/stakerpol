@@ -105,6 +105,16 @@ const Admin = () => {
   }
 
   if (!user) return <AdminLogin />;
+  if (adminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-admin-bg">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-admin-orange mx-auto mb-4" />
+          <p className="text-admin-muted">Weryfikacja roli administratora...</p>
+        </div>
+      </div>
+    );
+  }
   if (!isAdmin) return <Navigate to="/" replace />;
 
   const renderSection = () => {
