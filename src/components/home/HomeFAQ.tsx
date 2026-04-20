@@ -17,7 +17,7 @@ const HomeFAQ = () => {
     fetchFAQs(language);
   }, [language]);
 
-  const items = faqs.slice(0, 6);
+  const items = faqs.filter((f) => f.language === language).slice(0, 6);
 
   if (items.length === 0) return null;
 
