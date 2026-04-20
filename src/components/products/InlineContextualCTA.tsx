@@ -10,6 +10,8 @@ export interface InlineContextualCTAProps {
   actionLabel: string;
   actionType: 'phone' | 'form' | 'whatsapp' | 'demo';
   modelName?: string;
+  productId?: string;
+  serialNumber?: string;
 }
 
 const InlineContextualCTA = ({
@@ -19,6 +21,8 @@ const InlineContextualCTA = ({
   actionLabel,
   actionType,
   modelName,
+  productId,
+  serialNumber,
 }: InlineContextualCTAProps) => {
   const [demoOpen, setDemoOpen] = useState(false);
 
@@ -87,6 +91,8 @@ const InlineContextualCTA = ({
           open={demoOpen}
           onClose={() => setDemoOpen(false)}
           modelName={modelName}
+          productId={productId}
+          serialNumber={serialNumber}
         />
       )}
     </>
