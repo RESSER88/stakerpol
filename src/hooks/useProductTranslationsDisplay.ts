@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Language } from '@/contexts/LanguageContext';
+import { logger } from '@/utils/logger';
 
 interface ProductTranslation {
   language: string;
@@ -51,11 +52,11 @@ export const useProductTranslationsDisplay = (productId: string, language: Langu
           }
         });
 
-        console.log(`Loaded ${data?.length || 0} translations for product ${productId} in ${language}:`, translatedFields);
+        logger.log(`Loaded ${data?.length || 0} translations for product ${productId} in ${language}:`, translatedFields);
 
         setTranslations(translatedFields);
       } catch (err) {
-        console.error('Error fetching product translations:', err);
+        logger.error('Error fetching product translations:', err);
         setError(err.message || 'Failed to fetch translations');
         setTranslations({});
       } finally {

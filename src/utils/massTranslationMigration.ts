@@ -1,7 +1,8 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 export const executeMassTranslationMigration = async () => {
-  console.log('🚀 ROZPOCZYNANIE MASOWEJ MIGRACJI TŁUMACZEŃ');
+  logger.log('🚀 ROZPOCZYNANIE MASOWEJ MIGRACJI TŁUMACZEŃ');
   
   const startTime = Date.now();
   const results = {
@@ -26,7 +27,7 @@ export const executeMassTranslationMigration = async () => {
     }
 
     results.totalProducts = products?.length || 0;
-    console.log(`📊 Znaleziono ${results.totalProducts} produktów do przetworzenia`);
+    logger.log(`📊 Znaleziono ${results.totalProducts} produktów do przetworzenia`);
 
     if (!products || products.length === 0) {
       return { ...results, processingTime: Date.now() - startTime };
@@ -43,11 +44,11 @@ export const executeMassTranslationMigration = async () => {
       existingMap.set(key, true);
     });
 
-    console.log(`📋 Znaleziono ${existingTranslations?.length || 0} istniejących tłumaczeń`);
+    logger.log(`📋 Znaleziono ${existingTranslations?.length || 0} istniejących tłumaczeń`);
 
     // KROK 3: Przetwarzaj każdy produkt
     for (const product of products) {
-      console.log(`\n🔄 Przetwarzanie produktu: ${product.name} (${product.id})`);
+      logger.log(`\n🔄 Przetwarzanie produktu: ${product.name} (${product.id})`);
       results.processedProducts++;
 
       try {
@@ -68,7 +69,7 @@ export const executeMassTranslationMigration = async () => {
         }
 
         if (!needsTranslation) {
-          console.log(`⏭️ Produkt ${product.name} już ma wszystkie tłumaczenia`);
+          logger.log(`⏭️ Produkt ${product.name} już ma wszystkie tłumaczenia`);
           results.successfulProducts++;
           continue;
         }
@@ -94,23 +95,23 @@ export const executeMassTranslationMigration = async () => {
           ...productData
         };
 
-        console.log(`📤 Wysyłanie payload dla ${product.name}:`, translationPayload);
+        logger.log(`📤 Wysyłanie payload dla ${product.name}:`, translationPayload);
 
         const { data, error } = await supabase.functions.invoke('auto-translate', {
           body: translationPayload
         });
 
         if (error) {
-          console.error(`❌ Błąd tłumaczenia dla ${product.name}:`, error);
+          logger.error(`❌ Błąd tłumaczenia dla ${product.name}:`, error);
           results.errors.push(`${product.name}: ${error.message}`);
           results.failedProducts++;
         } else if (data?.success) {
-          console.log(`✅ Sukces tłumaczenia dla ${product.name}`);
+          logger.log(`✅ Sukces tłumaczenia dla ${product.name}`);
           const successCount = data.results?.filter((r: any) => r.status === 'completed').length || 0;
           results.totalTranslations += successCount;
           results.successfulProducts++;
         } else {
-          console.error(`❌ Nieoczekiwana odpowiedź dla ${product.name}:`, data);
+          logger.error(`❌ Nieoczekiwana odpowiedź dla ${product.name}:`, data);
           results.errors.push(`${product.name}: Nieoczekiwana odpowiedź z API`);
           results.failedProducts++;
         }
@@ -119,7 +120,7 @@ export const executeMassTranslationMigration = async () => {
         await new Promise(resolve => setTimeout(resolve, 1000));
 
       } catch (error) {
-        console.error(`❌ Błąd przetwarzania produktu ${product.name}:`, error);
+        logger.error(`❌ Błąd przetwarzania produktu ${product.name}:`, error);
         results.errors.push(`${product.name}: ${error.message}`);
         results.failedProducts++;
       }
@@ -127,22 +128,22 @@ export const executeMassTranslationMigration = async () => {
 
     results.processingTime = Date.now() - startTime;
 
-    console.log('\n🎯 PODSUMOWANIE MIGRACJI:');
-    console.log(`📊 Produkty: ${results.processedProducts}/${results.totalProducts} przetworzonych`);
-    console.log(`✅ Sukces: ${results.successfulProducts} produktów`);
-    console.log(`❌ Błędy: ${results.failedProducts} produktów`);
-    console.log(`🌐 Tłumaczenia: ${results.totalTranslations} utworzonych`);
-    console.log(`⏱️ Czas: ${Math.round(results.processingTime / 1000)}s`);
+    logger.log('\n🎯 PODSUMOWANIE MIGRACJI:');
+    logger.log(`📊 Produkty: ${results.processedProducts}/${results.totalProducts} przetworzonych`);
+    logger.log(`✅ Sukces: ${results.successfulProducts} produktów`);
+    logger.log(`❌ Błędy: ${results.failedProducts} produktów`);
+    logger.log(`🌐 Tłumaczenia: ${results.totalTranslations} utworzonych`);
+    logger.log(`⏱️ Czas: ${Math.round(results.processingTime / 1000)}s`);
 
     if (results.errors.length > 0) {
-      console.log('\n❌ BŁĘDY:');
-      results.errors.forEach(error => console.log(`  - ${error}`));
+      logger.log('\n❌ BŁĘDY:');
+      results.errors.forEach(error => logger.log(`  - ${error}`));
     }
 
     return results;
 
   } catch (error) {
-    console.error('💥 KRYTYCZNY BŁĄD MIGRACJI:', error);
+    logger.error('💥 KRYTYCZNY BŁĄD MIGRACJI:', error);
     results.processingTime = Date.now() - startTime;
     results.errors.push(`Krytyczny błąd: ${error.message}`);
     return results;

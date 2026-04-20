@@ -10,6 +10,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { SupabaseAuthProvider } from "./hooks/useSupabaseAuth";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
+import { logger } from "@/utils/logger";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
@@ -57,10 +58,10 @@ const App = () => {
         import('./utils/performance').then(({ trackWebVitals }) => {
           trackWebVitals();
         }).catch((error) => {
-          console.warn('Failed to load performance tracking:', error);
+          logger.warn('Failed to load performance tracking:', error);
         });
       } catch (error) {
-        console.warn('Error setting up performance tracking:', error);
+        logger.warn('Error setting up performance tracking:', error);
       }
     }
   }, []);
