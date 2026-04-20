@@ -189,8 +189,8 @@ export default {
 			'slide-up': 'slide-up 0.3s ease-out'
 			},
 			fontFamily: {
-				'sans': ['Montserrat', 'system-ui', 'sans-serif'],
-				'mono': ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+				'sans': ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+				'mono': ['ui-monospace', 'Consolas', 'Menlo', 'Monaco', 'monospace'],
 				'editorial': ['Georgia', 'Cambria', '"Times New Roman"', 'serif'],
 			}
 		}
