@@ -64,8 +64,19 @@ const ContactLeadForm = () => {
         page_url: window.location.href,
         user_agent: navigator.userAgent,
       };
-      const { error } = await supabase.functions.invoke('notify-lead', { body: payload });
+      const { error } = await supabase.from('leads').insert({
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email || null,
+        message: formData.message,
+        source: 'contact_page',
+        page_url: window.location.href,
+        user_agent: navigator.userAgent,
+        rodo_accepted: consent,
+      });
       if (error) throw error;
+
+      await supabase.functions.invoke('notify-lead', { body: payload });
       trackFormSubmit('contact_lead_form');
       setStatus('success');
     } catch {

@@ -47,7 +47,7 @@ const MobileContactButton = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const ok = await submit();
+    const ok = await submit({ source: 'floating_widget' });
     if (ok) setTimeout(closeSheet, 3000);
   };
 

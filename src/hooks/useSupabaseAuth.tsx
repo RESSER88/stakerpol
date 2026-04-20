@@ -111,6 +111,7 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (newSession?.user) {
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || checkedRoleForUserRef.current !== newSession.user.id) {
+          setAdminLoading(true);
           setTimeout(() => {
             if (mounted) void checkAdminRole(newSession.user.id);
           }, 0);
@@ -128,6 +129,7 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
       if (existing) {
         setSession(existing);
         setUser(existing.user);
+        setAdminLoading(true);
         setTimeout(() => {
           if (mounted) void checkAdminRole(existing.user.id);
         }, 0);
