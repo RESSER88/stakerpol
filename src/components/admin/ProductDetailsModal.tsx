@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { MoreVertical, Copy, Trash2 } from 'lucide-react';
+import { MoreVertical, Copy, Trash2, ExternalLink } from 'lucide-react';
 import { Product } from '@/types';
 import ProductImageManager from './ProductImageManager';
 import ProductForm from './ProductForm';
@@ -152,6 +152,17 @@ const ProductDetailsModal = ({
               <DialogTitle className="font-editorial text-2xl text-editorial-ink mt-1 truncate">
                 {isEditMode ? selectedProduct.model : 'Dodaj produkt'}
               </DialogTitle>
+              {isEditMode && selectedProduct && (
+                <a
+                  href={`/products/${selectedProduct.slug || selectedProduct.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 mt-2 text-[11px] font-bold tracking-[0.15em] uppercase text-editorial-muted hover:text-orange-cta transition-colors"
+                >
+                  Zobacz na stronie
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
             </div>
             {isEditMode && (onCopy || onDelete) && selectedProduct && (
               <DropdownMenu>
