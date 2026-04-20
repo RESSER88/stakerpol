@@ -62,7 +62,7 @@ const ProductCard = ({ product, priority = false }: ProductCardProps) => {
         <div className="px-3.5 pt-3 pb-3.5 flex-1 flex flex-col">
           {/* Title */}
           <Link to={productLink} className="block hover:text-stakerpol-orange transition-colors">
-            <h3 className="font-archivo font-extrabold text-stakerpol-navy text-base md:text-lg lg:text-xl leading-tight tracking-[-0.01em] mb-3">
+            <h3 className="font-sans font-extrabold text-stakerpol-navy text-base md:text-lg lg:text-xl leading-tight tracking-[-0.01em] mb-3">
               {product.model}
             </h3>
           </Link>
