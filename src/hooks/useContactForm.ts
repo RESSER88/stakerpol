@@ -8,6 +8,10 @@ interface ContactFormData {
   message: string;
 }
 
+interface SubmitOptions {
+  source?: 'homepage' | 'contact_page' | 'floating_widget';
+}
+
 interface ContactFormErrors {
   name?: string;
   contact?: string;
@@ -51,7 +55,7 @@ export function useContactForm() {
     if (value && errors.consent) setErrors(prev => ({ ...prev, consent: undefined }));
   };
 
-  const submit = async () => {
+  const submit = async ({ source = 'homepage' }: SubmitOptions = {}) => {
     // Honeypot: silently block bots
     if (honeypot) return false;
     if (!validate()) return false;
@@ -66,8 +70,19 @@ export function useContactForm() {
         page_url: window.location.href,
         user_agent: navigator.userAgent,
       };
-      const { error } = await supabase.functions.invoke('notify-lead', { body: payload });
+      const { error } = await supabase.from('leads').insert({
+        name: formData.name,
+        email: isEmail ? formData.contact : null,
+        phone: isEmail ? '000000000' : formData.contact,
+        message: formData.message,
+        source,
+        page_url: window.location.href,
+        user_agent: navigator.userAgent,
+        rodo_accepted: consent,
+      });
       if (error) throw error;
+
+      await supabase.functions.invoke('notify-lead', { body: payload });
       trackFormSubmit('contact_widget');
       setStatus('success');
       setFormData({ name: '', contact: '', message: '' });

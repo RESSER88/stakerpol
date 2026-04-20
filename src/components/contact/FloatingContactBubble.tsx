@@ -37,7 +37,7 @@ const FloatingContactBubble = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await submit();
+    await submit({ source: 'floating_widget' });
   };
 
   const inputCls = (err?: string) =>
