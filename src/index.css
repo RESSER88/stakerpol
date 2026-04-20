@@ -411,15 +411,6 @@ a:focus-visible {
   }
 }
 
-/* Optimize accordion animations */
-[data-state="open"] {
-  animation: accordion-down 0.2s ease-out;
-}
-
-[data-state="closed"] {
-  animation: accordion-up 0.2s ease-out;
-}
-
 /* WCAG 2.1 AA Focus States - Enhanced accessibility */
 *:focus {
   outline: 2px solid hsl(var(--ring));
