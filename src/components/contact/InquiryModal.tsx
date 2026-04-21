@@ -37,7 +37,7 @@ const InquiryModal = ({ isOpen, onClose, source, productId, productModel, serial
   };
 
   const inputCls = (err?: string) =>
-    `w-full px-3 py-2.5 text-sm rounded-lg bg-white border ${
+    `w-full px-3 py-2.5 text-base md:text-sm rounded-lg bg-white border ${
       err ? 'border-red-400' : 'border-border'
     } text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(25,100%,50%)] focus:border-transparent transition-colors`;
 

@@ -18,17 +18,17 @@ const ProductStickyBar = ({ product }: Props) => {
         <div className="grid grid-cols-2 gap-2">
           <a
             href={`tel:${PHONE_TEL}`}
-            className="flex items-center justify-center gap-2 rounded-[4px] font-bold text-white bg-orange-cta py-3 text-[13px]"
+            className="flex items-center justify-center gap-2 rounded-[4px] font-bold text-white bg-orange-cta min-h-[48px] text-sm active:scale-[0.97] active:brightness-95 transition-transform"
           >
-            <Phone size={14} />
+            <Phone size={16} />
             Zadzwoń
           </a>
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="flex items-center justify-center gap-2 rounded-[4px] font-bold text-white bg-ink py-3 text-[13px]"
+            className="flex items-center justify-center gap-2 rounded-[4px] font-bold text-white bg-ink min-h-[48px] text-sm active:scale-[0.97] active:brightness-95 transition-transform"
           >
-            <Mail size={14} />
+            <Mail size={16} />
             Zapytaj
           </button>
         </div>

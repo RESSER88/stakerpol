@@ -117,7 +117,7 @@ const ProductCard = memo(({ product, priority = false }: ProductCardProps) => {
                 stop(e);
                 trackPhoneClick(`product_card_grid_${product.model}`);
               }}
-              className="bg-orange-cta hover:brightness-110 text-white font-bold text-sm py-3 min-h-[48px] px-2 rounded flex items-center justify-center gap-1.5 transition-all"
+              className="bg-orange-cta hover:brightness-110 active:scale-[0.98] active:brightness-95 text-white font-bold text-sm py-3 min-h-[48px] px-2 rounded flex items-center justify-center gap-1.5 transition-all"
             >
               <Phone className="w-3.5 h-3.5" />
               {t('cardCallBtn')}
@@ -128,7 +128,7 @@ const ProductCard = memo(({ product, priority = false }: ProductCardProps) => {
                 stop(e);
                 setInquiryOpen(true);
               }}
-              className="bg-[#0E0E0E] hover:bg-[#222] text-white font-bold text-sm py-3 min-h-[48px] px-2 rounded flex items-center justify-center gap-1.5 transition-all"
+              className="bg-[#0E0E0E] hover:bg-[#222] active:scale-[0.98] active:brightness-95 text-white font-bold text-sm py-3 min-h-[48px] px-2 rounded flex items-center justify-center gap-1.5 transition-all"
             >
               <Mail className="w-3.5 h-3.5" />
               {t('cardAskBtn')}

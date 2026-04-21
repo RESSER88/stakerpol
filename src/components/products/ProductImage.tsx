@@ -101,14 +101,14 @@ const ProductImage = ({ image, alt, images, productionYear, availabilityStatus, 
             <>
               <button
                 onClick={(e) => { e.stopPropagation(); prevImage(); }}
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-black/70 z-10 touch-manipulation"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 hover:bg-black/70 active:scale-90 z-10 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label="Poprzednie zdjęcie"
               >
                 <ChevronLeft size={20} />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); nextImage(); }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-black/70 z-10 touch-manipulation"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 hover:bg-black/70 active:scale-90 z-10 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label="Następne zdjęcie"
               >
                 <ChevronRight size={20} />
