@@ -1,182 +1,115 @@
 
 
-# Audyt SEO — stan faktyczny i plan działania
+# Plan: Mobile UX 375px — podział na 3 etapy
 
-## Co jest już zrobione (wbrew Twoim podejrzeniom)
+Cel: poprawić mobile UX bez ingerencji w desktop i bez zmiany kolorów (używam istniejących tokenów Tailwind / shadcn).
 
-Projekt przeszedł kilka rund optymalizacji SEO. Większość Twojej listy **już istnieje**:
+---
 
-| Twoje żądanie | Stan w projekcie | Wniosek |
-|---|---|---|
-| Product schema JSON-LD (name, image, sku, brand, offers, aggregateRating) | ✅ `generateProductSchema.ts` — pełny schema z review/aggregateRating z testimonials | **Działa** |
-| BreadcrumbList schema | ✅ `BreadcrumbSchema.tsx` na ProductDetail | **Działa** |
-| Organization schema na home | ✅ `LocalBusinessSchema.tsx` (LocalBusiness = nadtyp Organization) | **Działa** |
-| Meta title format `[Produkt] - [Kategoria] \| Stakerpol` | ✅ `getMetaTitle()` w ProductDetail | **Działa** |
-| Meta description z USP | ✅ `getMetaDescription()` ze specami + CTA | **Działa** |
-| Unikatowy H1 z keyword | ✅ Każda strona ma jeden H1 (Index, ProductDetail, Products) | **Działa** |
-| Canonical URL | ✅ Ustawiony w ProductDetail i Index z prefiksem języka | **Działa** |
-| Alt text obrazów | ✅ ProductImage przekazuje `alt={product.model}`, hero `alt="Wózki paletowe Toyota BT"` | **Działa** |
-| XML sitemap | ✅ Edge function `supabase/functions/sitemap/index.ts` + statyczna w robots.txt | **Działa** |
-| robots.txt | ✅ `public/robots.txt` z bot-specific rules + sitemapy | **Działa** |
-| URL keyword-friendly | ✅ `/products/toyota-swe-200d-2018r-w-6633366` (slug) | **Działa** |
+## Etap 1 — Niskie ryzyko: globalne reguły CSS + tap targets
 
-## Realne problemy do naprawy (3 sztuki)
+Zmiany czysto addytywne, nie modyfikują istniejących komponentów strukturalnie.
 
-### Problem 1 — Konflikt canonical URL (KRYTYCZNE dla SEO)
+**Pliki:**
 
-**Lokalizacja:** `ProductDetail.tsx` linia 149 vs `HreflangLinks.tsx` linia 31-33
+1. **`src/index.css`** — dodaję dwie reguły w `@layer base`:
+   - **Anty-zoom iOS:** `@media (max-width: 768px) { input:not([type="checkbox"]):not([type="radio"]), textarea, select { font-size: 16px !important; } }`
+   - **Hover-none disable:** `@media (hover: none) { ... }` — wyłącza `hover:scale-*`, `hover:-translate-*`, wymusza widoczność elementów `group-hover:opacity-100`
 
-ProductDetail ustawia canonical jako `https://stakerpol.pl/${language}/products/${slug}`, ale faktyczny URL to `https://stakerpol.pl/products/${slug}` (bez prefiksu języka — patrz aktualny route w przeglądarce: `/products/toyota-swe-200d-2018r-w-6633366`).
+2. **`src/components/ui/input.tsx`** — `text-sm` → `text-base md:text-sm`
+3. **`src/components/ui/textarea.tsx`** — `text-sm` → `text-base md:text-sm`
+4. **`src/components/contact/InquiryModal.tsx`** — `inputCls`: `text-sm` → `text-base md:text-sm`
 
-**Skutek:** Google widzi `<link rel="canonical">` wskazujący na **nieistniejący URL** z prefiksem `/pl/`. To poważny błąd SEO — Google może deindeksować stronę lub ignorować canonical.
+5. **`src/components/products/ProductStickyBar.tsx`** — touch targets:
+   - `py-2.5` + `py-3` + `text-[13px]` → `min-h-[48px] text-sm`
+   - Ikony `size={14}` → `size={16}`
+   - Dodaję `active:scale-[0.97] active:brightness-95 transition-transform` na obu CTA
 
-**To samo dotyczy `og:url`** (linia 143).
+6. **`src/components/layout/Header.tsx`** — hamburger button:
+   - Dodaję `min-h-[48px] min-w-[48px] flex items-center justify-center rounded-md active:bg-gray-100`
 
-**Fix:** Usunąć prefiks `${language}/` z canonical i og:url w ProductDetail. To samo w Index (linia 47).
+**Ryzyko:** minimalne. Zmiany czysto utility-klasowe, brak zmian struktur DOM.
 
-### Problem 2 — Hreflang wskazuje na nieistniejące URL
+---
 
-**Lokalizacja:** `HreflangLinks.tsx` linie 18-21, 25-28
+## Etap 2 — Średnie ryzyko: interakcje touch w istniejących komponentach
 
-Generuje linki typu `https://stakerpol.pl/en/products/...`, `https://stakerpol.pl/de/...` — ale te trasy nie istnieją w `App.tsx` (routing nie ma `/:lang/` segmentu). Wszystkie hreflangi prowadzą do 404.
+Modyfikacja zachowania komponentów już renderowanych, ale bez zmiany struktury.
 
-**Skutek:** Google Search Console będzie raportować "alternate page with proper canonical tag" jako błąd; międzynarodowe SEO nie działa.
+**Pliki:**
 
-**Opcje fix:**
-- (A) **Usunąć prefiks języka** ze wszystkich `hreflang` URLów — wskazywać na ten sam URL kanoniczny z różnymi `hreflang` (rozwiązanie w stylu "język wykrywany przez kontekst klienta")
-- (B) **Dodać prawdziwe trasy `/:lang/`** w routerze — duża zmiana architektoniczna
+7. **`src/components/products/ProductImage.tsx`** — strzałki nawigacji galerii:
+   - `opacity-0 group-hover:opacity-100` → `opacity-100 md:opacity-0 md:group-hover:opacity-100`
+   - Dodaję `min-h-[44px] min-w-[44px]` + `active:scale-90` na buttonach strzałek
+   - Weryfikuję że dots paginacji mają min 32px tap area (padding wokół)
 
-**Rekomendacja:** Opcja A — szybka, zero ryzyka, zgodna z aktualną architekturą (jeden URL, wybór języka po stronie klienta). Hreflang stays jako sygnał dla Google że strona jest dostępna w wielu językach, ale wskazuje na ten sam URL.
+8. **`src/components/ui/ProductCard.tsx`** — active states na CTA wewnątrz karty:
+   - Dodaję `active:scale-[0.98] active:brightness-95 transition-transform` na przyciskach "Zadzwoń" / "Zapytaj"
+   - Weryfikuję wysokość CTA ≥48px (z poprzedniej iteracji powinno być spełnione)
 
-### Problem 3 — Przestarzały `<title>` w `index.html` jako fallback
+**Ryzyko:** niskie-średnie. Strzałki galerii zmienią widoczność na mobile (zamierzone). Active states są wizualnym uzupełnieniem.
 
-**Lokalizacja:** `index.html` linie 7-8, 54-58
+---
 
-Statyczny tytuł `"Stakerpol - Paleciaki elektryczne Toyota BT"` jest wstrzykiwany do HTML przed React-Helmet. Crawlery które nie wykonują JS (część botów AI, niektóre social media) widzą **ten sam tytuł na każdej podstronie**. Helmet nadpisuje to dopiero po hydracji.
+## Etap 3 — Wyższe ryzyko: bottom sheet dla filtrów
 
-**Skutek:** Niski wpływ (Google JS-renderuje od 2019), ale Bingbot, Facebook Open Graph crawler i część botów AI mogą widzieć duplikaty.
+Zmiana strukturalna komponentu — warunkowy rendering dialog vs sheet.
 
-**Opcja fix (niskie ryzyko):** Pozostawić jako fallback — nie ruszać. Alternatywa (SSR) wymaga przebudowy architektury. **Pomijam.**
+**Plik:**
 
-## Czego NIE robię (i dlaczego)
+9. **`src/components/products/FilterModal.tsx`** — przebudowa renderowania:
+   - Import `Sheet, SheetContent, SheetHeader, SheetTitle` z `@/components/ui/sheet`
+   - Import `useIsMobile` z `@/hooks/use-mobile`
+   - Logika: `isMobile ? <Sheet side="bottom" /> : <Dialog />` (zachowuję desktop bez zmian)
+   - Sheet content:
+     - `max-h-[85vh] rounded-t-2xl overflow-hidden flex flex-col`
+     - Handle bar: małe pociągnięcie `<div className="mx-auto w-12 h-1.5 rounded-full bg-muted mt-2 mb-1" />`
+     - Treść scrollowalna w `flex-1 overflow-y-auto px-4 pb-4`
+     - Sticky footer z Reset/Apply: `sticky bottom-0 bg-background border-t p-4 flex gap-2` — przyciski `min-h-[48px] flex-1` z `active:scale-[0.98]`
+   - Logika filtrów (slidery, useMemo, handlers) **bez zmian** — tylko warstwa prezentacji
 
-| Element | Powód |
-|---|---|
-| Zmiana URL na `/category/subcategory/product-name/` | Wszystkie produkty to wózki paletowe — sztuczny podział na kategorie/podkategorie zaszkodzi SEO (utrata linków przychodzących, rozrzedzenie autorytetu). Aktualne `/products/[slug]` jest właściwe dla katalogu jednolitego. |
-| Dodanie real `price` w Product schema | Model B2B kwotowy — `seoSettings.price` jest opcjonalne, jeśli admin ustawi cenę → schema się aktualizuje automatycznie (już zaimplementowane w `generateProductSchema.ts` linia 245-249). |
-| Duplikat `BreadcrumbSchema` na innych podstronach | Tylko ProductDetail go potrzebuje (głęboka nawigacja). Strona główna i listing nie mają hierarchii do pokazania. |
-| Re-konwersja URL produktów | Slugs są już keyword-friendly (`toyota-swe-200d-2018r-w-6633366` zawiera markę, model, rok). Zmiana wymagałaby 301 redirects = utrata SEO juice. |
-| Generowanie nowego sitemap | Edge function już generuje dynamicznie z bazy + statyczny fallback. |
+**Ryzyko:** średnie. Wymaga testu na 375 / 390 / 768px że:
+   - Bottom sheet otwiera się płynnie
+   - Slidery nie kolidują z gestem zamknięcia sheeta
+   - Sticky footer nie zasłania ostatniego sliderka (padding-bottom w content area)
+   - Desktop dialog nadal działa identycznie
 
-## Plan zmian — 2 pliki
+---
 
-### Plik 1: `src/pages/ProductDetail.tsx` (linie 143, 149)
+## Etap 4 (weryfikacja, bez zmian kodu)
 
-**Przed:**
-```tsx
-<meta property="og:url" content={`https://stakerpol.pl/${language}/products/${product.slug || product.id}`} />
-<link rel="canonical" href={`https://stakerpol.pl/${language}/products/${product.slug || product.id}`} />
-```
+Po wdrożeniu etapów 1–3:
+- Test wizualny przy 375px (iPhone SE), 390px (iPhone 14), 768px (iPad)
+- Manualna inspekcja tap targetów w DevTools (każdy interaktywny element ≥44×44, krytyczne CTA ≥48×48)
+- Sprawdzenie że focus na inputie w InquiryModal **nie powoduje zoomu** w iOS Safari
+- Sprawdzenie że strzałki galerii są widoczne od razu (bez tapnięcia w obraz)
+- Sprawdzenie że bottom sheet filtrów pojawia się od dołu, nie centralnie
 
-**Po:**
-```tsx
-<meta property="og:url" content={`https://stakerpol.pl/products/${product.slug || product.id}`} />
-<link rel="canonical" href={`https://stakerpol.pl/products/${product.slug || product.id}`} />
-```
+---
 
-### Plik 2: `src/pages/Index.tsx` (linia 41, 47)
+## Czego nie robię
 
-**Przed:**
-```tsx
-<meta property="og:url" content={`https://stakerpol.pl/${language}`} />
-<link rel="canonical" href={`https://stakerpol.pl/${language}`} />
-```
+- Nie zmieniam kolorów ani tokenów — używam istniejących klas (`bg-orange-cta`, `bg-ink`, `bg-muted`, `bg-background`, `border-border-line`)
+- Nie ruszam desktop layoutu (wszystkie zmiany gated przez `md:` lub `@media (max-width:768px)` / `@media (hover:none)`)
+- Nie zmieniam logiki filtrów ani analytics
+- Nie dotykam komponentów które już spełniają wymagania (ProductImage swipe, container px-4)
 
-**Po:**
-```tsx
-<meta property="og:url" content="https://stakerpol.pl/" />
-<link rel="canonical" href="https://stakerpol.pl/" />
-```
+## Pliki łącznie: 8
 
-### Plik 3: `src/components/seo/HreflangLinks.tsx` (linie 18-22, 32)
-
-**Przed:**
-```tsx
-const makeUrl = (lang: string) => {
-  const suffix = basePath === '/' ? '' : basePath;
-  return `https://stakerpol.pl/${lang}${suffix}`;
-};
-```
-
-**Po:**
-```tsx
-const makeUrl = (_lang: string) => {
-  // Routing nie ma prefiksu języka — wszystkie języki wskazują na ten sam URL.
-  // Wybór języka odbywa się po stronie klienta (LanguageContext).
-  const suffix = basePath === '/' ? '/' : basePath;
-  return `https://stakerpol.pl${suffix}`;
-};
-```
-
-Plus usunąć fallback canonical w linii 31-33 (canonical jest już ustawiany przez ProductDetail/Index — w HreflangLinks tworzy duplikat).
-
-## Przykładowy JSON-LD dla strony produktu (już generowany przez `generateProductSchema.ts`)
-
-```json
-{
-  "@context": "https://schema.org/",
-  "@type": "Product",
-  "name": "Toyota SWE200D 2018r W-6633366",
-  "brand": { "@type": "Brand", "name": "Toyota" },
-  "model": "SWE200D",
-  "sku": "W-6633366",
-  "description": "Elektryczny wózek paletowy Toyota SWE200D, rok 2018, wysokość podnoszenia 2000mm, udźwig 2000kg.",
-  "url": "https://stakerpol.pl/products/toyota-swe-200d-2018r-w-6633366",
-  "image": ["https://...image1.webp", "https://...image2.webp"],
-  "manufacturer": { "@type": "Organization", "name": "Toyota" },
-  "category": "Wózki widłowe",
-  "additionalProperty": [
-    { "@type": "PropertyValue", "name": "Wysokość podnoszenia", "value": "2000 mm", "unitCode": "MMT" },
-    { "@type": "PropertyValue", "name": "Udźwig na maszcie", "value": "2000 kg", "unitCode": "KGM" },
-    { "@type": "PropertyValue", "name": "Rok produkcji", "value": "2018" },
-    { "@type": "PropertyValue", "name": "Stan", "value": "Używany" }
-  ],
-  "aggregateRating": {
-    "@type": "AggregateRating",
-    "ratingValue": 4.9,
-    "reviewCount": 12,
-    "bestRating": 5,
-    "worstRating": 1
-  },
-  "review": [ /* lista z testimonials/ */ ],
-  "offers": {
-    "@type": "Offer",
-    "availability": "https://schema.org/InStock",
-    "businessFunction": "https://schema.org/Sell",
-    "seller": {
-      "@type": "Organization",
-      "name": "Stakerpol",
-      "url": "https://stakerpol.pl",
-      "telephone": "+48694133592"
-    }
-  },
-  "productionDate": "2018"
-}
-```
+Etap 1: 6 plików (CSS + 5 komponentów, drobne edycje 1–10 linii każdy)
+Etap 2: 2 pliki (ProductImage, ProductCard)
+Etap 3: 1 plik (FilterModal — większa przebudowa renderowania)
 
 ## Oczekiwany efekt
 
 | Metryka | Przed | Po |
 |---|---|---|
-| Canonical wskazuje na istniejący URL | ❌ `/pl/products/...` (404) | ✅ `/products/...` |
-| Hreflang prowadzi do 404 | ❌ tak | ✅ nie (wskazuje na canonical) |
-| Google Search Console "Alternate page" błędy | obecnie wszystkie | **0** |
-| Indeksowalność produktów | utrudniona (canonical → 404) | **prawidłowa** |
-| Pozostałe SEO (schema, meta, alt, sitemap) | już prawidłowe | bez zmian |
-
-## Uczciwa ocena
-
-Twoja lista 10 punktów zakładała projekt bez SEO. **8 z 10 jest już zaimplementowane prawidłowo.** Realne problemy znalazłem 2 (canonical mismatch + hreflang→404), oba są krytyczne dla indeksowania, ale małe w zakresie kodu (3 pliki, ~10 linii zmian).
-
-**Zero zmian wizualnych. Zero zmian funkcjonalnych. Tylko poprawne URL-e w meta tagach.**
+| iOS focus zoom | ❌ | ✅ wyłączony |
+| Najmniejszy tap target | 24–40px | **≥48px** krytyczne, ≥44px reszta |
+| Strzałki galerii mobile | ukryte | widoczne |
+| Filtry mobile | centered dialog | bottom sheet z handle |
+| Hover-laggy efekty na touch | aktywne | wyłączone |
+| Tap feedback | brak | scale + brightness |
+| Zmiany na desktop | — | **żadne** |
+| Zmiany kolorów | — | **żadne** |
 
