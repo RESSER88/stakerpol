@@ -12,7 +12,11 @@ const FAQ: React.FC = () => {
   const { language } = useLanguage();
   const t = useTranslation(language);
   const [searchTerm, setSearchTerm] = useState('');
-  const { faqs: supabaseFAQs, loading } = useSupabaseFAQ();
+  const { faqs: supabaseFAQs, loading, fetchFAQs } = useSupabaseFAQ();
+
+  React.useEffect(() => {
+    fetchFAQs(language);
+  }, [language]);
   
   // Fallback to static translations if no database FAQs exist
   const staticFaqItems: FAQItem[] = useMemo(() => {
