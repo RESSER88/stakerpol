@@ -60,6 +60,8 @@ const Index = () => {
           loading="eager"
           fetchPriority="high"
           decoding="async"
+          width={1920}
+          height={1080}
           className="absolute inset-0 w-full h-full object-cover object-center -z-10"
         />
         {/* Gradient overlay — identical to previous background-image stack */}
