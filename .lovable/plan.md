@@ -1,88 +1,97 @@
 
 
-## Cel
-Przebudowa `/admin` na nowoczesny panel z mobile bottom-nav i desktop sidebarem. Zachowuję pełną logikę Supabase, autentykację, ProductManager, FAQManager, SEOManagerTool. Dodaję 2 nowe sekcje (Start, Zapytania) i wyodrębniam Eksport.
+# Plan naprawczy wydajności (PageSpeed 73 → cel 88+)
 
-## Architektura nawigacji
+## Postęp dotychczasowy
+TBT spadło z 280 ms → 150 ms ✓ (po wyłączeniu polling). LCP nadal 4,7 s — wymaga code-splittingu i przyspieszenia ścieżki krytycznej.
 
-**Sekcje (z ikonami Lucide):**
-- `Zap` Start — dashboard (statystyki: liczba produktów, leadów dziś/7 dni, ostatnie 5 zapytań)
-- `Package` Produkty — istniejący `ProductManager` (bez wbudowanego przycisku Eksport — przeniesiony)
-- `Inbox` Zapytania — nowa lista z `leads` + `price_inquiries` (filtr po `source`, sortowanie po `created_at`)
-- `Download` Eksport — wyodrębniony eksport stanu magazynu (PDF/JPG) z `ExportFormatModal`
-- `Search` SEO (desktop only) — `SEOManagerTool`
-- `HelpCircle` FAQ (desktop only) — `FAQManager`
+## Diagnoza pozostałych problemów
 
-Mobile: 4 ikony (Start / Produkty / Zapytania / Eksport). SEO i FAQ schowane w "Więcej" w top barze (ikona MoreVertical → dropdown) — żeby nie tracić dostępu na mobile.
+| Problem | Wpływ | Źródło |
+|---|---|---|
+| Bundle `index-mTUYe_3q.js` = 132 KB, **70 KB nieużywane** | LCP +1,5 s | Wszystkie strony eager w `App.tsx` |
+| 6 podstron ładowanych razem ze stroną główną | FCP +200 ms | `Products`, `ProductDetail`, `Contact`, `FAQ`, `Testimonials`, `NotFound` |
+| `console.log` w `usePublicSupabaseProducts` w produkcji | TBT mały | logger.log na hot path |
+| Linki social w Footer bez `aria-label` | A11y -3 pkt | Facebook/Instagram ikony bez nazw |
+| Niski kontrast na CTA "Zapytaj 🇵🇱" w headerze | A11y -4 pkt | kolory tła/tekstu |
 
-## Tokeny CSS
-W `src/index.css` dodaję zmienne (HSL-friendly, by zachować Tailwind):
+## Plan zmian (3 kroki, rosnące ryzyko)
+
+### KROK 1 — Code-splitting podstron (BEZPIECZNE, największy zysk)
+**Plik:** `src/App.tsx`
+
+Zamiana:
+```tsx
+import Products from "./pages/Products";
+import ProductDetail from "./pages/ProductDetail";
+import Testimonials from "./pages/Testimonials";
+import Contact from "./pages/Contact";
+import FAQ from "./pages/FAQ";
+import NotFound from "./pages/NotFound";
 ```
---admin-orange: 24 95% 53%;   /* #F97316 */
---admin-dark: 222 47% 11%;    /* #0F172A */
---admin-bg: 210 40% 98%;      /* #F8FAFC */
---admin-border: 214 32% 91%;  /* #E2E8F0 */
---admin-text: 222 47% 17%;    /* #1E293B */
---admin-muted: 215 16% 47%;   /* #64748B */
---admin-green: 142 71% 45%;   /* #16A34A */
---admin-red: 0 73% 51%;       /* #DC2626 */
+na:
+```tsx
+const Products = lazy(() => import("./pages/Products"));
+const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const Testimonials = lazy(() => import("./pages/Testimonials"));
+const Contact = lazy(() => import("./pages/Contact"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 ```
-W `tailwind.config.ts` mapuję jako `admin.orange`, `admin.dark` itd. (nie ruszam istniejących `stakerpol-*`).
+Owinąć całe `<Routes>` w jedno wspólne `<Suspense fallback={...}>` (zamiast lokalnego dla Admin).
 
-## Pliki
+**Co zmienia:**  
+- Initial JS bundle: 132 KB → ~70 KB (-47%)
+- LCP estymacja: 4,7 s → 3,0–3,3 s
+- FCP: 2,4 s → 1,9 s
 
-**Nowe:**
-- `src/components/admin/layout/AdminLayout.tsx` — `<div>` z conditional rendering: desktop sidebar (`hidden lg:flex w-[220px] fixed`) + main `lg:ml-[220px]` + mobile top bar + mobile bottom nav (`lg:hidden fixed bottom-0`)
-- `src/components/admin/layout/AdminSidebar.tsx` — desktop sidebar: logo "StakerPanel", lista linków NavLink z aktywnym stanem (border-left pomarańczowy), przycisk Wyloguj na dole
-- `src/components/admin/layout/AdminTopBar.tsx` — mobile top bar `bg-admin-dark` z białym tytułem (z context/route) + dropdown MoreVertical (SEO/FAQ/Wyloguj)
-- `src/components/admin/layout/AdminBottomNav.tsx` — fixed bottom, 4 zakładki, aktywna z `text-admin-orange` + górną krechą 2px pomarańczową
-- `src/components/admin/layout/AdminPageHeader.tsx` — desktop: breadcrumb (Panel / [sekcja]) + slot na actions po prawej
-- `src/components/admin/sections/DashboardSection.tsx` — Start: 4 karty KPI (produkty, leady dziś, leady 7 dni, niska dostępność), tabela 5 ostatnich leadów, link „Zobacz wszystkie"
-- `src/components/admin/sections/InquiriesSection.tsx` — Zapytania: tabela leadów z `leads` (kolumny: data, imię, telefon, email, źródło, wiadomość, akcje: tel:/mailto:), filtr po `source` (`home_hero_form` / `product_lead` / inne), sortowanie desc po `created_at`, paginacja 20/str
-- `src/components/admin/sections/ExportSection.tsx` — Eksport: 2 karty (PDF stanu magazynu, JPG), reuse logiki z `ProductManager` (`exportProductListToPDF/JPG`)
+**Co zostaje bez zmian:** wygląd, działanie, routing, Index ładuje się tak samo.
 
-**Edytowane:**
-- `src/pages/Admin.tsx` — refaktor: zamiast Tabs używa stanu `activeSection` (lub query param `?section=`) i renderuje `AdminLayout` + odpowiednią sekcję. Cała logika auth/products bez zmian — przekazana jako prop do `ProductManager` w sekcji „produkty".
-- `src/components/admin/ProductManager.tsx` — usuwam wbudowany przycisk „Eksport stan magazyn" i `ExportFormatModal` (przeniesione do `ExportSection`). Pozostaje Odśwież + Dodaj Produkt.
-- `src/index.css` — dodanie tokenów `--admin-*`
-- `tailwind.config.ts` — dodanie `colors.admin.{orange,dark,bg,border,text,muted,green,red}`
+**Ryzyko:** **bardzo niskie**. Pierwsza nawigacja do podstrony pokaże krótki spinner (200–400 ms na 4G). Strona główna nie ma spinnera — Index jest eager.
 
-## Routing / aktywna sekcja
-Używam stanu lokalnego w `Admin.tsx` (`activeSection: 'start' | 'products' | 'inquiries' | 'export' | 'seo' | 'faq'`), domyślnie `'start'`. Każdy przycisk nav ustawia stan. Mapping tytułu top bara po `activeSection`. Brak zmian w React Router.
+### KROK 2 — Wyciszenie loggera w produkcji (BEZPIECZNE, mały zysk)
+**Plik:** `src/utils/logger.ts` (jeśli już tak działa — pominąć)
 
-## Zapytania — query Supabase
-```ts
-supabase.from('leads')
-  .select('id, created_at, name, phone, email, message, source, page_url')
-  .order('created_at', { ascending: false })
-  .range(page*20, page*20+19)
-```
-RLS już jest (admin czyta wszystko przez `has_role`). Jeśli brak policy SELECT dla admina — dodam migrację.
+Sprawdzić czy `logger.log` w produkcji jest no-op. Jeśli nie — opakować w `if (import.meta.env.DEV)`.
 
-## Layout — szczegóły CSS
+**Co zmienia:** mniej work na main thread w prod, czyściejsza konsola użytkownika.  
+**Ryzyko:** **zerowe** — tylko logi deweloperskie.
 
-Desktop:
-- Sidebar: `fixed top-0 left-0 h-screen w-[220px] bg-admin-dark text-white flex flex-col`
-- Logo: `px-6 py-5 text-xl font-bold` ("StakerPanel" + ikona Zap pomarańczowa)
-- Linki: `flex items-center gap-3 px-6 py-3 hover:bg-white/5`, aktywny: `bg-white/10 border-l-4 border-admin-orange`
-- Main: `lg:ml-[220px] min-h-screen bg-admin-bg`
-- Page header: `bg-white border-b border-admin-border px-8 py-4 flex items-center justify-between`
+### KROK 3 — Naprawa accessibility (BEZPIECZNE, +3-4 pkt A11y)
+**Plik:** `src/components/layout/Footer.tsx`
 
-Mobile:
-- Top bar: `lg:hidden sticky top-0 bg-admin-dark text-white px-4 h-14 flex items-center justify-between z-40`
-- Content: `pb-20` (miejsce na bottom nav)
-- Bottom nav: `lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-admin-border h-16 grid grid-cols-4 z-40`
-- Każda zakładka: kolumna ikona + label 11px; aktywna: `text-admin-orange` + `border-t-2 border-admin-orange -mt-px`
+Dodać `aria-label="Facebook"` i `aria-label="Instagram"` do linków social w stopce. Brak zmian wizualnych.
 
-## Kolejność implementacji
-1. Tokeny CSS + tailwind
-2. AdminLayout + Sidebar + TopBar + BottomNav + PageHeader (puste sekcje)
-3. Refaktor `Admin.tsx` na nowy layout, podpięcie istniejących `ProductManager`/`SEOManagerTool`/`FAQManager`
-4. `DashboardSection` (zapytania COUNT z Supabase)
-5. `InquiriesSection`
-6. `ExportSection` + usunięcie eksportu z `ProductManager`
-7. Migracja RLS dla `leads` jeśli admin nie może SELECT (sprawdzę po refaktorze)
+**Co zmienia:** A11y 93 → ~96.  
+**Ryzyko:** **zerowe**.
 
-## Co zostaje bez zmian
-- `useSupabaseAuth`, `AdminLogin`, ścieżki `/admin`, RLS produktów, ProductDetailsModal, formularze, eksport util `listExporter.ts`, klient Supabase.
+## Czego NIE ruszamy (i dlaczego)
+
+| Element | Powód |
+|---|---|
+| Czcionka `CameraPlay.woff2` (131 KB z `cdn.gpteng.co`) | Injektowana przez `gptengineer.js` — wymóg platformy Lovable, brak kontroli |
+| `gptengineer.js` script tag | Zabronione przez politykę Lovable |
+| Realtime WebSocket Supabase | Krytyczny dla synchronizacji z adminem; błędy `ERR_NAME_NOT_RESOLVED` w logach to artefakt środowiska Lighthouse, nie produkcji |
+| Hero `<img>` LCP | Już zoptymalizowane w poprzedniej iteracji |
+| Animacje akordeonu, fonty Google, refetchInterval | Już zoptymalizowane wcześniej |
+| SSR / pre-render / Service Worker | Duża zmiana architektury — wykracza poza "bezpieczne" |
+
+## Oczekiwany wynik
+
+| Metryka | Obecnie | Po wdrożeniu |
+|---|---|---|
+| Performance | 73 | **86–90** |
+| LCP | 4,7 s | **2,8–3,2 s** |
+| FCP | 2,4 s | **1,8 s** |
+| TBT | 150 ms | **100–130 ms** |
+| Initial JS transfer | 208 KB | **130–145 KB** |
+| Accessibility | 93 | **96** |
+
+## Pliki do edycji
+
+1. **`src/App.tsx`** — `lazy()` dla 6 podstron + globalne `<Suspense>`
+2. **`src/utils/logger.ts`** — guard produkcyjny (jeśli brak)
+3. **`src/components/layout/Footer.tsx`** — `aria-label` dla ikon social
+
+**Zero zmian wizualnych. Zero zmian w działaniu funkcji.**
 
