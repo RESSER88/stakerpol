@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { trackFormSubmit } from '@/utils/analytics';
+import { trackFormSubmit, trackGenerateLead } from '@/utils/analytics';
 
 interface ContactFormData {
   name: string;
