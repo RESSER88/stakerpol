@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Product } from '@/types';
+import { trackSearch } from '@/utils/analytics';
 
 interface FilterRanges {
   year: { min: number; max: number };
@@ -80,6 +81,25 @@ export const useProductFilter = (products: Product[]) => {
     });
     setFilteredProducts(products);
   };
+
+  // Track filter changes as view_search_results (debounced, skip initial)
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      const isDefault =
+        filters.year[0] === ranges.year.min && filters.year[1] === ranges.year.max &&
+        filters.hours[0] === ranges.hours.min && filters.hours[1] === ranges.hours.max &&
+        filters.height[0] === ranges.height.min && filters.height[1] === ranges.height.max;
+      if (isDefault) return;
+      const desc = `rok:${filters.year[0]}-${filters.year[1]},mth:${filters.hours[0]}-${filters.hours[1]},wys:${filters.height[0]}-${filters.height[1]}mm`;
+      trackSearch(desc, filteredProducts.length);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [filters, filteredProducts.length, ranges]);
 
   return {
     filters,
