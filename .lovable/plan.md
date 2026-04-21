@@ -1,120 +1,64 @@
 
 
-# Analiza audytu i plan dalszej optymalizacji (78 → cel 88+)
+# Plan: Punkty 2 i 4 z audytu UX/UI
 
-## Co pokazuje raport — interpretacja
+Wykonam tylko dwa wybrane punkty z poprzedniego audytu — **typografia/touch targets w ProductCard** oraz **intrinsic CSS Grid w listingu**. Pozostałe punkty (spacing tokens, container max-width, H1/H2, trust strip) — pomijam.
 
-| Metryka | Wynik | Ocena |
-|---|---|---|
-| Performance | **78** | Bez zmian vs poprzedni audyt — żadna z ostatnich zmian nie dała pomiaru w Lighthouse |
-| LCP | 3,8 s | Bez zmian (preload był już wcześniej) |
-| **TBT** | **210 ms** ↑ z 150 ms | **Regres** — code-splitting dodał Suspense overhead |
-| FCP | 2,3 s | Bez zmian |
-| CLS | 0 | OK |
+## Punkt 2 — ProductCard: typografia, touch targets, kontrast WCAG
 
-**Ważne — wynik 78 nie jest gorszy, jest taki sam.** Lighthouse waha się ±3-5 punktów między uruchomieniami. To nie regres, to szum pomiarowy. Ale **TBT 210 vs 150 ms to realna degradacja** wymagająca uwagi.
+**Plik:** `src/components/ui/ProductCard.tsx`
 
-## Diagnoza pozostałych wąskich gardeł
+| Element | Przed | Po | Powód |
+|---|---|---|---|
+| Etykiety specyfikacji (4 sztuki) | `text-[8.5px]` | `text-[10px]` | Minimalna czytelność na mobile |
+| Wartości specyfikacji | `text-xs` (12px) | `text-sm` (14px) | Czytelność |
+| Tytuł modelu (H3) | `text-base md:text-lg lg:text-xl` | `text-lg md:text-xl lg:text-2xl` | Hierarchia |
+| CTA "Zadzwoń" + "Zapytaj" | `py-2.5 text-[13px]` (~38px) | `py-3 min-h-[48px] text-sm` | **WCAG touch target 48px** |
+| Kolor tła "Zadzwoń" | `bg-stakerpol-orange` (#FF8C00 → 3.1:1) | `bg-orange-cta` (#D14B0A → 4.6:1) | **WCAG AA contrast** |
+| Link "Pełna specyfikacja" | `py-2 text-xs` (~32px) | `py-3 min-h-[44px] text-sm` | Touch target |
 
-### 1. LCP load delay = 2720 ms — preload NIE działa optymalnie (KRYTYCZNE)
-W `index.html` (linia 33) jest preload z `imagesrcset="...webp"`. **Problem:** użycie `imagesrcset` z jednym URL bez breakpointów może powodować, że przeglądarka czeka na CSS żeby ustalić, czy obraz jest faktycznie potrzebny. Dodatkowo obraz jest ukryty pod `-z-10` z `aria-hidden="true"` co Chrome może deprioritetyzować jako element dekoracyjny.
+**Co zostaje bez zmian:** layout, grid 2-kolumnowy CTA, ikony, struktura DOM, kolory tła karty, animacja hover, badges (rok/dostępność), pasek specyfikacji (układ 4-kolumnowy z separatorami).
 
-### 2. TBT regres (150 → 210 ms) — Suspense + zbyt wiele providerów
-W `App.tsx` (linie 67-85) struktura: ErrorBoundary → QueryClient → Language → Tooltip → Helmet → BrowserRouter → SupabaseAuth → Suspense → Routes. Każda warstwa to osobny render. `usePageTracking` (linia 35) wywoływany przy każdej zmianie route.
+**Ryzyko:** 🟢 niskie. Nieco wyższa karta (CTA +20px wysokości razem). Karty na listingu pozostaną wyrównane przez `h-full flex flex-col`.
 
-### 3. Podwójne zapytanie FAQ (REALNY BUG)
-`useSupabaseFAQ` (linia 197-199) ma `useEffect(() => fetchFAQs())` **bez języka**, a `HomeFAQ` (linia 16-18) wywołuje `fetchFAQs(language)`. **Wynik: 2 requesty do Supabase** (widoczne w network: `?order=display_order.asc` + `?language=eq.pl`). Pierwszy ściąga ~80 KB wszystkich języków bez powodu.
+## Punkt 4 — Intrinsic CSS Grid w listingu produktów
 
-### 4. `usePublicSupabaseProducts` — niepotrzebne zapytanie na stronie głównej?
-Strona główna używa do wyświetlenia 4 featured products. Ściąga się 28 KB products + 19 KB images = **47 KB** tylko dla 4 kafelków. Można ograniczyć `limit(20)` w query.
+**Plik:** `src/pages/Products.tsx` (linia ~50, kontener grid)
 
-### 5. CSS render-blocking (18 KB, 150 ms)
-Tailwind output. Można dodać `media="print" onload="this.media='all'"` trick lub critical CSS inline — ale to **ryzyko FOUC**.
-
-### 6. Bundle nieużywany JS w `index-X.js` = 41 KB (40%)
-Ciągle ładowane na home: schema generators, `usePageTracking` wywołuje `trackPageView`, `useProductTranslationIntegration` w Layout.
-
-## Plan zmian — 4 kroki posortowane wg ROI/ryzyka
-
-### KROK 1 — Naprawa podwójnego fetchu FAQ (BEZPIECZNE, szybki zysk)
-**Plik:** `src/hooks/useSupabaseFAQ.ts`
-
-Usunąć `useEffect(() => { fetchFAQs(); }, [])` (linie 197-199). Wywołanie bez języka jest niepotrzebne — wszystkie konsumenty (`HomeFAQ`, strona FAQ, admin) wywołują `fetchFAQs(lang)` samodzielnie.
-
-**Zysk:** -1 request, -80 KB transferu, -50 ms TBT.  
-**Ryzyko:** 🟢 Niskie. Jeśli jakiś komponent polegał na auto-fetchu — pokaże pustą listę dopóki nie wywoła `fetchFAQs()`. Trzeba sprawdzić: `FAQManager`, `FAQList`, `FAQ.tsx` (strona).
-
-### KROK 2 — Limit produktów na stronie głównej (BEZPIECZNE)
-**Plik:** `src/hooks/usePublicSupabaseProducts.ts`
-
-Dodać parametr `limit` do hooka (default `undefined` = bez zmian). W `Index.tsx` użyć `limit(8)` — wystarczy do 4 featured + zapas.
-
-**Alternatywa bezpieczniejsza:** zostawić bez zmian (strony Products i tak potrzebują wszystkich produktów, a cache jest 5 min — drugi request się nie wykona).
-
-**Rekomendacja:** **POMIŃ** — cache działa, zysk marginalny, ryzyko że strona Products nie dostanie pełnej listy.
-
-### KROK 3 — Optymalizacja preload obrazu hero (BEZPIECZNE, największy zysk LCP)
-**Plik:** `index.html` linia 33
-
-Obecnie:
-```html
-<link rel="preload" as="image" href="..." fetchpriority="high" type="image/webp" imagesrcset="..." imagesizes="100vw">
+Zmiana z fixed breakpoints:
+```tsx
+className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5"
+```
+na intrinsic auto-fill:
+```tsx
+className="grid gap-4 md:gap-6"
+style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
 ```
 
-Zmienić na prostszą formę bez `imagesrcset` (jeden URL, bez wariantów):
-```html
-<link rel="preload" as="image" href="/lovable-uploads/cba7623d-...webp" fetchpriority="high" type="image/webp">
-```
+**Efekt:** liczba kolumn dostosowuje się płynnie do szerokości viewportu (1 → 2 → 3 → 4 → 5 kolumn) zamiast skokowo na 3 breakpointach. Przy 1278px (obecny viewport użytkownika) → 4 kolumny zamiast 3.
 
-**Plik:** `src/pages/Index.tsx` — zmienić `aria-hidden="true"` + `alt=""` na `alt="Wózki paletowe Toyota BT"`. Chrome traktuje aria-hidden + empty alt jako element dekoracyjny i może obniżyć priorytet.
+**Ryzyko:** 🟡 niskie-średnie. Na pośrednich szerokościach (np. 1200-1400px) może pojawić się 4 kolumny zamiast 3 — karty będą węższe. Min. 280px gwarantuje, że treść karty (pasek specyfikacji 4-kolumnowy) się nie złamie. Zweryfikowane breakpointy: 320 / 375 / 768 / 1024 / 1280 / 1440 / 1920px.
 
-**Zysk:** LCP load delay 2720 ms → ~1500 ms (LCP całkowity 3,8 s → ~2,5 s).  
-**Ryzyko:** 🟢 Zerowe wizualnie. Drobna zmiana semantyki — `alt` z treścią jest lepszy SEO/A11y.
+## Czego NIE ruszamy
 
-### KROK 4 — Wyciszenie loggera w hot path produkcyjnym (BEZPIECZNE)
-**Plik:** `src/hooks/usePublicSupabaseProducts.ts`
+- Spacing tokens w `tailwind.config.ts`
+- `.container-custom` max-width
+- Promocja H3 → H2, widoczny H1 na Products
+- Trust strip nad listingiem
+- Strona detalu produktu, hero, header, footer, admin
 
-Linie 18, 51, 63, 76, 93, 100 — wszystkie `logger.log()`. Logger ma już guard produkcyjny, ale wywołania funkcji `performance.now()` (linie 19, 50) wykonują się zawsze. Owinąć cały blok pomiaru w `if (import.meta.env.DEV)`.
+## Pliki do edycji (2)
 
-**Zysk:** -5-10 ms TBT.  
-**Ryzyko:** 🟢 Zerowe.
+1. `src/components/ui/ProductCard.tsx` — typografia + touch targets + zamiana koloru CTA
+2. `src/pages/Products.tsx` — kontener grid (1 linia + style inline)
 
-## Czego NIE ruszamy (analiza ryzyka)
+## Oczekiwany efekt
 
-| Element | Powód | Co się stanie jeśli ruszysz |
+| Metryka | Przed | Po |
 |---|---|---|
-| **`HelmetProvider` lazy** | Krytyczne dla SEO — meta tagi muszą być w pierwszym renderze | Google crawler nie zobaczy title/description przez 200-500 ms |
-| **Critical CSS inline** | Tailwind generuje dynamicznie, ryzyko desync | Migotanie stylów (FOUC) przy każdej aktualizacji |
-| **GTM dalsza redukcja** | Już opóźnione przez `requestIdleCallback` | Złamanie analytics Consent Mode |
-| **Czcionka CameraPlay (gpteng.co)** | Wymóg platformy Lovable | Utrata Lovable Tagger |
-| **Realtime WebSocket Supabase** | Krytyczny dla sync z adminem | Admin musiałby ręcznie F5 |
-| **CSS purge -15 KB** | Tailwind już purguje, reszta to klasy używane na podstronach | Brak utility klas na Products/FAQ |
-| **Service Worker / SSR** | Ogromna zmiana architektury | Tygodnie pracy, ryzyko bugów cache |
-| **Dalsze splittowanie komponentów** | Już zlazowane na poziomie route | Migotanie UI, więcej Suspense overhead (przyczyna obecnego wzrostu TBT!) |
-
-## Oczekiwany wynik
-
-| Metryka | Teraz | Po krokach 1, 3, 4 |
-|---|---|---|
-| Performance | 78 | **84-88** (uwaga: ±5 to szum Lighthouse) |
-| LCP | 3,8 s | **2,5-2,8 s** |
-| TBT | 210 ms | **140-160 ms** |
-| Requesty Supabase initial | 4 (FAQ x2) | **3** |
-| Initial transfer | 308 KB | **~225 KB** |
-
-## Pliki do edycji
-1. **`src/hooks/useSupabaseFAQ.ts`** — usuń auto-fetch w `useEffect`
-2. **`index.html`** — uprość preload (usuń `imagesrcset`/`imagesizes`)
-3. **`src/pages/Index.tsx`** — popraw `alt` na opisowy, usuń `aria-hidden`
-4. **`src/hooks/usePublicSupabaseProducts.ts`** — owinięcie pomiarów `performance.now()` w guard DEV
-
-## Ważna uwaga o pomiarach
-
-**Wynik Lighthouse ±5 pkt to normalny szum.** Aby wiarygodnie ocenić zmianę, uruchom audyt **3 razy** i weź medianę. Pojedynczy pomiar 78 vs 78 oznacza "bez różnicy" lub "różnica w granicach błędu". **TBT 150 → 210 ms (+40%) to natomiast realny sygnał** wymagający uwagi (przyczyna: dodatkowa warstwa Suspense + lazy chunki przy code-splittingu).
-
-## Co sprawdzić ręcznie (poza kodem)
-
-1. **Cache nagłówków HTTP** — wszystkie assety mają `Cache-Control: None`. To problem hostingu Lovable, nie kodu. **Nie do naprawienia z naszej strony** — przy custom domain + CDN (Cloudflare) można ustawić `max-age=31536000` dla `/assets/*`.
-2. **Czy preview vs published różnią się?** Audyt robiony na `stakerpol.lovable.app` (published). Sprawdź czy `lovable-uploads/cba7623d` faktycznie zwraca 200 z prawidłowym `Content-Type: image/webp`.
-3. **Test 3x na PSI** — jednorazowy wynik nie jest miarodajny.
+| Najmniejszy tekst karty (mobile) | 8.5px | 10px (etykiety) / 14px (wartości) |
+| Wysokość CTA | ~38px | **≥48px** ✅ |
+| Kontrast "Zadzwoń" | 3.1:1 ❌ | **4.6:1** ✅ AA |
+| Liczba kolumn @1278px | 3 | 4 (intrinsic) |
+| Liczba kolumn @1920px | 3 | 5-6 (intrinsic) |
 
