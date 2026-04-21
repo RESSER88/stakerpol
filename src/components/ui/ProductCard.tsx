@@ -73,37 +73,37 @@ const ProductCard = memo(({ product, priority = false }: ProductCardProps) => {
           <div className="grid grid-cols-4 border-y border-[#E5E1D8] divide-x divide-[#E5E1D8] py-2.5 mb-3">
             <div className="flex flex-col items-center text-center px-1">
               <MoveVertical className="w-4 h-4 text-[#C8102E] mb-1" />
-              <span className="font-mono font-bold text-xs text-[#0E0E0E] leading-none">
+              <span className="font-mono font-bold text-sm text-[#0E0E0E] leading-none">
                 {formatPL(product.specs.liftHeight)}
               </span>
-              <span className="text-[8.5px] uppercase tracking-[0.04em] font-semibold text-[#5B5B5B] mt-1">
+              <span className="text-[10px] uppercase tracking-[0.04em] font-semibold text-[#5B5B5B] mt-1">
                 {t('cardSpecHeight')}
               </span>
             </div>
             <div className="flex flex-col items-center text-center px-1">
               <Calendar className="w-4 h-4 text-[#C8102E] mb-1" />
-              <span className="font-mono font-bold text-xs text-[#0E0E0E] leading-none">
+              <span className="font-mono font-bold text-sm text-[#0E0E0E] leading-none">
                 {product.specs.productionYear || '—'}
               </span>
-              <span className="text-[8.5px] uppercase tracking-[0.04em] font-semibold text-[#5B5B5B] mt-1">
+              <span className="text-[10px] uppercase tracking-[0.04em] font-semibold text-[#5B5B5B] mt-1">
                 {t('cardSpecYear')}
               </span>
             </div>
             <div className="flex flex-col items-center text-center px-1">
               <Clock className="w-4 h-4 text-[#C8102E] mb-1" />
-              <span className="font-mono font-bold text-xs text-[#0E0E0E] leading-none">
+              <span className="font-mono font-bold text-sm text-[#0E0E0E] leading-none">
                 {formatPL(product.specs.workingHours)}
               </span>
-              <span className="text-[8.5px] uppercase tracking-[0.04em] font-semibold text-[#5B5B5B] mt-1">
+              <span className="text-[10px] uppercase tracking-[0.04em] font-semibold text-[#5B5B5B] mt-1">
                 {t('cardSpecHours')}
               </span>
             </div>
             <div className="flex flex-col items-center text-center px-1">
               <Package className="w-4 h-4 text-[#C8102E] mb-1" />
-              <span className="font-mono font-bold text-xs text-[#0E0E0E] leading-none">
+              <span className="font-mono font-bold text-sm text-[#0E0E0E] leading-none">
                 {formatPL(product.specs.mastLiftingCapacity)}
               </span>
-              <span className="text-[8.5px] uppercase tracking-[0.04em] font-semibold text-[#5B5B5B] mt-1">
+              <span className="text-[10px] uppercase tracking-[0.04em] font-semibold text-[#5B5B5B] mt-1">
                 {t('cardSpecCapacity')}
               </span>
             </div>
@@ -117,7 +117,7 @@ const ProductCard = memo(({ product, priority = false }: ProductCardProps) => {
                 stop(e);
                 trackPhoneClick(`product_card_grid_${product.model}`);
               }}
-              className="bg-stakerpol-orange hover:brightness-110 text-white font-bold text-[13px] py-2.5 px-2 rounded flex items-center justify-center gap-1.5 transition-all"
+              className="bg-orange-cta hover:brightness-110 text-white font-bold text-sm py-3 min-h-[48px] px-2 rounded flex items-center justify-center gap-1.5 transition-all"
             >
               <Phone className="w-3.5 h-3.5" />
               {t('cardCallBtn')}
@@ -128,7 +128,7 @@ const ProductCard = memo(({ product, priority = false }: ProductCardProps) => {
                 stop(e);
                 setInquiryOpen(true);
               }}
-              className="bg-[#0E0E0E] hover:bg-[#222] text-white font-bold text-[13px] py-2.5 px-2 rounded flex items-center justify-center gap-1.5 transition-all"
+              className="bg-[#0E0E0E] hover:bg-[#222] text-white font-bold text-sm py-3 min-h-[48px] px-2 rounded flex items-center justify-center gap-1.5 transition-all"
             >
               <Mail className="w-3.5 h-3.5" />
               {t('cardAskBtn')}
@@ -138,7 +138,7 @@ const ProductCard = memo(({ product, priority = false }: ProductCardProps) => {
           {/* Full spec link */}
           <Link
             to={productLink}
-            className="block text-center bg-white border border-[#E5E1D8] hover:bg-[#F8F6F2] text-[#0E0E0E] font-semibold text-xs py-2 px-2 rounded transition-colors"
+            className="block text-center bg-white border border-[#E5E1D8] hover:bg-[#F8F6F2] text-[#0E0E0E] font-semibold text-sm py-3 min-h-[44px] px-2 rounded transition-colors flex items-center justify-center"
           >
             {t('cardFullSpec')}
           </Link>
