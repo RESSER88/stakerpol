@@ -6,6 +6,7 @@ import { trackCTAClick, trackPhoneClick } from '@/utils/analytics';
 const FloatingContactBubble = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<'none' | 'form' | 'call'>('none');
+  const [pulseActive, setPulseActive] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const { formData, errors, status, honeypot, setHoneypot, consent, updateConsent, updateField, submit, reset } = useContactForm();
 
@@ -18,6 +19,11 @@ const FloatingContactBubble = () => {
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => setPulseActive(false), 8000);
+    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -100,7 +106,7 @@ const FloatingContactBubble = () => {
                     {' *'}
                   </span>
                 </label>
-                <p className="text-[11px] text-gray-500 mt-1 ml-6 leading-snug">
+                <p className="text-xs text-gray-500 mt-1 ml-6 leading-snug">
                   Używamy Twoich danych tylko do odpowiedzi na zapytanie. Dane będą usunięte po 30 dniach.
                 </p>
                 {errors.consent && <p className="text-xs text-red-500 mt-1 ml-6">{errors.consent}</p>}
@@ -160,7 +166,7 @@ const FloatingContactBubble = () => {
       {/* Main bubble */}
       <button
         onClick={toggle}
-        className={`w-[52px] h-[52px] rounded-full bg-[hsl(25,100%,50%)] text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform ${!isOpen ? 'animate-[pulse-glow_2.2s_infinite]' : ''}`}
+        className={`w-[52px] h-[52px] rounded-full bg-[hsl(25,100%,50%)] text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform ${!isOpen && pulseActive ? 'animate-[pulse-glow_2.2s_infinite]' : ''}`}
         aria-label="Kontakt"
       >
         {isOpen ? <X size={22} /> : <MessageCircle size={22} />}

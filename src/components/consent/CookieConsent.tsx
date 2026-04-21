@@ -19,13 +19,15 @@ const CookieConsent = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (!saved) {
-        setOpen(true);
+        const t = setTimeout(() => setOpen(true), 1500);
+        return () => clearTimeout(t);
       } else {
         const parsed: ConsentState = JSON.parse(saved);
         setConsent(parsed);
       }
     } catch {
-      setOpen(true);
+      const t = setTimeout(() => setOpen(true), 1500);
+      return () => clearTimeout(t);
     }
   }, []);
 
@@ -80,7 +82,7 @@ const CookieConsent = () => {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 p-4">
+    <div className="fixed inset-x-0 bottom-0 z-50 p-4 animate-slide-in-up">
       <Card className="max-w-3xl mx-auto p-4 md:p-6 shadow-lg">
         <div className="md:flex md:items-start md:justify-between gap-6">
           <div className="space-y-3">

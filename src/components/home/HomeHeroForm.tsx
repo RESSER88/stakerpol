@@ -132,7 +132,7 @@ const HomeHeroForm = ({ isInHero = false, variant = 'light' }: HomeHeroFormProps
             aria-invalid={!!errors.name}
           />
           {errors.name && (
-            <p className="text-[10px] text-red-accent mt-1" role="alert">
+            <p className="text-xs text-red-accent mt-1" role="alert">
               {errors.name}
             </p>
           )}
@@ -150,7 +150,7 @@ const HomeHeroForm = ({ isInHero = false, variant = 'light' }: HomeHeroFormProps
             aria-invalid={!!errors.email}
           />
           {errors.email && (
-            <p className="text-[10px] text-red-accent mt-1" role="alert">
+            <p className="text-xs text-red-accent mt-1" role="alert">
               {errors.email}
             </p>
           )}
@@ -168,7 +168,7 @@ const HomeHeroForm = ({ isInHero = false, variant = 'light' }: HomeHeroFormProps
             aria-invalid={!!errors.phone}
           />
           {errors.phone && (
-            <p className="text-[10px] text-red-accent mt-1" role="alert">
+            <p className="text-xs text-red-accent mt-1" role="alert">
               {errors.phone}
             </p>
           )}
@@ -194,7 +194,7 @@ const HomeHeroForm = ({ isInHero = false, variant = 'light' }: HomeHeroFormProps
             disabled={submitting}
             className="mt-0.5 w-3.5 h-3.5 accent-orange-cta cursor-pointer flex-shrink-0"
           />
-          <span className={isDark ? 'text-[11px] text-white/75 leading-[1.4]' : 'text-[11px] text-ink-soft leading-[1.4]'}>
+          <span className={isDark ? 'text-xs text-white/75 leading-[1.4]' : 'text-xs text-ink-soft leading-[1.4]'}>
             Akceptuję{' '}
             <a
               href="/privacy"
@@ -205,7 +205,7 @@ const HomeHeroForm = ({ isInHero = false, variant = 'light' }: HomeHeroFormProps
           </span>
         </label>
         {errors.rodo && (
-          <p className="text-[10px] text-red-accent" role="alert">
+          <p className="text-xs text-red-accent" role="alert">
             {errors.rodo}
           </p>
         )}
