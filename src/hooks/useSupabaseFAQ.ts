@@ -194,10 +194,6 @@ export const useSupabaseFAQ = () => {
     }
   };
 
-  useEffect(() => {
-    fetchFAQs();
-  }, []);
-
   return {
     faqs,
     loading,

@@ -55,8 +55,7 @@ const Index = () => {
         {/* LCP image — real <img> for fast discovery */}
         <img
           src="/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.webp"
-          alt=""
-          aria-hidden="true"
+          alt="Wózki paletowe Toyota BT"
           loading="eager"
           fetchPriority="high"
           decoding="async"

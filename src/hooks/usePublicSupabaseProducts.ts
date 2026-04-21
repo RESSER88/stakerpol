@@ -15,8 +15,9 @@ export const usePublicSupabaseProducts = () => {
   const { data: products = [], isLoading, error, refetch } = useQuery({
     queryKey: ['public-products'],
     queryFn: async () => {
-      logger.log('Fetching products for public pages...');
-      const startTime = performance.now();
+      const isDev = import.meta.env.DEV;
+      if (isDev) logger.log('Fetching products for public pages...');
+      const startTime = isDev ? performance.now() : 0;
       
       // Fetch products - accessible to all users thanks to "Anyone can view products" RLS policy
       const { data: productsData, error: productsError } = await supabase
@@ -47,8 +48,10 @@ export const usePublicSupabaseProducts = () => {
         return mapSupabaseProductToProduct(product, productImages);
       });
 
-      const endTime = performance.now();
-      logger.log(`✅ Successfully fetched ${mappedProducts.length} products for public pages in ${(endTime - startTime).toFixed(2)}ms`);
+      if (isDev) {
+        const endTime = performance.now();
+        logger.log(`✅ Successfully fetched ${mappedProducts.length} products for public pages in ${(endTime - startTime).toFixed(2)}ms`);
+      }
       
       return mappedProducts;
     },
