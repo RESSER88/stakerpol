@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { trackFormSubmit } from '@/utils/analytics';
+import { trackFormSubmit, trackGenerateLead } from '@/utils/analytics';
 
 interface ContactFormData {
   name: string;
@@ -78,7 +78,7 @@ export function useContactForm() {
         page_url: window.location.href,
         user_agent: navigator.userAgent,
       };
-      const { error } = await supabase.from('leads').insert({
+      const { data: leadData, error } = await supabase.from('leads').insert({
         name: formData.name,
         email: isEmail ? formData.contact : null,
         phone: formData.contact,
@@ -88,11 +88,18 @@ export function useContactForm() {
         page_url: window.location.href,
         user_agent: navigator.userAgent,
         rodo_accepted: consent,
-      });
+      }).select('id').single();
       if (error) throw error;
 
       await supabase.functions.invoke('notify-lead', { body: payload });
-      trackFormSubmit('contact_widget');
+      trackFormSubmit('contact_widget', productModel);
+      trackGenerateLead(
+        leadData?.id || crypto.randomUUID(),
+        source,
+        productId || productModel
+          ? { id: productId || '', model: productModel || 'Zapytanie ogólne' }
+          : undefined
+      );
       setStatus('success');
       setFormData({ name: '', contact: '', message: '' });
       setConsent(false);

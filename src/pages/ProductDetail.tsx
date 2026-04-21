@@ -14,6 +14,7 @@ import RelatedProducts from '@/components/products/RelatedProducts';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import { generateProductSchema } from '@/utils/seo/generateProductSchema';
 import { useProductSEO } from '@/hooks/useProductSEO';
+import { trackViewItem } from '@/utils/analytics';
 import { Loader2 } from 'lucide-react';
 import FAQSection from '@/components/ui/FAQSection';
 import FAQSchema from '@/components/seo/FAQSchema';
@@ -55,6 +56,17 @@ const ProductDetail = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [id]);
+
+  useEffect(() => {
+    if (product?.id) {
+      trackViewItem({
+        id: product.id,
+        model: product.model,
+        brand: 'Toyota',
+        year: product.specs?.productionYear,
+      });
+    }
+  }, [product?.id]);
 
   const productFaqItems = useMemo(() => {
     if (!product) return [];
