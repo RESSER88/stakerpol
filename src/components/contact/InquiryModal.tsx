@@ -2,6 +2,7 @@ import { Send, X } from 'lucide-react';
 import { useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useContactForm } from '@/hooks/useContactForm';
+import { trackBeginInquiry } from '@/utils/analytics';
 
 interface InquiryModalProps {
   isOpen: boolean;
@@ -17,7 +18,16 @@ const InquiryModal = ({ isOpen, onClose, source, productId, productModel, serial
     useContactForm();
 
   useEffect(() => {
-    if (!isOpen) reset();
+    if (!isOpen) {
+      reset();
+    } else {
+      trackBeginInquiry(
+        productId || productModel
+          ? { id: productId || '', model: productModel || 'Zapytanie ogólne' }
+          : undefined,
+        source === 'product_list' ? 'product_list' : 'product_page'
+      );
+    }
   }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
