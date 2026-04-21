@@ -51,20 +51,29 @@ const Index = () => {
       <LocalBusinessSchema />
 
       {/* Hero Section — 2-kolumnowy desktop, 1-kolumnowy mobile */}
-      <section
-        className="relative text-white min-h-[480px] lg:min-h-[520px] flex items-center"
-        style={{
-          backgroundImage: `
-            radial-gradient(ellipse at 25% 60%, hsl(var(--color-orange-cta) / 0.35), transparent 60%),
-            radial-gradient(ellipse at 80% 30%, hsl(var(--color-red-accent) / 0.28), transparent 60%),
-            linear-gradient(135deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.35) 100%),
-            url('/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.webp')
-          `,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      >
+      <section className="relative text-white min-h-[480px] lg:min-h-[520px] flex items-center overflow-hidden">
+        {/* LCP image — real <img> for fast discovery */}
+        <img
+          src="/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.webp"
+          alt=""
+          aria-hidden="true"
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          className="absolute inset-0 w-full h-full object-cover object-center -z-10"
+        />
+        {/* Gradient overlay — identical to previous background-image stack */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 -z-10"
+          style={{
+            backgroundImage: `
+              radial-gradient(ellipse at 25% 60%, hsl(var(--color-orange-cta) / 0.35), transparent 60%),
+              radial-gradient(ellipse at 80% 30%, hsl(var(--color-red-accent) / 0.28), transparent 60%),
+              linear-gradient(135deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.35) 100%)
+            `,
+          }}
+        />
         <div className="container-custom max-w-[1200px] py-10 lg:py-20 px-5 lg:px-8 w-full">
           <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 items-center">
             <div className="space-y-4 lg:space-y-5">
