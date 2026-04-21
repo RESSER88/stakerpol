@@ -1,97 +1,117 @@
 
 
-# Plan naprawczy wydajności (PageSpeed 73 → cel 88+)
+# Analiza wyników PageSpeed (73 → 78) i plan dalszych optymalizacji
 
-## Postęp dotychczasowy
-TBT spadło z 280 ms → 150 ms ✓ (po wyłączeniu polling). LCP nadal 4,7 s — wymaga code-splittingu i przyspieszenia ścieżki krytycznej.
+## Co się poprawiło ✓
+| Metryka | Poprzednio | Teraz | Zmiana |
+|---|---|---|---|
+| Performance | 73 | **78** | +5 |
+| LCP | 4,7 s | **3,8 s** | -0,9 s |
+| FCP | 2,4 s | **2,3 s** | -0,1 s |
+| Initial JS | 132 KB | **104 KB** | -28 KB |
+| Accessibility | 93 | **96** | +3 |
+
+Code-splitting i `aria-label` zadziałały. LCP wciąż jednak za wysoki — wąskim gardłem jest **2720 ms "resource load delay"** dla obrazu hero.
 
 ## Diagnoza pozostałych problemów
 
-| Problem | Wpływ | Źródło |
-|---|---|---|
-| Bundle `index-mTUYe_3q.js` = 132 KB, **70 KB nieużywane** | LCP +1,5 s | Wszystkie strony eager w `App.tsx` |
-| 6 podstron ładowanych razem ze stroną główną | FCP +200 ms | `Products`, `ProductDetail`, `Contact`, `FAQ`, `Testimonials`, `NotFound` |
-| `console.log` w `usePublicSupabaseProducts` w produkcji | TBT mały | logger.log na hot path |
-| Linki social w Footer bez `aria-label` | A11y -3 pkt | Facebook/Instagram ikony bez nazw |
-| Niski kontrast na CTA "Zapytaj 🇵🇱" w headerze | A11y -4 pkt | kolory tła/tekstu |
+### 1. Obraz hero czeka 2,7 s zanim zacznie się ładować (KRYTYCZNE)
+Mimo `fetchpriority="high"` i `loading="eager"`, obraz `cba7623d-...webp` startuje dopiero po pobraniu CSS i głównego JS. Powód: **brak `<link rel="preload" as="image">` w `index.html`** — przeglądarka odkrywa obraz dopiero po sparsowaniu React.
 
-## Plan zmian (3 kroki, rosnące ryzyko)
+### 2. TBT wzrosło 150 → 210 ms
+Lazy chunki dorzuciły overhead inicjalizacji Suspense. Drobny regres, ale akceptowalny przy zysku LCP.
 
-### KROK 1 — Code-splitting podstron (BEZPIECZNE, największy zysk)
+### 3. Bundle `index-X-ujMmPG.js` = 104 KB, **41 KB nieużywane**
+Główna strona wciąż ciągnie kod, który nie jest potrzebny w pierwszym renderze: `react-helmet-async`, schema generators, `usePageTracking`, providers.
+
+### 4. GTM (171 KB, 220 ms main thread)
+Ładowane w `<body>` async — działa, ale ciężkie. Można opóźnić do `requestIdleCallback`.
+
+### 5. CSS 18 KB, 15 KB nieużywane
+Tailwind generuje klasy używane tylko przez podstrony.
+
+## Plan zmian (3 kroki, posortowane wg ROI / ryzyka)
+
+### KROK 1 — Preload obrazu hero w `<head>` (NAJWIĘKSZY ZYSK, ZERO RYZYKA)
+**Plik:** `index.html`
+
+Już istnieje `<link rel="preload" as="image" href="...cba7623d...">` ✓ — sprawdzić, czy ścieżka i atrybuty są zgodne z faktycznym `<img>`. Dodać `fetchpriority="high"` do tagu preload (jeśli brak) oraz `imagesrcset` / `imagesizes` dla wariantu mobile.
+
+**Dodatkowo w `src/pages/Index.tsx`**: obecny `<img>` ma `object-position: center` — przy mobile obraz może być za duży. Dodać atrybuty `width` i `height` (np. 1920×1080) dla zarezerwowania przestrzeni i szybszego layoutu.
+
+**Zysk:** LCP 3,8 s → **2,5–2,8 s**.  
+**Ryzyko:** zerowe.
+
+### KROK 2 — Opóźnienie GTM do `requestIdleCallback` (ŚREDNI ZYSK, NISKIE RYZYKO)
+**Plik:** `index.html`
+
+Obecnie `<script async src="...gtag/js">` ładuje się natychmiast. Owinąć w:
+```html
+<script>
+  (function(){
+    var load = function(){
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-SM784ZRC5E';
+      document.head.appendChild(s);
+    };
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(load, { timeout: 3000 });
+    } else {
+      setTimeout(load, 2000);
+    }
+  })();
+</script>
+```
+Consent Mode default zostaje w `<head>` bez zmian.
+
+**Zysk:** TBT -50 ms, FCP -100 ms.  
+**Ryzyko:** **niskie** — GA4 zarejestruje page_view z 2-sekundowym opóźnieniem. Dla witryny B2B z średnim czasem sesji 1-2 min — nieistotne. **Co może popsuć:** gdyby ktoś wszedł i natychmiast wyszedł (<2 s), event się nie zarejestruje. Dla bounce rate to drobne zaniżenie liczby sesji — akceptowalne.
+
+### KROK 3 — Wydzielenie ciężkich providerów z initial bundle (MAŁY ZYSK, ŚREDNIE RYZYKO)
 **Plik:** `src/App.tsx`
 
-Zamiana:
-```tsx
-import Products from "./pages/Products";
-import ProductDetail from "./pages/ProductDetail";
-import Testimonials from "./pages/Testimonials";
-import Contact from "./pages/Contact";
-import FAQ from "./pages/FAQ";
-import NotFound from "./pages/NotFound";
-```
-na:
-```tsx
-const Products = lazy(() => import("./pages/Products"));
-const ProductDetail = lazy(() => import("./pages/ProductDetail"));
-const Testimonials = lazy(() => import("./pages/Testimonials"));
-const Contact = lazy(() => import("./pages/Contact"));
-const FAQ = lazy(() => import("./pages/FAQ"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-```
-Owinąć całe `<Routes>` w jedno wspólne `<Suspense fallback={...}>` (zamiast lokalnego dla Admin).
+`HelmetProvider`, `usePageTracking`, schema components są ładowane natychmiast. Można:
+- Zostawić bez zmian (najbezpieczniej)
+- LUB lazy-loadować `HelmetProvider` przez dynamiczny import (ryzyko: SEO meta-tagi pojawią się 100-200 ms później — może wpłynąć na crawl Google)
 
-**Co zmienia:**  
-- Initial JS bundle: 132 KB → ~70 KB (-47%)
-- LCP estymacja: 4,7 s → 3,0–3,3 s
-- FCP: 2,4 s → 1,9 s
+**Rekomendacja: NIE ruszać.** Zysk ~10-15 KB nie wart ryzyka SEO.
 
-**Co zostaje bez zmian:** wygląd, działanie, routing, Index ładuje się tak samo.
+## Czego NIE ruszamy (ryzyko > zysk)
 
-**Ryzyko:** **bardzo niskie**. Pierwsza nawigacja do podstrony pokaże krótki spinner (200–400 ms na 4G). Strona główna nie ma spinnera — Index jest eager.
-
-### KROK 2 — Wyciszenie loggera w produkcji (BEZPIECZNE, mały zysk)
-**Plik:** `src/utils/logger.ts` (jeśli już tak działa — pominąć)
-
-Sprawdzić czy `logger.log` w produkcji jest no-op. Jeśli nie — opakować w `if (import.meta.env.DEV)`.
-
-**Co zmienia:** mniej work na main thread w prod, czyściejsza konsola użytkownika.  
-**Ryzyko:** **zerowe** — tylko logi deweloperskie.
-
-### KROK 3 — Naprawa accessibility (BEZPIECZNE, +3-4 pkt A11y)
-**Plik:** `src/components/layout/Footer.tsx`
-
-Dodać `aria-label="Facebook"` i `aria-label="Instagram"` do linków social w stopce. Brak zmian wizualnych.
-
-**Co zmienia:** A11y 93 → ~96.  
-**Ryzyko:** **zerowe**.
-
-## Czego NIE ruszamy (i dlaczego)
-
-| Element | Powód |
-|---|---|
-| Czcionka `CameraPlay.woff2` (131 KB z `cdn.gpteng.co`) | Injektowana przez `gptengineer.js` — wymóg platformy Lovable, brak kontroli |
-| `gptengineer.js` script tag | Zabronione przez politykę Lovable |
-| Realtime WebSocket Supabase | Krytyczny dla synchronizacji z adminem; błędy `ERR_NAME_NOT_RESOLVED` w logach to artefakt środowiska Lighthouse, nie produkcji |
-| Hero `<img>` LCP | Już zoptymalizowane w poprzedniej iteracji |
-| Animacje akordeonu, fonty Google, refetchInterval | Już zoptymalizowane wcześniej |
-| SSR / pre-render / Service Worker | Duża zmiana architektury — wykracza poza "bezpieczne" |
-
-## Oczekiwany wynik
-
-| Metryka | Obecnie | Po wdrożeniu |
+| Element | Powód NIE-tknięcia | Co by się stało gdyby tknąć |
 |---|---|---|
-| Performance | 73 | **86–90** |
-| LCP | 4,7 s | **2,8–3,2 s** |
-| FCP | 2,4 s | **1,8 s** |
-| TBT | 150 ms | **100–130 ms** |
-| Initial JS transfer | 208 KB | **130–145 KB** |
-| Accessibility | 93 | **96** |
+| Czcionka `CameraPlay.woff2` (131 KB, gpteng.co) | Wymóg platformy Lovable | Złamanie integracji Lovable Tagger |
+| `gptengineer.js` script | Polityka Lovable | Utrata edycji wizualnej |
+| Realtime Supabase WebSocket | Synchronizacja admin↔public | Admin musiałby ręcznie odświeżać |
+| `HelmetProvider` w App | Krytyczne dla SEO meta-tagów | Google indexer może nie zobaczyć title/description |
+| CSS purge (15 KB) | Tailwind już purguje; reszta to dynamiczne klasy | Random utility klasy znikłyby z runtime |
+| SSR / pre-render | Ogromna zmiana architektury | Przepisanie całej app |
+| Service Worker | Złożoność cache invalidation | Stare wersje strony u użytkowników |
+| Dalsze code-splitting komponentów (np. ProductCard) | Już zlazowane na poziomie route | Migotanie UI, dodatkowe Suspense overhead |
+| Inline krytyczny CSS | Manualna konserwacja, ryzyko desync | FOUC przy zmianach klas Tailwind |
+
+## Oczekiwany wynik po krokach 1+2
+
+| Metryka | Teraz | Po wdrożeniu |
+|---|---|---|
+| Performance | 78 | **86–90** |
+| LCP | 3,8 s | **2,5–2,8 s** |
+| FCP | 2,3 s | **1,9–2,1 s** |
+| TBT | 210 ms | **140–170 ms** |
+| Initial JS transfer | 180 KB | **160 KB** |
 
 ## Pliki do edycji
+1. **`index.html`** — zweryfikować `<link rel="preload" as="image">` z `fetchpriority="high"`; opóźnić GTM przez `requestIdleCallback`
+2. **`src/pages/Index.tsx`** — dodać `width` i `height` do hero `<img>`
 
-1. **`src/App.tsx`** — `lazy()` dla 6 podstron + globalne `<Suspense>`
-2. **`src/utils/logger.ts`** — guard produkcyjny (jeśli brak)
-3. **`src/components/layout/Footer.tsx`** — `aria-label` dla ikon social
+**Zero zmian wizualnych. Zero zmian funkcjonalnych poza opóźnieniem GA4 o ~2 s.**
 
-**Zero zmian wizualnych. Zero zmian w działaniu funkcji.**
+## Ocena ryzyka — podsumowanie
+
+| Krok | Zysk | Ryzyko | Rekomendacja |
+|---|---|---|---|
+| 1. Preload hero + width/height | ⭐⭐⭐⭐⭐ | 🟢 zerowe | **Zrób** |
+| 2. GTM przez requestIdleCallback | ⭐⭐⭐ | 🟡 niskie (analytics +2s opóźnienia) | **Zrób, jeśli akceptujesz drobne zaniżenie liczby sesji <2s** |
+| 3. Lazy HelmetProvider | ⭐ | 🔴 średnie (SEO) | **Nie ruszaj** |
 
