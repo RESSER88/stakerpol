@@ -140,13 +140,13 @@ const ProductDetail = () => {
         <meta property="og:title" content={getMetaTitle()} />
         <meta property="og:description" content={getMetaDescription()} />
         <meta property="og:image" content={getOgImage()} />
-        <meta property="og:url" content={`https://stakerpol.pl/${language}/products/${product.slug || product.id}`} />
+        <meta property="og:url" content={`https://stakerpol.pl/products/${product.slug || product.id}`} />
         <meta property="og:type" content="product" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={getMetaTitle()} />
         <meta name="twitter:description" content={getMetaDescription()} />
         <meta name="twitter:image" content={getOgImage()} />
-        <link rel="canonical" href={`https://stakerpol.pl/${language}/products/${product.slug || product.id}`} />
+        <link rel="canonical" href={`https://stakerpol.pl/products/${product.slug || product.id}`} />
         <script type="application/ld+json">
           {JSON.stringify(productSchemaData, null, 2)}
         </script>
