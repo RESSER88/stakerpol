@@ -45,6 +45,16 @@ const CookieConsent = () => {
       window.gtag?.('consent', 'update', payload);
     } catch {}
 
+    // Microsoft Clarity — start/stop based on analytics consent
+    try {
+      if (next.analytics) {
+        window.dispatchEvent(new Event('clarity-consent-granted'));
+      } else {
+        // @ts-ignore
+        window.clarity?.('stop');
+      }
+    } catch {}
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   };
 
