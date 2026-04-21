@@ -118,6 +118,11 @@
   .container-custom {
     @apply container mx-auto px-4 md:px-6;
   }
+
+  .cv-auto-card {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 480px;
+  }
   
   .section-padding {
     @apply py-12 md:py-20;

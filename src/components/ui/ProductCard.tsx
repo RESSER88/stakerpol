@@ -32,7 +32,7 @@ const ProductCard = memo(({ product, priority = false }: ProductCardProps) => {
 
   return (
     <>
-      <div className="bg-white rounded-md shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_18px_40px_-20px_rgba(0,0,0,0.18)] hover:-translate-y-[3px] transition-all duration-[250ms] ease-out h-full flex flex-col overflow-hidden">
+      <div className="cv-auto-card bg-white rounded-md shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_18px_40px_-20px_rgba(0,0,0,0.18)] hover:-translate-y-[3px] transition-all duration-[250ms] ease-out h-full flex flex-col overflow-hidden">
         {/* Image with chips */}
         <Link to={productLink} className="block relative">
           <div className="aspect-[3/4] overflow-hidden bg-stakerpol-lightgray relative">
