@@ -12,13 +12,13 @@ import { SupabaseAuthProvider } from "./hooks/useSupabaseAuth";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import { logger } from "@/utils/logger";
 import Index from "./pages/Index";
-import Products from "./pages/Products";
-import ProductDetail from "./pages/ProductDetail";
-import Testimonials from "./pages/Testimonials";
-import Contact from "./pages/Contact";
-import NotFound from "./pages/NotFound";
+const Products = lazy(() => import("./pages/Products"));
+const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const Testimonials = lazy(() => import("./pages/Testimonials"));
+const Contact = lazy(() => import("./pages/Contact"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 const Admin = lazy(() => import('./pages/Admin'));
-import FAQ from "./pages/FAQ";
+const FAQ = lazy(() => import("./pages/FAQ"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
