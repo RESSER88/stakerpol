@@ -51,8 +51,8 @@ const ContactDetailsCard = () => {
         </div>
       </div>
 
-      {/* Company billing data */}
-      <div className="mt-5 pt-4 border-t border-gray-200 text-xs text-gray-500 leading-relaxed">
+      {/* Company billing data + warehouse */}
+      <div className="mt-5 pt-4 border-t border-gray-200 text-xs text-gray-500 leading-relaxed grid grid-cols-2 gap-4">
         <div className="flex items-start gap-1.5">
           <MapPin size={12} className="mt-0.5 flex-shrink-0" />
           <div>
@@ -61,6 +61,15 @@ const ContactDetailsCard = () => {
             <div>ul. Szewska 6</div>
             <div>32-043 Skała</div>
             <div>NIP: PL6492111954</div>
+          </div>
+        </div>
+        <div className="flex items-start gap-1.5">
+          <MapPin size={12} className="mt-0.5 flex-shrink-0" />
+          <div>
+            <div className="font-semibold text-gray-600">Magazyn</div>
+            <div>ul. Międzyleśna 115</div>
+            <div>32-095 Celiny</div>
+            <div>Polska</div>
           </div>
         </div>
       </div>
