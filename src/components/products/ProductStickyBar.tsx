@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Phone, Mail } from 'lucide-react';
 import { Product } from '@/types';
-import PriceInquiryModal from './PriceInquiryModal';
+import InquiryModal from '@/components/contact/InquiryModal';
 
 interface Props {
   product: Product;
@@ -33,7 +33,14 @@ const ProductStickyBar = ({ product }: Props) => {
           </button>
         </div>
       </div>
-      <PriceInquiryModal isOpen={open} onClose={() => setOpen(false)} product={product} />
+      <InquiryModal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        source="product_page"
+        productId={product.id}
+        productModel={product.model}
+        serialNumber={product.specs?.serialNumber}
+      />
     </>
   );
 };
