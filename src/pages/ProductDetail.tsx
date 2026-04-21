@@ -146,7 +146,7 @@ const ProductDetail = () => {
         <meta name="twitter:title" content={getMetaTitle()} />
         <meta name="twitter:description" content={getMetaDescription()} />
         <meta name="twitter:image" content={getOgImage()} />
-        <link rel="canonical" href={`https://stakerpol.pl/${language}/products/${product.slug || product.id}`} />
+        <link rel="canonical" href={`https://stakerpol.pl/products/${product.slug || product.id}`} />
         <script type="application/ld+json">
           {JSON.stringify(productSchemaData, null, 2)}
         </script>
