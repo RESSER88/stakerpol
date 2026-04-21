@@ -12,13 +12,13 @@ import { SupabaseAuthProvider } from "./hooks/useSupabaseAuth";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import { logger } from "@/utils/logger";
 import Index from "./pages/Index";
-import Products from "./pages/Products";
-import ProductDetail from "./pages/ProductDetail";
-import Testimonials from "./pages/Testimonials";
-import Contact from "./pages/Contact";
-import NotFound from "./pages/NotFound";
+const Products = lazy(() => import("./pages/Products"));
+const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const Testimonials = lazy(() => import("./pages/Testimonials"));
+const Contact = lazy(() => import("./pages/Contact"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 const Admin = lazy(() => import('./pages/Admin'));
-import FAQ from "./pages/FAQ";
+const FAQ = lazy(() => import("./pages/FAQ"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,20 +34,18 @@ const queryClient = new QueryClient({
 const AppRoutes = () => {
   usePageTracking();
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/products" element={<Products />} />
-      <Route path="/products/:id" element={<ProductDetail />} />
-      <Route path="/testimonials" element={<Testimonials />} />
-      <Route path="/contact" element={<Contact />} />
-      <Route path="/faq" element={<FAQ />} />
-      <Route path="/admin" element={
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Ładowanie...</div>}>
-          <Admin />
-        </Suspense>
-      } />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Ładowanie...</div>}>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/products/:id" element={<ProductDetail />} />
+        <Route path="/testimonials" element={<Testimonials />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 };
 
