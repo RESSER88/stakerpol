@@ -114,6 +114,7 @@ const Footer = () => {
               href="https://www.instagram.com/stakerpol_paleciak_elektryczny" 
               target="_blank" 
               rel="noopener noreferrer"
+              aria-label="Instagram Stakerpol"
               onClick={() => trackSocialClick('instagram')}
               className="w-10 h-10 bg-gray-800 hover:bg-stakerpol-orange rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
             >
@@ -123,6 +124,7 @@ const Footer = () => {
               href="https://www.youtube.com/@stakerpol" 
               target="_blank" 
               rel="noopener noreferrer"
+              aria-label="YouTube Stakerpol"
               onClick={() => trackSocialClick('youtube')}
               className="w-10 h-10 bg-gray-800 hover:bg-stakerpol-orange rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
             >
@@ -132,6 +134,7 @@ const Footer = () => {
               href="https://www.facebook.com/stakerpol/?locale=pl_PL" 
               target="_blank" 
               rel="noopener noreferrer"
+              aria-label="Facebook Stakerpol"
               onClick={() => trackSocialClick('facebook')}
               className="w-10 h-10 bg-gray-800 hover:bg-stakerpol-orange rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
             >
