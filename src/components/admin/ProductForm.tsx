@@ -25,8 +25,12 @@ interface ValidationErrors {
 
 const ProductForm = ({ product, onFieldChange, onSpecsFieldChange, benefits = [], onBenefitsChange }: ProductFormProps) => {
   const [errors, setErrors] = useState<ValidationErrors>({});
-  const { faqs } = useSupabaseFAQ();
+  const { faqs, fetchFAQs } = useSupabaseFAQ();
   const [faqLang, setFaqLang] = useState('pl');
+
+  useEffect(() => {
+    fetchFAQs(faqLang);
+  }, [faqLang]);
 
   const availableFaqs = faqs.filter(f => f.language === faqLang);
   const selectedFaqIds = product.faqIds || [];
