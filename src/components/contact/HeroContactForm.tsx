@@ -93,7 +93,7 @@ const HeroContactForm = () => {
                   {' *'}
                 </span>
               </label>
-              <p className="text-[11px] text-white/60 mt-1 ml-6 leading-snug">
+              <p className="text-xs text-white/60 mt-1 ml-6 leading-snug">
                 Używamy Twoich danych tylko do odpowiedzi na zapytanie. Dane będą usunięte po 30 dniach.
               </p>
               {errors.consent && <p className="text-xs text-red-300 mt-1 ml-6">{errors.consent}</p>}

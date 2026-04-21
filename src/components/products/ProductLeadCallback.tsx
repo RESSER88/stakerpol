@@ -33,7 +33,7 @@ const ProductLeadCallback = ({ productId }: Props) => {
       className="text-white py-8 md:py-14 px-4"
       style={{ background: 'linear-gradient(135deg, hsl(var(--color-navy-brand)) 0%, hsl(222 64% 22%) 100%)' }}
     >
-      <div className="container-custom max-w-3xl text-center md:text-left">
+      <div className="container-custom max-w-3xl text-left">
         <h3 className="font-extrabold mb-2 text-[17px] md:text-[22px]">
           Nie wiesz, czy to dobry wybór?
         </h3>
@@ -43,7 +43,7 @@ const ProductLeadCallback = ({ productId }: Props) => {
         </p>
 
         {success ? (
-          <div className="flex flex-col items-center md:items-start gap-2 py-4 animate-fade-in">
+          <div className="flex flex-col items-start gap-2 py-4 animate-fade-in">
             <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/10">
               <Check className="w-8 h-8 text-green-available" strokeWidth={3} />
             </div>
