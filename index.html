@@ -30,7 +30,7 @@
     </script>
 
     <!-- Performance optimizations -->
-    <link rel="preload" as="image" href="/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.webp" fetchpriority="high" type="image/webp">
+    <link rel="preload" as="image" href="/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.webp" fetchpriority="high" type="image/webp" imagesrcset="/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.webp" imagesizes="100vw">
     <link rel="preconnect" href="https://peztqgfmmnxaaoapzpbw.supabase.co" crossorigin>
     <link rel="dns-prefetch" href="https://peztqgfmmnxaaoapzpbw.supabase.co">
     <link rel="dns-prefetch" href="https://www.google.com">
@@ -64,8 +64,22 @@
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
-    <!-- Google Analytics 4: Stakerpol (gtag.js loader) — moved to end of body for performance -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SM784ZRC5E"></script>
+    <!-- Google Analytics 4: Stakerpol (gtag.js loader) — deferred via requestIdleCallback for performance -->
+    <script>
+      (function(){
+        var load = function(){
+          var s = document.createElement('script');
+          s.async = true;
+          s.src = 'https://www.googletagmanager.com/gtag/js?id=G-SM784ZRC5E';
+          document.head.appendChild(s);
+        };
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(load, { timeout: 3000 });
+        } else {
+          setTimeout(load, 2000);
+        }
+      })();
+    </script>
     <!-- GA4 init (deferred) -->
     <script defer>
       (function(){
