@@ -38,7 +38,7 @@ const Index = () => {
         <meta property="og:title" content={getMetaTitle()} />
         <meta property="og:description" content="Profesjonalna sprzedaż używanych wózków widłowych Toyota i BT. Elektryczne i spalinowe paleciaki magazynowe z serwisem." />
         <meta property="og:image" content="/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.png" />
-        <meta property="og:url" content={`https://stakerpol.pl/${language}`} />
+        <meta property="og:url" content="https://stakerpol.pl/" />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Stakerpol - Wózki widłowe Toyota BT" />
