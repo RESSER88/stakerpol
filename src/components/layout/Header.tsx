@@ -59,7 +59,7 @@ const Header = () => {
             <LanguageSwitcher />
             <button
               onClick={toggleMenu}
-              className="text-gray-800 hover:text-stakerpol-orange transition-all"
+              className="text-gray-800 hover:text-stakerpol-orange transition-all min-h-[48px] min-w-[48px] flex items-center justify-center rounded-md active:bg-gray-100 active:scale-95"
               aria-label="Toggle menu"
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
