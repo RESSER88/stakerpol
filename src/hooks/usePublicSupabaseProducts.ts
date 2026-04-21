@@ -55,8 +55,7 @@ export const usePublicSupabaseProducts = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     gcTime: 10 * 60 * 1000, // 10 minutes in memory
     retry: 3,
-    refetchOnWindowFocus: true,
-    refetchInterval: 30 * 1000, // Auto-refetch every 30 seconds for real-time sync
+    refetchOnWindowFocus: false,
   });
 
   // Enhanced realtime subscription for immediate sync with admin panel
