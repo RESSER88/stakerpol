@@ -15,6 +15,38 @@ import FAQSchema from '@/components/seo/FAQSchema';
 const Testimonials = () => {
   const { language } = useLanguage();
   const t = useTranslation(language);
+  const { faqs, fetchFAQs } = useSupabaseFAQ();
+
+  useEffect(() => {
+    fetchFAQs(language);
+  }, [language]);
+
+  const reviewsFaqItems = faqs
+    .filter((f) => f.language === language)
+    .filter((f) => f.is_active === true)
+    .filter((f) => f.display_locations?.includes('reviews'))
+    .sort((a, b) => a.display_order - b.display_order);
+
+  const getFaqHeading = () => {
+    switch (language) {
+      case 'en': return { title: 'Frequently asked questions', subtitle: 'We answer the questions most often asked by our customers before purchase.' };
+      case 'cs': return { title: 'Často kladené otázky', subtitle: 'Odpovídáme na otázky, které naši zákazníci nejčastěji kladou před nákupem.' };
+      case 'sk': return { title: 'Často kladené otázky', subtitle: 'Odpovedáme na otázky, ktoré naši zákazníci najčastejšie kladú pred nákupom.' };
+      case 'de': return { title: 'Häufig gestellte Fragen', subtitle: 'Wir beantworten die Fragen, die unsere Kunden am häufigsten vor dem Kauf stellen.' };
+      default: return { title: 'Najczęstsze pytania', subtitle: 'Odpowiadamy na pytania, które najczęściej zadają nasi klienci przed zakupem' };
+    }
+  };
+  const getNoAnswerCopy = () => {
+    switch (language) {
+      case 'en': return { title: "Didn't find your answer?", subtitle: 'Call or write — free consultation' };
+      case 'cs': return { title: 'Nenašli jste odpověď?', subtitle: 'Zavolejte nebo napište — bezplatná konzultace' };
+      case 'sk': return { title: 'Nenašli ste odpoveď?', subtitle: 'Zavolajte alebo napíšte — bezplatná konzultácia' };
+      case 'de': return { title: 'Keine Antwort gefunden?', subtitle: 'Rufen Sie an oder schreiben Sie — kostenlose Beratung' };
+      default: return { title: 'Nie znalazłeś odpowiedzi na swoje pytanie?', subtitle: 'Zadzwoń lub napisz — doradzimy bezpłatnie' };
+    }
+  };
+  const faqHeading = getFaqHeading();
+  const noAnswerCopy = getNoAnswerCopy();
 
   const getExperienceContent = () => {
     switch (language) {
