@@ -1,7 +1,11 @@
 import { Product } from '@/types';
 import { useProductBenefits } from '@/hooks/useProductBenefits';
 import * as Icons from 'lucide-react';
+import { MapPin, ArrowRight } from 'lucide-react';
 import InlineContextualCTA from './InlineContextualCTA';
+
+const DIRECTIONS_URL =
+  'https://www.google.com/maps/dir/?api=1&destination=ul.+Mi%C4%99dzyle%C5%9Bna+115,+32-095+Celiny,+Polska';
 
 interface Props {
   product: Product;
