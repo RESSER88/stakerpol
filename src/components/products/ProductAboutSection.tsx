@@ -1,7 +1,11 @@
 import { Product } from '@/types';
 import { useProductBenefits } from '@/hooks/useProductBenefits';
 import * as Icons from 'lucide-react';
+import { MapPin, ArrowRight } from 'lucide-react';
 import InlineContextualCTA from './InlineContextualCTA';
+
+const DIRECTIONS_URL =
+  'https://www.google.com/maps/dir/?api=1&destination=ul.+Mi%C4%99dzyle%C5%9Bna+115,+32-095+Celiny,+Polska';
 
 interface Props {
   product: Product;
@@ -76,15 +80,32 @@ const ProductAboutSection = ({ product }: Props) => {
               </div>
             )}
           </div>
-          <InlineContextualCTA
-            variant="line"
-            question="Chcesz zobaczyć ten model w naszym magazynie?"
-            actionLabel="Umów wizytę"
-            actionType="demo"
-            modelName={product.model}
-            productId={product.id}
-            serialNumber={product.specs?.serialNumber}
-          />
+          <div className="flex flex-col md:flex-row md:items-center md:gap-4 mt-2">
+            <div className="flex-1">
+              <InlineContextualCTA
+                variant="line"
+                question="Chcesz zobaczyć ten model w naszym magazynie?"
+                actionLabel="Umów wizytę"
+                actionType="demo"
+                modelName={product.model}
+                productId={product.id}
+                serialNumber={product.specs?.serialNumber}
+              />
+            </div>
+            <a
+              href={DIRECTIONS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center gap-1.5 text-[13px] md:text-[14px] font-bold text-navy-brand hover:underline whitespace-nowrap mt-3 md:mt-4 px-3 md:px-0"
+            >
+              <MapPin size={14} className="shrink-0" />
+              Jak dojechać
+              <ArrowRight
+                size={14}
+                className="transition-transform duration-150 group-hover:translate-x-0.5"
+              />
+            </a>
+          </div>
         </div>
       </div>
     </section>
