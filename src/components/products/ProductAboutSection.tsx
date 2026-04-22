@@ -80,15 +80,32 @@ const ProductAboutSection = ({ product }: Props) => {
               </div>
             )}
           </div>
-          <InlineContextualCTA
-            variant="line"
-            question="Chcesz zobaczyć ten model w naszym magazynie?"
-            actionLabel="Umów wizytę"
-            actionType="demo"
-            modelName={product.model}
-            productId={product.id}
-            serialNumber={product.specs?.serialNumber}
-          />
+          <div className="flex flex-col md:flex-row md:items-center md:gap-4 mt-2">
+            <div className="flex-1">
+              <InlineContextualCTA
+                variant="line"
+                question="Chcesz zobaczyć ten model w naszym magazynie?"
+                actionLabel="Umów wizytę"
+                actionType="demo"
+                modelName={product.model}
+                productId={product.id}
+                serialNumber={product.specs?.serialNumber}
+              />
+            </div>
+            <a
+              href={DIRECTIONS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center gap-1.5 text-[13px] md:text-[14px] font-bold text-navy-brand hover:underline whitespace-nowrap mt-3 md:mt-4 px-3 md:px-0"
+            >
+              <MapPin size={14} className="shrink-0" />
+              Jak dojechać
+              <ArrowRight
+                size={14}
+                className="transition-transform duration-150 group-hover:translate-x-0.5"
+              />
+            </a>
+          </div>
         </div>
       </div>
     </section>
