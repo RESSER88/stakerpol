@@ -236,24 +236,19 @@ const ProductImageManager = ({
   }, []);
 
   return (
-    <div className={cn("space-y-6", className)}>
-      <div className="border-2 border-dashed border-gray-300 rounded-lg">
+    <div className={cn("space-y-5", className)}>
+      <div className="border border-dashed border-gray-200 rounded-lg bg-white">
         <div
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
-          className="p-8 text-center hover:border-stakerpol-orange transition-colors"
+          className="px-4 py-6 sm:py-8 text-center hover:border-stakerpol-navy/40 transition-colors min-h-[140px] sm:min-h-[170px] flex flex-col items-center justify-center"
         >
-          <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2 text-stakerpol-navy">
+          <ImageIcon className="h-9 w-9 text-muted-foreground mx-auto mb-2" />
+          <h3 className="text-base font-medium mb-1 text-stakerpol-navy">
             Dodaj zdjęcia produktu
           </h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-sm text-muted-foreground mb-3">
             Przeciągnij zdjęcia tutaj lub kliknij, aby wybrać (maksymalnie {maxImages})
-          </p>
-          <p className="text-sm text-gray-500 mb-6">
-            Obsługiwane formaty: JPG, PNG, WebP • 
-            Automatyczny upload do Supabase Storage • 
-            Max 50MB
           </p>
           
           <input
@@ -268,41 +263,46 @@ const ProductImageManager = ({
           
           <Button
             type="button"
-            className="cta-button"
+            variant="outline"
+            size="sm"
             asChild
             disabled={uploading || previews.length >= maxImages}
+            className="h-9 px-4 border-stakerpol-navy text-stakerpol-navy hover:bg-stakerpol-navy/5"
           >
             <label htmlFor="product-images-upload" className="cursor-pointer">
               {uploading ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Przesyłanie do Storage...
+                  <div className="w-3.5 h-3.5 border-2 border-stakerpol-navy border-t-transparent rounded-full animate-spin mr-2" />
+                  Przesyłanie...
                 </>
               ) : (
                 <>
-                  <Upload className="h-4 w-4 mr-2" />
+                  <Upload className="h-3.5 w-3.5 mr-2" />
                   Wybierz zdjęcia
                 </>
               )}
             </label>
           </Button>
+          <p className="text-xs text-muted-foreground mt-3">
+            Obsługiwane formaty: JPG, PNG, WebP • Automatyczny upload • Max 50MB
+          </p>
         </div>
       </div>
 
       {previews.length > 0 && (
-        <div className="space-y-4">
-          <h4 className="font-semibold text-stakerpol-navy">
+        <div className="space-y-3">
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Podgląd zdjęć ({previews.length}/{maxImages})
-            <span className="text-sm text-green-600 ml-2">(Supabase Storage)</span>
+            <span className="ml-2 text-muted-foreground/70 normal-case font-normal">(Supabase Storage)</span>
           </h4>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
             {previews.map((preview, index) => (
               <div key={index} className="relative group">
                 <div className={cn(
-                  "relative aspect-[4/3] bg-white rounded-lg overflow-hidden border-2 transition-all",
+                  "relative aspect-[4/3] bg-white rounded-md overflow-hidden border transition-all",
                   index === mainImageIndex 
-                    ? "border-stakerpol-orange shadow-lg ring-2 ring-stakerpol-orange/20" 
+                    ? "border-stakerpol-orange/60 ring-1 ring-stakerpol-orange/30" 
                     : "border-gray-200 hover:border-gray-300"
                 )}>
                   <img
@@ -315,7 +315,7 @@ const ProductImageManager = ({
                   
                   {/* Main image indicator */}
                   {index === mainImageIndex && (
-                    <div className="absolute top-2 left-2 bg-stakerpol-orange text-white px-2 py-1 rounded text-xs font-semibold flex items-center">
+                    <div className="absolute top-1.5 left-1.5 bg-stakerpol-orange/10 text-stakerpol-orange px-2 py-0.5 rounded text-xs font-medium flex items-center">
                       <Star className="h-3 w-3 mr-1 fill-current" />
                       Główne
                     </div>
