@@ -151,7 +151,7 @@ const PDFQuoteGenerator = ({ product }: PDFQuoteGeneratorProps) => {
           <ArrowUp className="h-3 w-3 sm:h-4 sm:w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3xl mx-4 w-[calc(100vw-2rem)] sm:w-full max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-3xl mx-4 w-[calc(100vw-2rem)] sm:w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-stakerpol-navy text-base sm:text-lg">
             Generuj profesjonalną ofertę PDF

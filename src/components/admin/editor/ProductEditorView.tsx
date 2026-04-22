@@ -146,7 +146,7 @@ const ProductEditorView = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-editorial-bg overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-editorial-bg overflow-y-auto pb-12 lg:pb-0">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-editorial-bg border-b border-editorial-line">
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 flex items-center gap-4">
