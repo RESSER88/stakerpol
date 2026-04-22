@@ -97,8 +97,8 @@ const ContactConversionCards = ({ formHref = '#form' }: ContactConversionCardsPr
         <div className="grid md:grid-cols-2 gap-4 items-stretch">
               {/* Card A */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col items-center text-center">
-                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-3 mx-auto">
-                  <Phone className="text-red-600" size={22} />
+                <div className="w-12 h-12 rounded-full bg-stakerpol-navy/10 flex items-center justify-center mb-3 mx-auto">
+                  <Phone className="text-stakerpol-navy" size={22} />
                 </div>
                 <h3 className="font-bold text-base text-gray-900 mb-2 text-center">Nie wiesz, który model wybrać?</h3>
                 <p className="text-sm text-gray-600 mb-4 flex-1 text-center">
@@ -117,8 +117,8 @@ const ContactConversionCards = ({ formHref = '#form' }: ContactConversionCardsPr
 
               {/* Card C */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col items-center text-center">
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-3 mx-auto">
-                  <PhoneCall className="text-green-600" size={22} />
+                <div className="w-12 h-12 rounded-full bg-stakerpol-navy/10 flex items-center justify-center mb-3 mx-auto">
+                  <PhoneCall className="text-stakerpol-navy" size={22} />
                 </div>
                 <h3 className="font-bold text-base text-gray-900 mb-2 text-center">Zostaw numer — oddzwonimy</h3>
                 <p className="text-sm text-gray-600 mb-4 flex-1 text-center">

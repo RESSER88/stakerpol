@@ -52,7 +52,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Company Info */}
           <div className="animate-fade-in">
-            <h3 className="text-xl font-bold mb-4 text-stakerpol-orange">Stakerpol</h3>
+            <h3 className="text-xl font-bold mb-4 text-white">Stakerpol</h3>
             <p className="mb-4">{companyInfo.description}</p>
             <div className="flex items-center space-x-2 mb-3 group">
               <Phone size={16} className="text-stakerpol-orange group-hover:animate-pulse-light" />
@@ -77,7 +77,7 @@ const Footer = () => {
           
           {/* Quick Links */}
           <div className="animate-fade-in delay-100">
-            <h3 className="text-xl font-bold mb-4 text-stakerpol-orange">Menu</h3>
+            <h3 className="text-xl font-bold mb-4 text-white">Menu</h3>
             <ul className="space-y-3">
               <li>
                 <Link to="/" onClick={handleLinkClick} className="hover:text-stakerpol-orange transition-colors inline-flex items-center group">
