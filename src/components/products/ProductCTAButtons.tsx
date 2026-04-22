@@ -27,7 +27,7 @@ const ProductCTAButtons = ({ product }: Props) => {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex items-center justify-center gap-2 rounded-[5px] font-bold text-white bg-ink py-3 text-sm hover:opacity-90 transition"
+          className="flex items-center justify-center gap-2 rounded-[5px] font-bold text-navy-brand bg-white border border-navy-brand py-3 text-sm hover:bg-navy-brand/5 transition"
         >
           <Mail size={16} />
           Wyślij zapytanie
