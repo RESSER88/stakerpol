@@ -54,7 +54,7 @@ export const useSupabaseFAQ = () => {
     try {
       const { data, error } = await supabase
         .from('faqs')
-        .insert([faq as any])
+        .insert([faq])
         .select()
         .single();
 
@@ -80,7 +80,7 @@ export const useSupabaseFAQ = () => {
     try {
       const { data, error } = await supabase
         .from('faqs')
-        .update(updates as any)
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
