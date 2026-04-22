@@ -24,7 +24,7 @@ const HomeFAQ = () => {
   return (
     <section className="bg-white py-10 md:py-16">
       <div className="container-custom max-w-[800px] px-4 md:px-6">
-        <div className="font-mono text-xs md:text-sm text-red-accent tracking-widest mb-2">
+        <div className="font-mono text-xs md:text-sm text-orange-cta tracking-widest mb-2">
           03
         </div>
         <h2 className="text-xl md:text-3xl font-extrabold text-navy-brand leading-tight mb-6 md:mb-8">
@@ -54,6 +54,30 @@ const HomeFAQ = () => {
         </Accordion>
 
         <FAQSchema items={items.map((f) => ({ question: f.question, answer: f.answer }))} />
+
+        {/* CTA pod FAQ */}
+        <div className="mt-8 md:mt-10 text-center bg-surface-soft border border-border-line rounded-lg py-6 px-4 md:px-6">
+          <p className="text-base md:text-lg font-semibold text-navy-brand">
+            Nie znalazłeś odpowiedzi na swoje pytanie?
+          </p>
+          <p className="text-sm text-ink-soft mt-1">
+            Zadzwoń lub napisz — doradzimy bezpłatnie
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 justify-center items-center mt-4">
+            <a
+              href="tel:+48694133592"
+              className="text-sm md:text-base font-semibold text-navy-brand hover:text-orange-cta transition-colors"
+            >
+              📞 694 133 592
+            </a>
+            <a
+              href="mailto:info@stakerpol.pl"
+              className="text-sm md:text-base font-semibold text-navy-brand hover:text-orange-cta transition-colors"
+            >
+              ✉ info@stakerpol.pl
+            </a>
+          </div>
+        </div>
       </div>
     </section>
   );

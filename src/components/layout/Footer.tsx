@@ -55,15 +55,15 @@ const Footer = () => {
             <h3 className="text-xl font-bold mb-4 text-white">Stakerpol</h3>
             <p className="mb-4">{companyInfo.description}</p>
             <div className="flex items-center space-x-2 mb-3 group">
-              <Phone size={16} className="text-stakerpol-orange group-hover:animate-pulse-light" />
+              <Phone size={16} className="text-white/80 group-hover:animate-pulse-light" />
               <a href="tel:+48694133592" className="hover:text-stakerpol-orange transition-colors" onClick={() => trackPhoneClick('footer')}>+48 694 133 592</a>
             </div>
             <div className="flex items-center space-x-2 mb-3 group">
-              <Mail size={16} className="text-stakerpol-orange group-hover:animate-pulse-light" />
+              <Mail size={16} className="text-white/80 group-hover:animate-pulse-light" />
               <a href="mailto:info@stakerpol.pl" className="hover:text-stakerpol-orange transition-colors" onClick={() => trackEmailClick('footer')}>info@stakerpol.pl</a>
             </div>
             <div className="flex items-start space-x-2 group">
-              <MapPin size={16} className="mt-1 flex-shrink-0 text-stakerpol-orange group-hover:animate-pulse-light" />
+              <MapPin size={16} className="mt-1 flex-shrink-0 text-white/80 group-hover:animate-pulse-light" />
               <a
                 href="https://maps.app.goo.gl/1CHQFHvBnjvtvtR49"
                 target="_blank"
