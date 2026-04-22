@@ -79,7 +79,7 @@ const Index = () => {
           <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 items-center">
             <div className="space-y-4 lg:space-y-5">
               <div
-                className="font-mono text-[11px] lg:text-xs tracking-[0.14em] text-white/70 uppercase animate-fade-in"
+                className="font-mono text-[11px] lg:text-xs tracking-[0.14em] text-orange-cta font-semibold uppercase animate-fade-in"
                 style={{ animationDelay: '0ms', animationFillMode: 'both' }}
               >
                 // Używane wózki Toyota · od 2008

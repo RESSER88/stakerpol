@@ -12,7 +12,7 @@ const HomeFeaturedProducts = ({ products, isLoading }: Props) => {
   return (
     <section className="bg-white py-10 md:py-16">
       <div className="container-custom max-w-[1200px] px-4 md:px-6">
-        <div className="font-mono text-xs md:text-sm text-red-accent tracking-widest mb-2">
+        <div className="font-mono text-xs md:text-sm text-orange-cta tracking-widest mb-2">
           01
         </div>
         <h2 className="text-xl md:text-3xl font-extrabold text-navy-brand leading-tight">

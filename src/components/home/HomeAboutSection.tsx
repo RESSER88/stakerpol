@@ -31,7 +31,7 @@ const HomeAboutSection = () => {
   return (
     <section className="bg-surface-soft py-10 md:py-16">
       <div className="container-custom max-w-[1200px] px-4 md:px-6">
-        <div className="font-mono text-xs md:text-sm text-red-accent tracking-widest mb-2">
+        <div className="font-mono text-xs md:text-sm text-orange-cta tracking-widest mb-2">
           02
         </div>
         <h2 className="text-xl md:text-3xl font-extrabold text-navy-brand leading-tight">
@@ -55,7 +55,7 @@ const HomeAboutSection = () => {
             return (
               <div key={s.label} className="text-center flex flex-col justify-center">
                 <div
-                  className={`font-mono font-extrabold text-orange-cta leading-none ${
+                  className={`font-mono font-extrabold text-navy-brand leading-none ${
                     isLong
                       ? 'text-base md:text-2xl'
                       : 'text-2xl md:text-4xl'
@@ -79,7 +79,7 @@ const HomeAboutSection = () => {
               className="bg-white border border-border-line rounded p-4 md:p-5 flex flex-col hover:bg-surface-soft transition-colors"
             >
               <div className="w-[38px] h-[38px] rounded-full bg-surface-soft flex items-center justify-center mb-3">
-                <b.Icon className="w-5 h-5 text-red-accent" />
+                <b.Icon className="w-5 h-5 text-navy-brand" />
               </div>
               <h3 className="text-[15px] font-bold text-navy-brand mb-1.5">
                 {b.title}
