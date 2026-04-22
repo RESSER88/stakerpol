@@ -233,6 +233,48 @@ const Testimonials = () => {
         </div>
       </section>
 
+      {/* FAQ section — only renders when admin selected at least one FAQ for "reviews" */}
+      {reviewsFaqItems.length > 0 && (
+        <section className="bg-white py-12 md:py-16">
+          <div className="container-custom max-w-4xl">
+            <h2 className="text-3xl font-bold text-center mb-3 text-stakerpol-navy">{faqHeading.title}</h2>
+            <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">{faqHeading.subtitle}</p>
+
+            <Accordion type="single" collapsible className="space-y-2">
+              {reviewsFaqItems.map((qa, idx) => (
+                <AccordionItem
+                  key={qa.id}
+                  value={`reviews-faq-${idx}`}
+                  className="border rounded-md bg-white"
+                >
+                  <AccordionTrigger className="text-left text-sm md:text-base font-semibold hover:text-stakerpol-navy py-4 px-5 hover:no-underline">
+                    {qa.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="px-5 pb-5">
+                    <p className="text-sm text-muted-foreground leading-relaxed">{qa.answer}</p>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+
+            <FAQSchema items={reviewsFaqItems.map((f) => ({ question: f.question, answer: f.answer }))} />
+
+            <div className="mt-8 text-center bg-muted/30 border rounded-lg py-6 px-4 md:px-6">
+              <p className="text-base md:text-lg font-semibold text-stakerpol-navy">{noAnswerCopy.title}</p>
+              <p className="text-sm text-muted-foreground mt-1">{noAnswerCopy.subtitle}</p>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 justify-center items-center mt-4">
+                <a href="tel:+48694133592" className="text-sm md:text-base font-semibold text-stakerpol-navy hover:opacity-80">
+                  📞 694 133 592
+                </a>
+                <a href="mailto:info@stakerpol.pl" className="text-sm md:text-base font-semibold text-stakerpol-navy hover:opacity-80">
+                  ✉ info@stakerpol.pl
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Custom CTA section (replaces global CallToAction here) */}
       <section className="bg-stakerpol-navy text-white py-16">
         <div className="container-custom text-center">
