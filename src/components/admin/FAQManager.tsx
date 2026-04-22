@@ -69,7 +69,11 @@ const FAQManager: React.FC = () => {
   };
 
   const handleToggleActive = async (id: string, isActive: boolean) => {
-    await toggleFAQActive(id, isActive);
+    try {
+      await toggleFAQActive(id, isActive);
+    } catch (e) {
+      // Toast already shown in hook; swallow to avoid unhandled rejection
+    }
     loadFAQs();
   };
 
