@@ -13,12 +13,20 @@ interface FAQFormProps {
 }
 
 const FAQForm: React.FC<FAQFormProps> = ({ faq, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    language: string;
+    question: string;
+    answer: string;
+    display_order: number;
+    is_active: boolean;
+    display_locations: string[];
+  }>({
     language: 'pl',
     question: '',
     answer: '',
     display_order: 0,
     is_active: true,
+    display_locations: [],
   });
   const [loading, setLoading] = useState(false);
 
@@ -30,9 +38,19 @@ const FAQForm: React.FC<FAQFormProps> = ({ faq, onSubmit, onCancel }) => {
         answer: faq.answer,
         display_order: faq.display_order,
         is_active: faq.is_active,
+        display_locations: faq.display_locations ?? [],
       });
     }
   }, [faq]);
+
+  const toggleLocation = (loc: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      display_locations: prev.display_locations.includes(loc)
+        ? prev.display_locations.filter((l) => l !== loc)
+        : [...prev.display_locations, loc],
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +66,7 @@ const FAQForm: React.FC<FAQFormProps> = ({ faq, onSubmit, onCancel }) => {
           answer: '',
           display_order: 0,
           is_active: true,
+          display_locations: [],
         });
       }
     } catch (error) {
@@ -98,6 +117,35 @@ const FAQForm: React.FC<FAQFormProps> = ({ faq, onSubmit, onCancel }) => {
             }
             min="0"
           />
+        </div>
+      </div>
+
+      <div className="rounded-md border p-3 space-y-2">
+        <div>
+          <Label className="text-sm font-semibold">Wyświetlaj na stronach</Label>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Zaznacz, gdzie pytanie ma się pojawić. Strona /faq i karty produktów działają niezależnie.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 pt-1">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.display_locations.includes('home')}
+              onChange={() => toggleLocation('home')}
+              className="h-4 w-4"
+            />
+            <span className="text-sm">Strona główna</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.display_locations.includes('reviews')}
+              onChange={() => toggleLocation('reviews')}
+              className="h-4 w-4"
+            />
+            <span className="text-sm">Opinie klientów</span>
+          </label>
         </div>
       </div>
 

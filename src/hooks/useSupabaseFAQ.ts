@@ -9,6 +9,8 @@ export interface FAQ {
   answer: string;
   display_order: number;
   is_active: boolean;
+  /** Pages where the FAQ should appear: 'home' | 'reviews'. Other pages ignore this field. */
+  display_locations?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -52,7 +54,7 @@ export const useSupabaseFAQ = () => {
     try {
       const { data, error } = await supabase
         .from('faqs')
-        .insert([faq])
+        .insert([faq as any])
         .select()
         .single();
 
@@ -78,7 +80,7 @@ export const useSupabaseFAQ = () => {
     try {
       const { data, error } = await supabase
         .from('faqs')
-        .update(updates)
+        .update(updates as any)
         .eq('id', id)
         .select()
         .single();

@@ -8,10 +8,45 @@ import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { Star, Users, Award, Package, Phone } from 'lucide-react';
 import { trackPhoneClick, trackWhatsAppClick } from '@/utils/analytics';
+import { useSupabaseFAQ } from '@/hooks/useSupabaseFAQ';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import FAQSchema from '@/components/seo/FAQSchema';
 
 const Testimonials = () => {
   const { language } = useLanguage();
   const t = useTranslation(language);
+  const { faqs, fetchFAQs } = useSupabaseFAQ();
+
+  useEffect(() => {
+    fetchFAQs(language);
+  }, [language]);
+
+  const reviewsFaqItems = faqs
+    .filter((f) => f.language === language)
+    .filter((f) => f.is_active === true)
+    .filter((f) => f.display_locations?.includes('reviews'))
+    .sort((a, b) => a.display_order - b.display_order);
+
+  const getFaqHeading = () => {
+    switch (language) {
+      case 'en': return { title: 'Frequently asked questions', subtitle: 'We answer the questions most often asked by our customers before purchase.' };
+      case 'cs': return { title: 'Často kladené otázky', subtitle: 'Odpovídáme na otázky, které naši zákazníci nejčastěji kladou před nákupem.' };
+      case 'sk': return { title: 'Často kladené otázky', subtitle: 'Odpovedáme na otázky, ktoré naši zákazníci najčastejšie kladú pred nákupom.' };
+      case 'de': return { title: 'Häufig gestellte Fragen', subtitle: 'Wir beantworten die Fragen, die unsere Kunden am häufigsten vor dem Kauf stellen.' };
+      default: return { title: 'Najczęstsze pytania', subtitle: 'Odpowiadamy na pytania, które najczęściej zadają nasi klienci przed zakupem' };
+    }
+  };
+  const getNoAnswerCopy = () => {
+    switch (language) {
+      case 'en': return { title: "Didn't find your answer?", subtitle: 'Call or write — free consultation' };
+      case 'cs': return { title: 'Nenašli jste odpověď?', subtitle: 'Zavolejte nebo napište — bezplatná konzultace' };
+      case 'sk': return { title: 'Nenašli ste odpoveď?', subtitle: 'Zavolajte alebo napíšte — bezplatná konzultácia' };
+      case 'de': return { title: 'Keine Antwort gefunden?', subtitle: 'Rufen Sie an oder schreiben Sie — kostenlose Beratung' };
+      default: return { title: 'Nie znalazłeś odpowiedzi na swoje pytanie?', subtitle: 'Zadzwoń lub napisz — doradzimy bezpłatnie' };
+    }
+  };
+  const faqHeading = getFaqHeading();
+  const noAnswerCopy = getNoAnswerCopy();
 
   const getExperienceContent = () => {
     switch (language) {
@@ -197,6 +232,48 @@ const Testimonials = () => {
           </div>
         </div>
       </section>
+
+      {/* FAQ section — only renders when admin selected at least one FAQ for "reviews" */}
+      {reviewsFaqItems.length > 0 && (
+        <section className="bg-white py-12 md:py-16">
+          <div className="container-custom max-w-4xl">
+            <h2 className="text-3xl font-bold text-center mb-3 text-stakerpol-navy">{faqHeading.title}</h2>
+            <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">{faqHeading.subtitle}</p>
+
+            <Accordion type="single" collapsible className="space-y-2">
+              {reviewsFaqItems.map((qa, idx) => (
+                <AccordionItem
+                  key={qa.id}
+                  value={`reviews-faq-${idx}`}
+                  className="border rounded-md bg-white"
+                >
+                  <AccordionTrigger className="text-left text-sm md:text-base font-semibold hover:text-stakerpol-navy py-4 px-5 hover:no-underline">
+                    {qa.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="px-5 pb-5">
+                    <p className="text-sm text-muted-foreground leading-relaxed">{qa.answer}</p>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+
+            <FAQSchema items={reviewsFaqItems.map((f) => ({ question: f.question, answer: f.answer }))} />
+
+            <div className="mt-8 text-center bg-muted/30 border rounded-lg py-6 px-4 md:px-6">
+              <p className="text-base md:text-lg font-semibold text-stakerpol-navy">{noAnswerCopy.title}</p>
+              <p className="text-sm text-muted-foreground mt-1">{noAnswerCopy.subtitle}</p>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 justify-center items-center mt-4">
+                <a href="tel:+48694133592" className="text-sm md:text-base font-semibold text-stakerpol-navy hover:opacity-80">
+                  📞 694 133 592
+                </a>
+                <a href="mailto:info@stakerpol.pl" className="text-sm md:text-base font-semibold text-stakerpol-navy hover:opacity-80">
+                  ✉ info@stakerpol.pl
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Custom CTA section (replaces global CallToAction here) */}
       <section className="bg-stakerpol-navy text-white py-16">
