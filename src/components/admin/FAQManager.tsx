@@ -140,13 +140,16 @@ const FAQManager: React.FC = () => {
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
+          <DialogHeader className="border-b border-editorial-line pb-3 mb-2">
+            <DialogTitle
+              className="font-editorial text-2xl text-editorial-ink tracking-tight font-normal"
+              style={{ fontFamily: 'Georgia, serif' }}
+            >
               {editingFAQ ? 'Edytuj FAQ' : 'Dodaj nowe FAQ'}
             </DialogTitle>
-            <DialogDescription>
-              {editingFAQ 
-                ? 'Zaktualizuj pytanie i odpowiedź FAQ' 
+            <DialogDescription className="text-xs text-editorial-muted italic mt-1">
+              {editingFAQ
+                ? 'Zaktualizuj pytanie i odpowiedź FAQ'
                 : 'Dodaj nowe pytanie i odpowiedź do FAQ'
               }
             </DialogDescription>
