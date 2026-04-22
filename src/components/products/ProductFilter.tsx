@@ -32,7 +32,7 @@ const ProductFilter = ({ products, onFilterChange, language, variant = 'default'
         <Button
           onClick={() => setIsModalOpen(true)}
           variant="outline"
-          className="flex items-center gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+          className="flex items-center gap-2 border border-stakerpol-navy text-stakerpol-navy hover:bg-stakerpol-navy hover:text-white transition-colors px-5 py-2.5 font-semibold"
         >
           <Filter className="h-4 w-4" />
           {t('filterProducts')}
