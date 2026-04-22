@@ -151,98 +151,98 @@ const PDFQuoteGenerator = ({ product }: PDFQuoteGeneratorProps) => {
           <ArrowUp className="h-3 w-3 sm:h-4 sm:w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3xl mx-4 w-[calc(100vw-2rem)] sm:w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-stakerpol-navy text-base sm:text-lg">
-            Generuj profesjonalną ofertę PDF
+      <DialogContent className="sm:max-w-2xl mx-4 w-[calc(100vw-2rem)] sm:w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-4 sm:p-6 [&>button]:h-11 [&>button]:w-11 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:right-2 [&>button]:top-2">
+        <DialogHeader className="space-y-1 pr-8">
+          <DialogTitle className="text-stakerpol-navy text-lg sm:text-xl font-semibold">
+            Generuj ofertę PDF
           </DialogTitle>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm font-medium text-muted-foreground">
             {product.model}
           </p>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-muted-foreground">
             Wszystkie pola są opcjonalne. Wypełnij tylko te informacje, które chcesz umieścić w ofercie.
           </p>
         </DialogHeader>
         
-        <div className="space-y-6 py-4">
+        <div className="space-y-5 py-3">
           {/* Sekcja: Dane klienta */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-stakerpol-navy border-b pb-2 flex items-center gap-2">
-              👤 Dane klienta (opcjonalne)
+          <div className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-1.5">
+              Dane klienta (opcjonalne)
             </h3>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="clientName" className="text-sm">Imię i nazwisko</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="clientName" className="text-xs font-medium">Imię i nazwisko</Label>
                 <Input
                   id="clientName"
                   type="text"
                   placeholder="np. Jan Kowalski"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
-                  className="w-full"
+                  className="h-9 text-sm"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="companyName" className="text-sm">Nazwa firmy</Label>
+              <div className="space-y-1">
+                <Label htmlFor="companyName" className="text-xs font-medium">Nazwa firmy</Label>
                 <Input
                   id="companyName"
                   type="text"
                   placeholder="np. Firma ABC Sp. z o.o."
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  className="w-full"
+                  className="h-9 text-sm"
                 />
               </div>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm">E-mail</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="email" className="text-xs font-medium">E-mail</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="np. klient@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full"
+                  className="h-9 text-sm"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm">Telefon</Label>
+              <div className="space-y-1">
+                <Label htmlFor="phone" className="text-xs font-medium">Telefon</Label>
                 <Input
                   id="phone"
                   type="tel"
                   placeholder="np. +48 123 456 789"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full"
+                  className="h-9 text-sm"
                 />
               </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="address" className="text-sm">Adres</Label>
+            <div className="space-y-1">
+              <Label htmlFor="address" className="text-xs font-medium">Adres</Label>
               <Textarea
                 id="address"
                 placeholder="np. ul. Przykładowa 123&#10;00-000 Warszawa"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="w-full resize-none"
-                rows={3}
+                className="w-full resize-none text-sm min-h-0"
+                rows={2}
               />
             </div>
           </div>
 
           {/* Sekcja: Warunki handlowe */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-stakerpol-navy border-b pb-2 flex items-center gap-2">
-              💰 Warunki handlowe (opcjonalne)
+          <div className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-1.5">
+              Warunki handlowe (opcjonalne)
             </h3>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="netPrice" className="text-sm">Cena netto (PLN)</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="netPrice" className="text-xs font-medium">Cena netto (PLN)</Label>
                 <Input
                   id="netPrice"
                   type="number"
@@ -251,11 +251,11 @@ const PDFQuoteGenerator = ({ product }: PDFQuoteGeneratorProps) => {
                   placeholder="np. 25000.00"
                   value={netPrice}
                   onChange={(e) => setNetPrice(e.target.value)}
-                  className="w-full"
+                  className="h-9 text-sm"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="transportPrice" className="text-sm">Cena transportu (PLN)</Label>
+              <div className="space-y-1">
+                <Label htmlFor="transportPrice" className="text-xs font-medium">Cena transportu (PLN)</Label>
                 <Input
                   id="transportPrice"
                   type="number"
@@ -264,16 +264,16 @@ const PDFQuoteGenerator = ({ product }: PDFQuoteGeneratorProps) => {
                   placeholder="np. 500.00"
                   value={transportPrice}
                   onChange={(e) => setTransportPrice(e.target.value)}
-                  className="w-full"
+                  className="h-9 text-sm"
                 />
               </div>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="paymentMethod" className="text-sm">Forma płatności</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="paymentMethod" className="text-xs font-medium">Forma płatności</Label>
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9 text-sm">
                     <SelectValue placeholder="Wybierz formę płatności" />
                   </SelectTrigger>
                   <SelectContent>
@@ -285,56 +285,58 @@ const PDFQuoteGenerator = ({ product }: PDFQuoteGeneratorProps) => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2 flex items-end">
+              <div className="flex items-end h-9">
                 <div className="flex items-center space-x-2">
                   <Checkbox 
                     id="leasing" 
                     checked={leasingAvailable}
                     onCheckedChange={(checked) => setLeasingAvailable(checked as boolean)}
                   />
-                  <Label htmlFor="leasing" className="text-sm">Leasing możliwy</Label>
+                  <Label htmlFor="leasing" className="text-xs font-medium">Leasing możliwy</Label>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Sekcja: Uwagi dodatkowe */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-stakerpol-navy border-b pb-2 flex items-center gap-2">
-              📝 Uwagi dodatkowe (opcjonalne)
+          <div className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-1.5">
+              Uwagi dodatkowe (opcjonalne)
             </h3>
             
-            <div className="space-y-2">
-              <Label htmlFor="additionalNotes" className="text-sm">Dodatkowe informacje</Label>
+            <div className="space-y-1">
+              <Label htmlFor="additionalNotes" className="text-xs font-medium">Dodatkowe informacje</Label>
               <Textarea
                 id="additionalNotes"
                 placeholder="np. Specjalne warunki, terminy dostawy, gwarancje..."
                 value={additionalNotes}
                 onChange={(e) => setAdditionalNotes(e.target.value)}
-                className="w-full resize-none"
-                rows={3}
+                className="w-full resize-none text-sm min-h-0"
+                rows={2}
               />
             </div>
           </div>
+        </div>
 
-          {/* Przyciski akcji */}
-          <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2 pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={() => setIsOpen(false)}
-              disabled={isGenerating}
-              className="w-full sm:w-auto"
-            >
-              Anuluj
-            </Button>
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className="cta-button w-full sm:w-auto"
-            >
-              {isGenerating ? 'Generowanie...' : 'Wygeneruj profesjonalną ofertę PDF'}
-            </Button>
-          </div>
+        {/* Sticky przyciski akcji */}
+        <div className="sticky bottom-0 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-background border-t border-border flex justify-end gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsOpen(false)}
+            disabled={isGenerating}
+            className="h-9"
+          >
+            Anuluj
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className="h-9 bg-stakerpol-navy hover:bg-stakerpol-navy/90 text-white"
+          >
+            {isGenerating ? 'Generowanie...' : 'Generuj PDF'}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
