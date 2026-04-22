@@ -1,4 +1,5 @@
 import { Phone, Mail, MessageCircle, Clock, MapPin } from 'lucide-react';
+import michalPhoto from '@/assets/michal-seweryn.jpg';
 
 const ContactDetailsCard = () => {
   return (
@@ -47,6 +48,23 @@ const ContactDetailsCard = () => {
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Godziny pracy</div>
             <div className="font-semibold text-gray-800">Pon–Pt, 8:00–17:00</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Owner block */}
+      <div className="mt-5 pt-5 border-t border-gray-200">
+        <div className="flex flex-row md:flex-col items-center md:text-center gap-3">
+          <img
+            src={michalPhoto}
+            alt="Michał Seweryn — właściciel Stakerpol"
+            className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-stakerpol-navy flex-shrink-0"
+            loading="lazy"
+          />
+          <div className="min-w-0">
+            <div className="font-semibold text-gray-900">Michał Seweryn</div>
+            <div className="text-sm text-gray-500">Właściciel · 17 lat w branży</div>
+            <p className="text-sm text-gray-700 mt-1">Odpiszę Ci osobiście — zwykle w ciągu kilku godzin.</p>
           </div>
         </div>
       </div>

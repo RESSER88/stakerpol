@@ -24,8 +24,6 @@ interface FormErrors {
 const validateEmail = (v: string) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 const validatePhone = (v: string) => /^[\d\s\-+()]{7,20}$/.test(v);
 
-const interestOptions = ['BT SWE 200D', 'BT SWE 140L', 'Ogólne doradztwo', 'Serwis i naprawa'];
-
 const ContactLeadForm = () => {
   const [formData, setFormData] = useState<FormData>({ name: '', phone: '', email: '', interest: '', message: '' });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -125,20 +123,12 @@ const ContactLeadForm = () => {
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Interesuje mnie</label>
-          <select value={formData.interest} onChange={e => updateField('interest', e.target.value)} className={inputCls()}>
-            <option value="">— wybierz —</option>
-            {interestOptions.map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
-        </div>
-
-        <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">Wiadomość *</label>
           <textarea
             rows={3}
             value={formData.message}
             onChange={e => updateField('message', e.target.value)}
-            placeholder="Np. szukam paleciaka do magazynu o wysokości 3 m..."
+            placeholder="Np. paleciak elektryczny, z nizkim szatem, udźwig 1 t, magazyn z posadzką w kostce"
             className={inputCls(errors.message) + ' resize-none'}
             maxLength={1000}
           />
