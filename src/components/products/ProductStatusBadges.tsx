@@ -15,7 +15,7 @@ const ProductStatusBadges = ({ product }: Props) => {
           ● {condition}
         </span>
       )}
-      <span className="inline-flex items-center gap-1 rounded-[3px] font-bold uppercase bg-amber-soft text-amber-soft-foreground text-[10px] px-2.5 py-1 tracking-wide">
+      <span className="inline-flex items-center gap-1 rounded-[3px] font-bold uppercase bg-navy-brand/10 text-navy-brand text-[10px] px-2.5 py-1 tracking-wide">
         ✓ Po przeglądzie
       </span>
       {featured && (

@@ -10,18 +10,24 @@ export interface FAQItem {
 interface FAQSectionProps {
   title?: string;
   items: FAQItem[];
+  compact?: boolean;
 }
 
-const FAQSection: React.FC<FAQSectionProps> = ({ title = 'Najczęstsze pytania (FAQ)', items }) => {
+const FAQSection: React.FC<FAQSectionProps> = ({ title = 'Najczęstsze pytania (FAQ)', items, compact = false }) => {
   if (!items || items.length === 0) return null;
 
   if (FEATURES.MODERN_FAQ_UI) {
     return (
-      <section className="py-12 md:py-16 bg-background" aria-labelledby="faq-heading">
-        <div className="container mx-auto px-4 max-w-3xl">
-          <h2 id="faq-heading" className="text-2xl md:text-3xl font-semibold text-foreground text-center mb-8">
-            {title}
-          </h2>
+      <section
+        className={compact ? '' : 'py-12 md:py-16 bg-background'}
+        aria-labelledby="faq-heading"
+      >
+        <div className={compact ? '' : 'container mx-auto px-4 max-w-3xl'}>
+          {title && (
+            <h2 id="faq-heading" className="text-2xl md:text-3xl font-semibold text-foreground text-center mb-8">
+              {title}
+            </h2>
+          )}
           <Accordion type="single" collapsible className="space-y-0 divide-y divide-border/50">
             {items.map((qa, idx) => (
               <AccordionItem

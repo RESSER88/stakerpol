@@ -224,13 +224,6 @@ const ProductDetail = () => {
               <h2 className="font-extrabold text-lg md:text-xl text-navy-brand">Pełna specyfikacja</h2>
             </div>
             <ProductInfo product={product} language={language} />
-            <InlineContextualCTA
-              variant="soft"
-              accentColor="red"
-              question="Nie masz pewności co do parametrów?"
-              actionLabel="Zadzwoń i zapytaj"
-              actionType="phone"
-            />
           </div>
         </div>
       </section>
@@ -245,19 +238,21 @@ const ProductDetail = () => {
       <ProductLeadCallback productId={product.id} />
 
       {/* CARD — FAQ */}
-      <section className="bg-surface-soft py-4 md:py-12 px-4 md:px-6">
+      <section className="bg-surface-soft py-8 md:py-12 px-4 md:px-6">
         <div className="container-custom max-w-[1200px]">
-          <div className="bg-white border border-border-line rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.03)] p-3 md:p-8">
+          <div className="bg-white border border-border-line rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.03)] p-5 md:p-8">
             <h2 className="text-xl md:text-2xl font-extrabold text-navy-brand mb-4">
               Najczęstsze pytania
             </h2>
-            <FAQSection title="" items={productFaqItems} />
-            <InlineContextualCTA
-              variant="line"
-              question="Nie znalazłeś odpowiedzi?"
-              actionLabel="Zadzwoń do nas"
-              actionType="phone"
-            />
+            <FAQSection title="" items={productFaqItems} compact />
+            <div className="mt-4">
+              <InlineContextualCTA
+                variant="line"
+                question="Nie znalazłeś odpowiedzi?"
+                actionLabel="Zadzwoń do nas"
+                actionType="phone"
+              />
+            </div>
           </div>
         </div>
       </section>
