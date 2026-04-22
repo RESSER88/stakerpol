@@ -72,6 +72,7 @@ export type Database = {
         Row: {
           answer: string
           created_at: string
+          display_locations: string[]
           display_order: number
           id: string
           is_active: boolean
@@ -82,6 +83,7 @@ export type Database = {
         Insert: {
           answer: string
           created_at?: string
+          display_locations?: string[]
           display_order?: number
           id?: string
           is_active?: boolean
@@ -92,6 +94,7 @@ export type Database = {
         Update: {
           answer?: string
           created_at?: string
+          display_locations?: string[]
           display_order?: number
           id?: string
           is_active?: boolean
