@@ -11,7 +11,7 @@ const ContactStatsBar = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 md:divide-x divide-y md:divide-y-0 divide-white/15">
           {stats.map(s => (
             <div key={s.label} className="px-6 py-4 text-center">
-              <div className="text-2xl font-bold text-stakerpol-orange">{s.value}</div>
+              <div className="text-2xl font-bold text-white">{s.value}</div>
               <div className="text-xs text-white/70 mt-1">{s.label}</div>
             </div>
           ))}

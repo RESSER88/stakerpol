@@ -1,6 +1,6 @@
 import { useState } from 'react';
 // useState used by CallbackMiniForm below
-import { Phone, MessageSquare, PhoneCall, ArrowRight } from 'lucide-react';
+import { Phone, PhoneCall } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { trackCTAClick, trackFormSubmit } from '@/utils/analytics';
 
@@ -94,7 +94,7 @@ const ContactConversionCards = ({ formHref = '#form' }: ContactConversionCardsPr
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4 items-stretch">
+        <div className="grid md:grid-cols-2 gap-4 items-stretch">
               {/* Card A */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col items-center text-center">
                 <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-3 mx-auto">
@@ -112,25 +112,6 @@ const ContactConversionCards = ({ formHref = '#form' }: ContactConversionCardsPr
                 >
                   <Phone size={16} />
                   Zadzwoń: 694 133 592
-                </a>
-              </div>
-
-              {/* Card B */}
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col items-center text-center">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-3 mx-auto">
-                  <MessageSquare className="text-blue-600" size={22} />
-                </div>
-                <h3 className="font-bold text-base text-gray-900 mb-2 text-center">Dobierzemy wózek do Twojego magazynu</h3>
-                <p className="text-sm text-gray-600 mb-4 flex-1 text-center">
-                  Opisz swoje potrzeby — wysokość regałów, rodzaj nawierzchni, udźwig — przygotujemy propozycję.
-                </p>
-                <a
-                  href={formHref}
-                  onClick={() => trackCTAClick('conversion_card_form')}
-                  className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border-2 border-stakerpol-orange text-stakerpol-orange hover:bg-stakerpol-orange hover:text-white text-sm font-semibold transition-colors min-h-[44px]"
-                >
-                  Wyślij opis magazynu
-                  <ArrowRight size={16} />
                 </a>
               </div>
 
