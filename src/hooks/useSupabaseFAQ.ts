@@ -9,6 +9,8 @@ export interface FAQ {
   answer: string;
   display_order: number;
   is_active: boolean;
+  /** Pages where the FAQ should appear: 'home' | 'reviews'. Other pages ignore this field. */
+  display_locations?: string[];
   created_at: string;
   updated_at: string;
 }

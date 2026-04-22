@@ -13,12 +13,20 @@ interface FAQFormProps {
 }
 
 const FAQForm: React.FC<FAQFormProps> = ({ faq, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    language: string;
+    question: string;
+    answer: string;
+    display_order: number;
+    is_active: boolean;
+    display_locations: string[];
+  }>({
     language: 'pl',
     question: '',
     answer: '',
     display_order: 0,
     is_active: true,
+    display_locations: [],
   });
   const [loading, setLoading] = useState(false);
 
@@ -30,9 +38,19 @@ const FAQForm: React.FC<FAQFormProps> = ({ faq, onSubmit, onCancel }) => {
         answer: faq.answer,
         display_order: faq.display_order,
         is_active: faq.is_active,
+        display_locations: faq.display_locations ?? [],
       });
     }
   }, [faq]);
+
+  const toggleLocation = (loc: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      display_locations: prev.display_locations.includes(loc)
+        ? prev.display_locations.filter((l) => l !== loc)
+        : [...prev.display_locations, loc],
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +66,7 @@ const FAQForm: React.FC<FAQFormProps> = ({ faq, onSubmit, onCancel }) => {
           answer: '',
           display_order: 0,
           is_active: true,
+          display_locations: [],
         });
       }
     } catch (error) {
