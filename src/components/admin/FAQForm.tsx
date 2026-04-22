@@ -120,6 +120,35 @@ const FAQForm: React.FC<FAQFormProps> = ({ faq, onSubmit, onCancel }) => {
         </div>
       </div>
 
+      <div className="rounded-md border p-3 space-y-2">
+        <div>
+          <Label className="text-sm font-semibold">Wyświetlaj na stronach</Label>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Zaznacz, gdzie pytanie ma się pojawić. Strona /faq i karty produktów działają niezależnie.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 pt-1">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.display_locations.includes('home')}
+              onChange={() => toggleLocation('home')}
+              className="h-4 w-4"
+            />
+            <span className="text-sm">Strona główna</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.display_locations.includes('reviews')}
+              onChange={() => toggleLocation('reviews')}
+              className="h-4 w-4"
+            />
+            <span className="text-sm">Opinie klientów</span>
+          </label>
+        </div>
+      </div>
+
       <div>
         <Label htmlFor="question">Pytanie</Label>
         <Input

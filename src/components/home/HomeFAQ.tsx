@@ -17,7 +17,14 @@ const HomeFAQ = () => {
     fetchFAQs(language);
   }, [language]);
 
-  const items = faqs.filter((f) => f.language === language).slice(0, 6);
+  const langFaqs = faqs.filter((f) => f.language === language);
+  const homeSelected = langFaqs
+    .filter((f) => f.display_locations?.includes('home'))
+    .sort((a, b) => a.display_order - b.display_order);
+
+  // Fallback: jeśli admin nie zaznaczył jeszcze pytań dla "home",
+  // pokazujemy pierwsze 6 (zachowanie wsteczne). Po zaznaczeniu pytań fallback wygasa.
+  const items = homeSelected.length > 0 ? homeSelected : langFaqs.slice(0, 6);
 
   if (items.length === 0) return null;
 
