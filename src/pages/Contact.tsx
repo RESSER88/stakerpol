@@ -40,9 +40,14 @@ const Contact = () => {
       {/* Map */}
       <section className="bg-white py-8">
         <div className="container-custom">
-          <div className="flex items-center gap-2 mb-4">
-            <MapPin className="text-stakerpol-orange" size={20} />
-            <h2 className="text-xl font-bold text-stakerpol-navy">Nasza lokalizacja</h2>
+          <div className="mb-4">
+            <div className="flex items-center gap-2">
+              <MapPin className="text-stakerpol-orange" size={20} />
+              <h2 className="text-xl font-bold text-stakerpol-navy">Odwiedź nasz magazyn</h2>
+            </div>
+            <p className="text-sm text-gray-600 mt-1">
+              Celiny 115, 32-095 · parking przy magazynie · sprzęt można obejrzeć na żywo po wcześniejszym kontakcie telefonicznym
+            </p>
           </div>
           <div className="rounded-xl overflow-hidden shadow-sm border border-gray-200">
             <iframe
