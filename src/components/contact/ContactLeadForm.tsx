@@ -128,7 +128,7 @@ const ContactLeadForm = () => {
             rows={3}
             value={formData.message}
             onChange={e => updateField('message', e.target.value)}
-            placeholder="Np. paleciak elektryczny, z nizkim szatem, udźwig 1 t, magazyn z posadzką w kostce"
+            placeholder="Np. paleciak elektryczny, z niskim masztem, udźwig 1000 kg , magazyn z posadzką w kostce"
             className={inputCls(errors.message) + ' resize-none'}
             maxLength={1000}
           />
