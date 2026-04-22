@@ -8,6 +8,9 @@ import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { Star, Users, Award, Package, Phone } from 'lucide-react';
 import { trackPhoneClick, trackWhatsAppClick } from '@/utils/analytics';
+import { useSupabaseFAQ } from '@/hooks/useSupabaseFAQ';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import FAQSchema from '@/components/seo/FAQSchema';
 
 const Testimonials = () => {
   const { language } = useLanguage();
