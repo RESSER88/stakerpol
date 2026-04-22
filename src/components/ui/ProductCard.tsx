@@ -53,8 +53,8 @@ const ProductCard = memo(({ product, priority = false }: ProductCardProps) => {
               </span>
             )}
             {/* Availability chip - top right */}
-            <span className="absolute top-2.5 right-2.5 bg-white text-[#0E0E0E] text-[10px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#14A84A]" />
+            <span className="absolute top-2.5 right-2.5 bg-green-50 text-green-700 text-[10px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
               {t('cardAvailable')}
             </span>
           </div>
