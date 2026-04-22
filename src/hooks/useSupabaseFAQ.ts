@@ -105,21 +105,28 @@ export const useSupabaseFAQ = () => {
 
   const toggleFAQActive = async (id: string, isActive: boolean) => {
     try {
+      // Only send the is_active field to avoid touching NOT NULL columns
+      // like display_locations with undefined values.
       const { error } = await supabase
         .from('faqs')
         .update({ is_active: isActive })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[toggleFAQActive] Supabase error:', error);
+        throw error;
+      }
 
       toast({
         title: "Success",
         description: isActive ? "FAQ aktywowane" : "FAQ dezaktywowane",
       });
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'Nie udało się zmienić statusu FAQ';
+      console.error('[toggleFAQActive] failed:', err);
       toast({
         title: "Error",
-        description: "Nie udało się zmienić statusu FAQ",
+        description: message,
         variant: "destructive",
       });
       throw err;
