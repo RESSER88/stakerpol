@@ -44,7 +44,6 @@ const Header = () => {
             <Link to="/contact" className="font-medium hover:text-stakerpol-orange transition-colors">
               {t('contact')}
             </Link>
-            <LanguageSwitcher />
             <Button className="cta-button" asChild>
               <a href="tel:+48694133592" onClick={() => trackPhoneClick('header_desktop')}>
                 <Phone className="mr-2 h-4 w-4" />
@@ -56,7 +55,6 @@ const Header = () => {
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center space-x-3">
             <MobileContactButton />
-            <LanguageSwitcher />
             <button
               onClick={toggleMenu}
               className="text-gray-800 hover:text-stakerpol-orange transition-all min-h-[48px] min-w-[48px] flex items-center justify-center rounded-md active:bg-gray-100 active:scale-95"

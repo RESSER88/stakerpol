@@ -5,8 +5,7 @@ import * as Icons from 'lucide-react';
 import { MapPin, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import InlineContextualCTA from './InlineContextualCTA';
 
-const DIRECTIONS_URL =
-  'https://www.google.com/maps/dir/?api=1&destination=ul.+Mi%C4%99dzyle%C5%9Bna+115,+32-095+Celiny,+Polska';
+const DIRECTIONS_URL = 'https://maps.app.goo.gl/AerTrGnXriJWsvqf6';
 
 interface Props {
   product: Product;
