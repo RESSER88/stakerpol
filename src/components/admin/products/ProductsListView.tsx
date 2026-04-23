@@ -25,7 +25,7 @@ const FILTERS: { key: StatusFilter; label: string }[] = [
 ];
 
 const ProductsListView = ({
-  products, onEdit, onAdd, onExport, onRefresh, refreshing,
+  products, onEdit, onCopy, onDelete, onAdd, onExport, onRefresh, refreshing,
 }: Props) => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<StatusFilter>('all');
