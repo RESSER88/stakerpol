@@ -1,88 +1,80 @@
 
+## Plan: Trigger first, forms second — jedna zmiana na raz
 
-## Diagnoza
-
-Wszystkie 4 formularze (dymek, lista, karta produktu, /contact) trafiają do **jednego** edge function `notify-lead`. Handler jest spójny, payload pasuje. Problem nie leży w formularzach.
-
-Znalazłem **dwa realne problemy**, które razem dają objaw "wysyłka nie działa":
-
-### Problem 1 — CORS preflight blokuje request w przeglądarce
-W `notify-lead/index.ts` `Access-Control-Allow-Headers` zawiera tylko:
-```
-authorization, x-client-info, apikey, content-type
-```
-Nowsza wersja `@supabase/supabase-js` (używana w `src/integrations/supabase/client.ts`) wysyła dodatkowo `x-supabase-client-platform`, `x-supabase-client-platform-version`, `x-supabase-client-runtime`, `x-supabase-client-runtime-version`. Brak tych nagłówków → przeglądarka odrzuca preflight → `supabase.functions.invoke` rzuca błędem zanim cokolwiek dotrze do handlera. To tłumaczy, czemu w logach `notify-lead` jest pusto i czemu front pokazuje "Błąd wysyłki".
-
-### Problem 2 — adresat maila niezgodny z trybem sandbox Resend
-Obecnie:
-```ts
-from: "Stakerpol <onboarding@resend.dev>"
-to:   "info@stakerpol.pl"
-```
-Resend w trybie sandbox (bez zweryfikowanej domeny) pozwala wysyłać `onboarding@resend.dev` **wyłącznie na adres właściciela konta Resend**. Potwierdzasz, że `info@stakerpol.pl` to właśnie ten adres → wystarczy zostawić obecną konfigurację `from`/`to` i zadziała. **Żadna zmiana adresów nie jest potrzebna.**
-
-### Co NIE jest problemem
-- Mapowanie pól (`name`, `contact`, `message`, `phone`, `product_model`) — `useContactForm` poprawnie składa `LeadPayload`.
-- `RESEND_API_KEY` — jest skonfigurowany.
-- Zapis do `leads` — działa (idzie przed `invoke`, nie wysypuje się).
-- `useLeadSubmit` (mini-formularz "oddzwonimy w 30 min") — zapisuje tylko do DB; wysyłkę maila i tak odpala trigger `notify_lead_created` → edge function.
+Słusznie zwracasz uwagę. Zatrzymuję refactor formularzy. Robimy to w dwóch krokach z testem po każdej zmianie.
 
 ---
 
-## Plan naprawy
+### Krok 1 — Udowodnić że trigger działa (i naprawić jeśli nie)
 
-### Krok 1 — naprawa CORS w `supabase/functions/notify-lead/index.ts`
-
-Rozszerzam nagłówki:
-```ts
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, " +
-    "x-supabase-client-platform, x-supabase-client-platform-version, " +
-    "x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+**1a. Test triggera przez SQL** (bez żadnych zmian w kodzie):
+```sql
+INSERT INTO public.leads (name, email, phone, message, source, rodo_accepted, page_url, user_agent)
+VALUES ('TEST TRIGGER 1', 'test@stakerpol.pl', '600000001',
+        'Test triggera trg_leads_notify - wstawka 1.', 'trigger_test', true,
+        'https://test.local/step1', 'pg-trigger-test')
+RETURNING id, source, created_at;
 ```
-Stosowane w odpowiedzi OPTIONS, 200 i 500 (tam już są).
+Następnie:
+- sprawdzam logi `notify-lead` (czy się odpaliła, czy Resend zwrócił sukces),
+- sprawdzam czy mail dotarł na `info@stakerpol.pl`.
 
-### Krok 2 — utwardzenie raportowania błędów w handlerze
+**1b. Jeśli mail NIE przyszedł** → naprawa `notify_lead_created`:
+- Zamiana `extensions.http_post(...)` na `public.http_post(uri, content, content_type)` (rozszerzenie `http` jest zainstalowane w schemacie `public` — potwierdzone w liście funkcji DB, gdzie `public.http_post` istnieje, a `extensions.http_post` nie).
+- Migracja `CREATE OR REPLACE FUNCTION public.notify_lead_created()` z poprawioną sygnaturą wywołania (JSON body jako `text` + `application/json`) i `SET search_path = public`.
+- Powtórzenie testu SQL z punktu 1a (`TEST TRIGGER 2`) — musi przyjść mail.
 
-Obecnie błąd Resend leci tylko do `console.error`, a handler zwraca `{ ok: true }`. Zmiana:
-- jeśli Resend zwróci błąd **i** `webhookUrl` też zawiódł (lub nie jest ustawiony) → handler odpowiada `502` z treścią błędu, dzięki czemu front pokaże "Błąd wysyłki" zamiast cichej awarii,
-- jeśli webhook się powiódł (lead trafił gdzieś indziej) → nadal `200`,
-- dorzucam `reply_to: lead.email || lead.phone-derived undefined`, żeby w przychodzącej wiadomości można było odpowiedzieć bezpośrednio klientowi.
-
-`from`/`to` zostają **bez zmian** (`Stakerpol <onboarding@resend.dev>` → `info@stakerpol.pl`).
-
-### Krok 3 — bez zmian po stronie frontendu
-
-Żaden plik w `src/components/contact/*`, `src/components/products/*` ani `src/hooks/*` się nie zmienia. Payload i tak jest poprawny.
-
-### Krok 4 — deploy edge function
-
-Deploy `notify-lead` po zmianach.
-
-### Krok 5 — testy 4 formularzy
-
-Dla każdego: wysyłam testową wiadomość, sprawdzam:
-1. status w panelu (toast "Dziękujemy") — PASS/FAIL,
-2. nowy rekord w tabeli `leads` — PASS/FAIL,
-3. log w `notify-lead` z `Email sent successfully` + `id` z Resend — PASS/FAIL.
-
-Formularze:
-- **Floating bubble** (desktop, dowolna podstrona) — `source: floating_widget`,
-- **Lista produktów** `/products` → "Zapytaj o produkt" → `InquiryModal` — `source: product_list`,
-- **Karta produktu** `/products/:slug` → ten sam `InquiryModal` — `source: product_page`,
-- **`/contact`** → `ContactLeadForm` — `source: contact_page`.
-
-Potwierdzenie faktycznego dotarcia maila na `info@stakerpol.pl` zostawiam Tobie — z mojej strony zweryfikuję `Email sent successfully` w logach (Resend zwraca ID maila).
+**Wyjście z Kroku 1:** potwierdzenie w logach Resenda, że trigger DB sam (bez frontu) wysyła maila. Dopiero wtedy idziemy dalej.
 
 ---
 
-## Pliki, które się zmienią
+### Krok 2 — Audyt 6 formularzy, jeden po drugim
 
-- `supabase/functions/notify-lead/index.ts` — rozszerzone CORS headers, lepsza obsługa błędów Resend, opcjonalny `reply_to`. Bez zmian w `from`/`to`.
+Dopiero gdy trigger udowodniony. Dla KAŻDEGO formularza osobno wykonuję ten sam mini-cykl:
 
-Po Twoim "akceptuję" implementuję Kroki 1–4 i raportuję wyniki Kroku 5.
+1. Przeczytanie kodu formularza i wskazanie czy robi `INSERT` do `leads`, czy `INSERT` do innej tabeli, czy tylko `functions.invoke`.
+2. Wykonanie testu z UI (lub symulacja inserta klienckiego z anon key).
+3. `SELECT` na `leads` po `created_at desc` — czy rekord wpadł.
+4. Logi `notify-lead` — czy trigger odpalił, czy Resend OK.
+5. Raport: ✅ działa / ❌ co jest zepsute → punktowa naprawa TYLKO tego jednego formularza.
 
+**Lista 6 formularzy do audytu (kolejność):**
+
+| # | Formularz | Plik | Tabela docelowa | Znane ryzyko |
+|---|-----------|------|-----------------|--------------|
+| 1 | Dymek (floating bubble) | `FloatingContactBubble` → `useContactForm` | `leads` | `.insert(...).select('id').single()` — anon nie ma SELECT na `leads` (RLS), 401 mimo udanego INSERT |
+| 2 | Strona główna — hero form | `HomeHeroForm` → `useContactForm` | `leads` | to samo co #1 (wspólny hook) |
+| 3 | Karta produktu — pełny formularz | `ProductDetail` / `useContactForm` | `leads` | to samo co #1 |
+| 4 | Karta produktu — szybki callback | `ProductLeadCallback` → `useLeadSubmit` | `leads` | `INSERT` bez `.select()` — powinno działać, weryfikuję |
+| 5 | Strona /contact — formularz | `ContactLeadForm` | `leads` | po wcześniejszym refactorze brak ręcznego invoke — ma polegać na triggerze |
+| 6 | Karta produktu — modal cenowy | `PriceInquiryModal` | `price_inquiries` (nie `leads`!) | trigger NIE obejmuje tej tabeli — tu nadal musi być ręczny `functions.invoke('notify-lead')` |
+
+**Naprawa wzorca z #1 (dotyczy formularzy 1, 2, 3):**
+W `useContactForm.ts` usuwam `.select('id').single()`. Lead ID do GA4 zastępuję `crypto.randomUUID()` (już jest fallback w kodzie). Po tej zmianie INSERT przejdzie pod RLS dla anon, trigger DB wyśle mail.
+
+**Dla #6 (PriceInquiryModal):** zostawiam ręczny `invoke` — tabela `price_inquiries` nie ma triggera i celowo nie dodajemy go w tym kroku (osobny temat).
+
+---
+
+### Co zmieniam fizycznie
+
+1. **Migracja DB** (Krok 1b, tylko jeśli test SQL nie wyśle maila):
+   - `CREATE OR REPLACE FUNCTION public.notify_lead_created()` — `public.http_post` zamiast `extensions.http_post`, `SET search_path = public`.
+
+2. **Frontend** (Krok 2, po naprawie triggera):
+   - `src/hooks/useContactForm.ts` — usunięcie `.select('id').single()`, użycie `crypto.randomUUID()` dla GA4.
+   - Pozostałe pliki tylko jeśli audyt punktowy wykryje problem — nie ruszam ich „prewencyjnie".
+
+3. **Bez zmian:** `PriceInquiryModal.tsx`, `useLeadSubmit.ts` (chyba że audyt pokaże problem), edge function `notify-lead` (już naprawione w poprzednich krokach).
+
+---
+
+### Kontrakt na każdy krok
+
+Po każdej pojedynczej zmianie raportuję Tobie:
+- co zmieniłem,
+- wynik testu (SQL insert lub UI submit),
+- wpis w logach Resenda (ID maila lub błąd),
+- decyzja: idziemy dalej / cofamy.
+
+Zaczynam od Kroku 1a — czysty test SQL bez żadnej modyfikacji kodu. Jeśli mail przyjdzie, pomijam 1b i przechodzę do audytu formularzy. Akceptujesz?
