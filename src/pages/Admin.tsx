@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Navigate } from 'react-router-dom';
+
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useSupabaseProducts } from '@/hooks/useSupabaseProducts';
 import { Button } from '@/components/ui/button';
@@ -110,26 +110,29 @@ const Admin = () => {
     }
   };
 
-  if (authLoading || adminLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-admin-bg">
-        <div className="absolute top-4 right-4">
-          {user && <Button variant="outline" onClick={signOut}>Wyloguj</Button>}
-        </div>
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-admin-orange mx-auto mb-4" />
-          <p className="text-admin-muted">
-            {authLoading ? 'Sprawdzanie uprawnień...' : 'Weryfikacja roli administratora...'}
-          </p>
+          <p className="text-admin-muted">Sprawdzanie sesji...</p>
         </div>
       </div>
     );
   }
 
   if (!user) return <AdminLogin />;
+
+  // User is logged in — wait for the admin role check to resolve before
+  // deciding whether to render the panel or refuse access. Without this
+  // gate, a logged-in admin briefly sees isAdmin=false and gets bounced
+  // to "/" while has_role is still in flight.
   if (adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-admin-bg">
+        <div className="absolute top-4 right-4">
+          <Button variant="outline" onClick={signOut}>Wyloguj</Button>
+        </div>
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-admin-orange mx-auto mb-4" />
           <p className="text-admin-muted">Weryfikacja roli administratora...</p>
@@ -137,8 +140,9 @@ const Admin = () => {
       </div>
     );
   }
+
   if (adminError) return <PermissionDenied message={adminError} />;
-  if (!isAdmin && !adminLoading) return <Navigate to="/" replace />;
+  if (!isAdmin) return <PermissionDenied message="To konto nie ma uprawnień administratora." />;
 
   const renderSection = () => {
     switch (activeSection) {
