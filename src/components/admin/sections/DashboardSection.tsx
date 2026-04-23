@@ -53,7 +53,7 @@ const DashboardSection = ({ productCount, products, onNavigate, onAddProduct, on
     .slice(0, 2);
 
   const stats: { label: string; value: string | number; onClick?: () => void }[] = [
-    { label: 'Produkty', value: productCount },
+    { label: 'Produkty', value: productCount, onClick: () => onNavigate('products') },
     { label: 'Nowe zapytania', value: loading ? '…' : newLeadsCount, onClick: () => onNavigate('inquiries') },
     { label: 'Dostępnych', value: availableCount },
   ];

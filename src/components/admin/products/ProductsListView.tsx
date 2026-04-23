@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Product } from '@/types';
-import { Search, Plus, Download, RefreshCw } from 'lucide-react';
+import { Search, Plus, Download, RefreshCw, ArrowUp, Copy, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import StatusDot from '../editorial/StatusDot';
+import PDFQuoteGenerator from '../PDFQuoteGenerator';
 
 interface Props {
   products: Product[];
@@ -24,7 +25,7 @@ const FILTERS: { key: StatusFilter; label: string }[] = [
 ];
 
 const ProductsListView = ({
-  products, onEdit, onAdd, onExport, onRefresh, refreshing,
+  products, onEdit, onCopy, onDelete, onAdd, onExport, onRefresh, refreshing,
 }: Props) => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<StatusFilter>('all');
@@ -122,10 +123,10 @@ const ProductsListView = ({
             if (p.specs.liftHeight) meta.push(`${p.specs.liftHeight} mm`);
 
             return (
-              <li key={p.id} className="border-b border-editorial-line">
+              <li key={p.id} className="border-b border-editorial-line group/row relative">
                 <button
                   onClick={() => onEdit(p)}
-                  className="w-full flex items-start gap-4 py-4 text-left group"
+                  className="w-full flex items-start gap-4 py-4 pr-28 md:pr-32 text-left group"
                 >
                   <span className="text-[10px] font-bold tracking-[0.2em] text-editorial-accent w-7 pt-1 shrink-0">
                     {num}
@@ -141,12 +142,44 @@ const ProductsListView = ({
                         {p.model}
                       </span>
                     </div>
-                    <div className="text-[11px] text-editorial-muted mt-1 leading-relaxed">
+                    <div className="text-[10px] md:text-[11px] text-editorial-muted mt-1 leading-relaxed">
                       {meta.join(' · ') || '—'}
                     </div>
                   </div>
-                  <StatusDot status={p.availabilityStatus} className="mt-2 shrink-0" />
                 </button>
+
+                {/* Actions cluster — right side, beside status dot */}
+                <div className="absolute top-1/2 -translate-y-1/2 right-2 md:right-3 flex items-center gap-0.5 md:gap-1">
+                  <div
+                    className={cn(
+                      'flex items-center gap-0.5 md:gap-1 transition-opacity',
+                      'opacity-100 md:opacity-0 md:group-hover/row:opacity-100 md:focus-within:opacity-100'
+                    )}
+                  >
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <PDFQuoteGenerator product={p} />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); onCopy(p); }}
+                      className="h-11 w-11 md:h-8 md:w-8 inline-flex items-center justify-center text-editorial-muted hover:text-editorial-ink hover:bg-editorial-line/40 transition-colors rounded-sm"
+                      title="Duplikuj"
+                      aria-label="Duplikuj"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); onDelete(p); }}
+                      className="h-11 w-11 md:h-8 md:w-8 inline-flex items-center justify-center text-editorial-bad hover:bg-editorial-bad/10 transition-colors rounded-sm"
+                      title="Usuń"
+                      aria-label="Usuń"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <StatusDot status={p.availabilityStatus} className="ml-1 shrink-0" />
+                </div>
               </li>
             );
           })}

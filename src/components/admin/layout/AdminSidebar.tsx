@@ -21,12 +21,19 @@ const AdminSidebar = ({ active, onChange, onSignOut }: Props) => {
   return (
     <aside className="hidden lg:flex fixed top-0 left-0 h-screen w-[240px] bg-white border-r border-editorial-line flex-col z-40">
       <div className="px-8 py-8 border-b border-editorial-line">
-        <div className="text-[10px] font-bold tracking-[0.25em] text-editorial-muted">
-          STAKERPOL
-        </div>
-        <div className="font-editorial text-xl text-editorial-ink mt-1">
-          Panel
-        </div>
+        <button
+          type="button"
+          onClick={() => onChange('start')}
+          className="text-left block group"
+          aria-label="Przejdź do panelu startowego"
+        >
+          <div className="text-[10px] font-bold tracking-[0.25em] text-editorial-muted group-hover:text-editorial-accent transition-colors">
+            STAKERPOL
+          </div>
+          <div className="font-editorial text-xl text-editorial-ink mt-1 group-hover:text-editorial-accent transition-colors">
+            Panel
+          </div>
+        </button>
       </div>
       <nav className="flex-1 py-4">
         {items.map((item) => {
