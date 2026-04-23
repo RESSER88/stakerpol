@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { trackFormSubmit, trackGenerateLead } from '@/utils/analytics';
 
 // Polish phone format: optional +48, then 9 digits starting 5-9, with optional spaces/dashes
 const phoneSchema = z
@@ -35,6 +36,13 @@ export const useLeadSubmit = () => {
         user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
       } as any);
       if (dbError) throw dbError;
+      // notify-lead is triggered automatically by DB trigger on leads INSERT
+      trackFormSubmit('product_callback_inline');
+      trackGenerateLead(
+        crypto.randomUUID(),
+        'product_page_inline',
+        productId ? { id: productId, model: 'Zapytanie produktowe' } : undefined
+      );
       toast({
         title: '✅ Dziękujemy!',
         description: 'Oddzwonimy w ciągu 30 minut w godzinach pracy.',

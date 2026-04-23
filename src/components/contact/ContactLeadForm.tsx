@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Send, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { trackFormSubmit } from '@/utils/analytics';
+import { trackFormSubmit, trackGenerateLead } from '@/utils/analytics';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
@@ -68,6 +68,7 @@ const ContactLeadForm = () => {
 
       // notify-lead is triggered automatically by DB trigger on leads INSERT
       trackFormSubmit('contact_lead_form');
+      trackGenerateLead(crypto.randomUUID(), 'contact_page');
       setStatus('success');
     } catch {
       setStatus('error');
