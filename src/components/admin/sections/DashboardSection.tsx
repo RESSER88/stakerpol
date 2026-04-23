@@ -51,9 +51,9 @@ const DashboardSection = ({ productCount, products, onNavigate, onAddProduct, on
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 2);
 
-  const stats = [
+  const stats: { label: string; value: string | number; onClick?: () => void }[] = [
     { label: 'Produkty', value: productCount },
-    { label: 'Nowe zapytania', value: loading ? '…' : newLeadsCount },
+    { label: 'Nowe zapytania', value: loading ? '…' : newLeadsCount, onClick: () => onNavigate('inquiries') },
     { label: 'Dostępnych', value: availableCount },
   ];
 
@@ -91,23 +91,35 @@ const DashboardSection = ({ productCount, products, onNavigate, onAddProduct, on
 
       {/* Stats — vertical lines */}
       <section className="grid grid-cols-3 border-y border-editorial-line py-8">
-        {stats.map((s, i) => (
-          <div
-            key={s.label}
-            className={
-              i > 0
-                ? 'pl-4 lg:pl-8 border-l border-editorial-line'
-                : 'pr-4 lg:pr-8'
-            }
-          >
-            <div className="font-editorial text-3xl lg:text-4xl text-editorial-ink">
-              {s.value}
-            </div>
-            <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-editorial-muted mt-2">
-              {s.label}
-            </div>
-          </div>
-        ))}
+        {stats.map((s, i) => {
+          const wrapperClass = i > 0
+            ? 'pl-4 lg:pl-8 border-l border-editorial-line'
+            : 'pr-4 lg:pr-8';
+          const content = (
+            <>
+              <div className={cn(
+                'font-editorial text-3xl lg:text-4xl transition-colors',
+                s.onClick ? 'text-editorial-ink group-hover:text-editorial-accent' : 'text-editorial-ink'
+              )}>
+                {s.value}
+              </div>
+              <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-editorial-muted mt-2">
+                {s.label}
+              </div>
+            </>
+          );
+          return s.onClick ? (
+            <button
+              key={s.label}
+              onClick={s.onClick}
+              className={cn(wrapperClass, 'text-left group cursor-pointer')}
+            >
+              {content}
+            </button>
+          ) : (
+            <div key={s.label} className={wrapperClass}>{content}</div>
+          );
+        })}
       </section>
 
       {/* Quick actions */}

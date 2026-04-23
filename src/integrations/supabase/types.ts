@@ -108,6 +108,7 @@ export type Database = {
         Row: {
           created_at: string
           email: string | null
+          handled_at: string | null
           id: string
           message: string | null
           name: string | null
@@ -122,6 +123,7 @@ export type Database = {
         Insert: {
           created_at?: string
           email?: string | null
+          handled_at?: string | null
           id?: string
           message?: string | null
           name?: string | null
@@ -136,6 +138,7 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string | null
+          handled_at?: string | null
           id?: string
           message?: string | null
           name?: string | null
@@ -782,6 +785,7 @@ export type Database = {
     }
     Functions: {
       bytea_to_text: { Args: { data: string }; Returns: string }
+      cleanup_old_handled_leads: { Args: never; Returns: number }
       generate_product_slug: {
         Args: { product_name: string; serial_number?: string }
         Returns: string

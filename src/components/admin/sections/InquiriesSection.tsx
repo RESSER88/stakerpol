@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Phone, Mail, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Check, Package } from 'lucide-react';
+import { Phone, Mail, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Check, Package, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 interface Lead {
   id: string;
   created_at: string;
+  handled_at: string | null;
   name: string | null;
   phone: string;
   email: string | null;
@@ -19,6 +20,7 @@ interface Lead {
 }
 
 const PAGE_SIZE = 20;
+const RETENTION_DAYS = 60;
 type StatusFilter = 'all' | 'new' | 'handled';
 
 const sourceLabel: Record<string, string> = {
@@ -27,13 +29,17 @@ const sourceLabel: Record<string, string> = {
   contact_form: 'Kontakt',
 };
 
-const InquiriesSection = () => {
+interface Props {
+  initialFilter?: StatusFilter;
+}
+
+const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
   const { toast } = useToast();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
-  const [filter, setFilter] = useState<StatusFilter>('all');
+  const [filter, setFilter] = useState<StatusFilter>(initialFilter);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [updating, setUpdating] = useState<Set<string>>(new Set());
 
@@ -41,7 +47,7 @@ const InquiriesSection = () => {
     setLoading(true);
     let q = supabase
       .from('leads')
-      .select('id, created_at, name, phone, email, message, source, page_url, status, product_id', { count: 'exact' })
+      .select('id, created_at, handled_at, name, phone, email, message, source, page_url, status, product_id', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
@@ -90,15 +96,47 @@ const InquiriesSection = () => {
       return;
     }
     toast({ title: newStatus === 'handled' ? '✓ Oznaczono jako obsłużone' : 'Oznaczono jako nowe' });
-    setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, status: newStatus } : l)));
+
+    // Auto-switch tab so the user sees where the lead landed
+    if (filter !== 'all') {
+      setFilter(newStatus as StatusFilter);
+      setPage(0);
+    } else {
+      setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, status: newStatus } : l)));
+    }
+  };
+
+  const deleteLead = async (lead: Lead) => {
+    if (!confirm(`Usunąć zapytanie od ${lead.name || lead.phone}? Tej operacji nie można cofnąć.`)) return;
+    setUpdating((prev) => new Set(prev).add(lead.id));
+    const { error } = await supabase.from('leads').delete().eq('id', lead.id);
+    setUpdating((prev) => {
+      const n = new Set(prev);
+      n.delete(lead.id);
+      return n;
+    });
+    if (error) {
+      toast({ title: 'Błąd', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Zapytanie usunięte' });
+    setLeads((prev) => prev.filter((l) => l.id !== lead.id));
+    setTotal((t) => Math.max(0, t - 1));
+  };
+
+  const daysUntilDeletion = (handledAt: string | null): number | null => {
+    if (!handledAt) return null;
+    const handled = new Date(handledAt).getTime();
+    const elapsedDays = (Date.now() - handled) / (1000 * 60 * 60 * 24);
+    return Math.max(0, Math.ceil(RETENTION_DAYS - elapsedDays));
   };
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const filterChips: { value: StatusFilter; label: string }[] = [
-    { value: 'all', label: 'Wszystkie' },
     { value: 'new', label: 'Nowe' },
     { value: 'handled', label: 'Obsłużone' },
+    { value: 'all', label: 'Wszystkie' },
   ];
 
   return (
@@ -143,6 +181,7 @@ const InquiriesSection = () => {
             const shortMsg = isLong ? `${lead.message!.slice(0, 120)}…` : lead.message;
             const isHandled = lead.status === 'handled';
             const isUpdating = updating.has(lead.id);
+            const daysLeft = isHandled ? daysUntilDeletion(lead.handled_at) : null;
 
             return (
               <li key={lead.id} className="border-b border-editorial-line py-5">
@@ -216,6 +255,12 @@ const InquiriesSection = () => {
                         )}
                       </div>
                     )}
+
+                    {isHandled && daysLeft !== null && (
+                      <p className="mt-2 text-[10px] font-bold tracking-[0.2em] uppercase text-editorial-muted">
+                        Zostanie usunięte za {daysLeft} {daysLeft === 1 ? 'dzień' : 'dni'}
+                      </p>
+                    )}
                   </div>
 
                   <div className="text-[11px] text-editorial-muted whitespace-nowrap">
@@ -226,7 +271,7 @@ const InquiriesSection = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-1 mt-3 pl-5">
+                <div className="flex gap-1 mt-3 pl-5 flex-wrap">
                   <a
                     href={`tel:${lead.phone}`}
                     className="px-3 h-8 inline-flex items-center gap-1.5 bg-editorial-ink text-white text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-editorial-ink/90 transition-colors"
@@ -247,6 +292,16 @@ const InquiriesSection = () => {
                     <Check className="h-3 w-3" />
                     {isHandled ? 'Cofnij' : 'Obsłużone'}
                   </button>
+                  {isHandled && (
+                    <button
+                      disabled={isUpdating}
+                      onClick={() => deleteLead(lead)}
+                      className="px-3 h-8 inline-flex items-center gap-1.5 border border-destructive/40 text-destructive text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-destructive hover:text-destructive-foreground transition-colors disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Usuń
+                    </button>
+                  )}
                 </div>
               </li>
             );
