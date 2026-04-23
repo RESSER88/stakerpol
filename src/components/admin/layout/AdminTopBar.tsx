@@ -17,10 +17,15 @@ interface Props {
 const AdminTopBar = ({ title, onChange, onSignOut }: Props) => {
   return (
     <header className="lg:hidden sticky top-0 bg-white border-b border-editorial-line px-4 h-12 flex items-center justify-between z-40">
-      <div className="flex items-baseline gap-2">
+      <button
+        type="button"
+        onClick={() => onChange('start')}
+        className="flex items-baseline gap-2 hover:opacity-80 transition-opacity"
+        aria-label="Przejdź do panelu startowego"
+      >
         <span className="text-[10px] font-bold tracking-[0.25em] text-editorial-muted">STAKERPOL</span>
         <span className="font-editorial text-sm text-editorial-ink">· {title}</span>
-      </div>
+      </button>
       <DropdownMenu>
         <DropdownMenuTrigger className="p-2 -mr-2 text-editorial-ink">
           <MoreVertical className="h-5 w-5" />
