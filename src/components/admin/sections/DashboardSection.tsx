@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, Package } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 import type { AdminSection } from '../layout/types';
 import type { Product } from '@/types';
 import StatusDot from '../editorial/StatusDot';
