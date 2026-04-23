@@ -17,7 +17,7 @@ const Chapter02_Basic = ({ product, onChange, onSave, saving, isCreate }: Props)
     onChange({ ...product, specs: { ...product.specs, [k]: v } });
 
   const valid = !!product.model?.trim() && !!product.specs?.serialNumber?.trim();
-  const shortDesc = (product as any).shortDescription || '';
+  const shortDesc = product.shortDescription || '';
   const model = product.model || '';
   const slogan = product.slogan || '';
 
@@ -55,7 +55,7 @@ const Chapter02_Basic = ({ product, onChange, onSave, saving, isCreate }: Props)
         rows={2}
         maxLength={300}
         value={shortDesc}
-        onChange={(e) => set({ ...(product as any), shortDescription: e.target.value.slice(0, 300) } as any)}
+        onChange={(e) => set({ shortDescription: e.target.value.slice(0, 300) })}
         placeholder="1–2 zdania o produkcie (max 300 znaków)"
         hint={`${shortDesc.length}/300`}
       />
