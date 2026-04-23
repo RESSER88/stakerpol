@@ -59,15 +59,22 @@ const Admin = () => {
     }
   }), []);
 
-  // After a refetch, sync `selectedProduct` with the fresh row from the list
-  // — but ONLY while the editor is closed, so we never overwrite in-flight edits.
+  // Keep `selectedProduct` in sync with the freshest row from the products list.
+  // Runs even while the editor is open: ProductEditorView guards its own local
+  // state against being overwritten mid-edit (it re-hydrates only when the
+  // product *id* changes, not on every realtime refetch). This way, closing
+  // and reopening the modal — or returning from another sidebar section —
+  // always shows current DB data instead of a stale snapshot from before save.
   useEffect(() => {
-    if (isEditDialogOpen) return;
     if (!selectedProduct?.id) return;
     const fresh = products.find((p: Product) => p.id === selectedProduct.id);
     if (fresh && fresh !== selectedProduct) {
       setSelectedProduct(fresh);
-      setProductImages(fresh.images || []);
+      // Only refresh image list when editor is closed, so an in-flight image
+      // edit isn't replaced by the realtime payload.
+      if (!isEditDialogOpen) {
+        setProductImages(fresh.images || []);
+      }
     }
   }, [products, isEditDialogOpen, selectedProduct]);
 

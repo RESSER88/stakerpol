@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Product } from '@/types';
 import { toast } from 'sonner';
 import { X, MoreHorizontal, Copy, Trash2 } from 'lucide-react';
@@ -60,32 +60,51 @@ const ProductEditorView = ({
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Hydrate local state ONLY when modal opens or when switching to a different product.
-  // Avoids overwriting user edits when realtime invalidates the products query and
-  // creates a new `initialProduct` reference for the same record.
+  // Track which product id (and which "session" — open transition) we have hydrated.
+  // We re-hydrate (and reset activeChapter) ONLY when:
+  //   - the modal transitions from closed → open, OR
+  //   - the underlying product id changes while open.
+  // Otherwise (same id, modal already open) we leave local state alone so that
+  // realtime/refetch updates don't wipe in-flight edits or jump back to chapter 1.
+  const lastHydratedKeyRef = useRef<string | null>(null);
+
+  const loadBenefits = async (productId: string) => {
+    const { data } = await supabase
+      .from('product_benefits' as any)
+      .select('icon_name, title, description, sort_order')
+      .eq('product_id', productId)
+      .order('sort_order', { ascending: true });
+    setBenefits(
+      ((data as any) || []).map((b: any) => ({
+        icon_name: b.icon_name || 'check',
+        title: b.title || '',
+        description: b.description || '',
+      }))
+    );
+  };
+
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      lastHydratedKeyRef.current = null;
+      return;
+    }
+    // Key encodes "this open session for this product id". A new open or a
+    // product switch produces a new key; a realtime refetch for the same id
+    // while the modal stays open does NOT.
+    const key = `${initialProduct?.id || '__new__'}`;
+    if (lastHydratedKeyRef.current === key) {
+      // Same product, modal already hydrated — do not overwrite local state.
+      return;
+    }
+    lastHydratedKeyRef.current = key;
+
     setProduct(initialProduct);
     setImages(initialImages);
     const create = initialIsCreate;
     setMode(create ? 'create' : 'edit');
     setActiveChapter(create ? 2 : 1);
-    // load benefits for existing product
     if (!create && initialProduct?.id) {
-      (async () => {
-        const { data } = await supabase
-          .from('product_benefits' as any)
-          .select('icon_name, title, description, sort_order')
-          .eq('product_id', initialProduct.id)
-          .order('sort_order', { ascending: true });
-        setBenefits(
-          ((data as any) || []).map((b: any) => ({
-            icon_name: b.icon_name || 'check',
-            title: b.title || '',
-            description: b.description || '',
-          }))
-        );
-      })();
+      loadBenefits(initialProduct.id);
     } else {
       setBenefits([]);
     }
