@@ -1,80 +1,44 @@
 
-## Plan: Trigger first, forms second — jedna zmiana na raz
+## Plan: ujednolicenie analityki GA4 dla 3 brakujących formularzy
 
-Słusznie zwracasz uwagę. Zatrzymuję refactor formularzy. Robimy to w dwóch krokach z testem po każdej zmianie.
+### Kontekst
+Wszystkie 6 formularzy poprawnie zapisuje leady do bazy i wywołuje mail (potwierdzone w logach Resend, 8/8 sukcesów). Ale tylko 3 z nich raportują konwersję do GA4. Pozostałe 3 są "niewidzialne" dla raportów konwersji.
 
----
+### Brakujące tracking'i
 
-### Krok 1 — Udowodnić że trigger działa (i naprawić jeśli nie)
-
-**1a. Test triggera przez SQL** (bez żadnych zmian w kodzie):
-```sql
-INSERT INTO public.leads (name, email, phone, message, source, rodo_accepted, page_url, user_agent)
-VALUES ('TEST TRIGGER 1', 'test@stakerpol.pl', '600000001',
-        'Test triggera trg_leads_notify - wstawka 1.', 'trigger_test', true,
-        'https://test.local/step1', 'pg-trigger-test')
-RETURNING id, source, created_at;
+**1. `src/components/contact/ContactLeadForm.tsx`** (źródło: `contact_page`)
+Po udanym INSERT dodać:
+```ts
+trackFormSubmit('contact_page_form');
+trackGenerateLead(crypto.randomUUID(), 'contact_page');
 ```
-Następnie:
-- sprawdzam logi `notify-lead` (czy się odpaliła, czy Resend zwrócił sukces),
-- sprawdzam czy mail dotarł na `info@stakerpol.pl`.
 
-**1b. Jeśli mail NIE przyszedł** → naprawa `notify_lead_created`:
-- Zamiana `extensions.http_post(...)` na `public.http_post(uri, content, content_type)` (rozszerzenie `http` jest zainstalowane w schemacie `public` — potwierdzone w liście funkcji DB, gdzie `public.http_post` istnieje, a `extensions.http_post` nie).
-- Migracja `CREATE OR REPLACE FUNCTION public.notify_lead_created()` z poprawioną sygnaturą wywołania (JSON body jako `text` + `application/json`) i `SET search_path = public`.
-- Powtórzenie testu SQL z punktu 1a (`TEST TRIGGER 2`) — musi przyjść mail.
+**2. `src/hooks/useLeadSubmit.ts`** (źródła: `product_page_inline`, `product_list`)
+Po udanym INSERT dodać:
+```ts
+trackFormSubmit('product_callback', productModel);
+trackGenerateLead(crypto.randomUUID(), source, product ? { id: productId, model: productModel } : undefined);
+```
+(`source` ustalany z kontekstu wywołania)
 
-**Wyjście z Kroku 1:** potwierdzenie w logach Resenda, że trigger DB sam (bez frontu) wysyła maila. Dopiero wtedy idziemy dalej.
+**3. `src/components/contact/ContactConversionCards.tsx`** (źródła: `callback_card`, `visit_request`)
+Po udanym INSERT dla każdego z dwóch wariantów (callback vs wizyta):
+```ts
+trackFormSubmit(variant === 'callback' ? 'conversion_callback' : 'conversion_visit');
+trackGenerateLead(crypto.randomUUID(), source);
+```
 
----
+### Zasady wspólne
+- `crypto.randomUUID()` jako transaction_id (nie czytamy `id` z bazy → nie łamiemy RLS)
+- Kolejność: najpierw INSERT, dopiero po `if (!error)` track
+- Brak zmian w bazie, brak nowych zależności, brak zmian w mailu
 
-### Krok 2 — Audyt 6 formularzy, jeden po drugim
+### Test po wdrożeniu
+Wypełnić każdy z 3 formularzy → sprawdzić w DevTools → Network → `collect?v=2` że leci event `generate_lead` z odpowiednim `lead_source`. W GA4 DebugView (jeśli aktywny) eventy widoczne w 30 sek.
 
-Dopiero gdy trigger udowodniony. Dla KAŻDEGO formularza osobno wykonuję ten sam mini-cykl:
+### Pliki do edycji
+- `src/components/contact/ContactLeadForm.tsx`
+- `src/hooks/useLeadSubmit.ts`
+- `src/components/contact/ContactConversionCards.tsx`
 
-1. Przeczytanie kodu formularza i wskazanie czy robi `INSERT` do `leads`, czy `INSERT` do innej tabeli, czy tylko `functions.invoke`.
-2. Wykonanie testu z UI (lub symulacja inserta klienckiego z anon key).
-3. `SELECT` na `leads` po `created_at desc` — czy rekord wpadł.
-4. Logi `notify-lead` — czy trigger odpalił, czy Resend OK.
-5. Raport: ✅ działa / ❌ co jest zepsute → punktowa naprawa TYLKO tego jednego formularza.
-
-**Lista 6 formularzy do audytu (kolejność):**
-
-| # | Formularz | Plik | Tabela docelowa | Znane ryzyko |
-|---|-----------|------|-----------------|--------------|
-| 1 | Dymek (floating bubble) | `FloatingContactBubble` → `useContactForm` | `leads` | `.insert(...).select('id').single()` — anon nie ma SELECT na `leads` (RLS), 401 mimo udanego INSERT |
-| 2 | Strona główna — hero form | `HomeHeroForm` → `useContactForm` | `leads` | to samo co #1 (wspólny hook) |
-| 3 | Karta produktu — pełny formularz | `ProductDetail` / `useContactForm` | `leads` | to samo co #1 |
-| 4 | Karta produktu — szybki callback | `ProductLeadCallback` → `useLeadSubmit` | `leads` | `INSERT` bez `.select()` — powinno działać, weryfikuję |
-| 5 | Strona /contact — formularz | `ContactLeadForm` | `leads` | po wcześniejszym refactorze brak ręcznego invoke — ma polegać na triggerze |
-| 6 | Karta produktu — modal cenowy | `PriceInquiryModal` | `price_inquiries` (nie `leads`!) | trigger NIE obejmuje tej tabeli — tu nadal musi być ręczny `functions.invoke('notify-lead')` |
-
-**Naprawa wzorca z #1 (dotyczy formularzy 1, 2, 3):**
-W `useContactForm.ts` usuwam `.select('id').single()`. Lead ID do GA4 zastępuję `crypto.randomUUID()` (już jest fallback w kodzie). Po tej zmianie INSERT przejdzie pod RLS dla anon, trigger DB wyśle mail.
-
-**Dla #6 (PriceInquiryModal):** zostawiam ręczny `invoke` — tabela `price_inquiries` nie ma triggera i celowo nie dodajemy go w tym kroku (osobny temat).
-
----
-
-### Co zmieniam fizycznie
-
-1. **Migracja DB** (Krok 1b, tylko jeśli test SQL nie wyśle maila):
-   - `CREATE OR REPLACE FUNCTION public.notify_lead_created()` — `public.http_post` zamiast `extensions.http_post`, `SET search_path = public`.
-
-2. **Frontend** (Krok 2, po naprawie triggera):
-   - `src/hooks/useContactForm.ts` — usunięcie `.select('id').single()`, użycie `crypto.randomUUID()` dla GA4.
-   - Pozostałe pliki tylko jeśli audyt punktowy wykryje problem — nie ruszam ich „prewencyjnie".
-
-3. **Bez zmian:** `PriceInquiryModal.tsx`, `useLeadSubmit.ts` (chyba że audyt pokaże problem), edge function `notify-lead` (już naprawione w poprzednich krokach).
-
----
-
-### Kontrakt na każdy krok
-
-Po każdej pojedynczej zmianie raportuję Tobie:
-- co zmieniłem,
-- wynik testu (SQL insert lub UI submit),
-- wpis w logach Resenda (ID maila lub błąd),
-- decyzja: idziemy dalej / cofamy.
-
-Zaczynam od Kroku 1a — czysty test SQL bez żadnej modyfikacji kodu. Jeśli mail przyjdzie, pomijam 1b i przechodzę do audytu formularzy. Akceptujesz?
+Brak migracji DB. Brak edge functions. Tylko 3 pliki frontu, każdy ~3 linijki.
