@@ -2,7 +2,7 @@ import { useState } from 'react';
 // useState used by CallbackMiniForm below
 import { Phone, PhoneCall } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { trackCTAClick, trackFormSubmit } from '@/utils/analytics';
+import { trackCTAClick, trackFormSubmit, trackGenerateLead } from '@/utils/analytics';
 
 const validatePhone = (v: string) => /^[\d\s\-+()]{7,20}$/.test(v);
 
@@ -30,6 +30,7 @@ const CallbackMiniForm = () => {
       if (err) throw err;
       // notify-lead is triggered automatically by DB trigger on leads INSERT
       trackFormSubmit('contact_callback_card');
+      trackGenerateLead(crypto.randomUUID(), 'callback_card');
       setStatus('success');
     } catch {
       setStatus('error');
