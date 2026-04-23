@@ -6,8 +6,11 @@ const webhookUrl = Deno.env.get("LEAD_WEBHOOK_URL");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, " +
+    "x-supabase-client-platform, x-supabase-client-platform-version, " +
+    "x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface LeadPayload {
@@ -112,16 +115,34 @@ const handler = async (req: Request): Promise<Response> => {
             ${lead.id ? `<p><strong>ID rekordu:</strong> ${lead.id}</p>` : ""}
           `;
 
+      let emailSent = false;
+      let emailError: string | null = null;
       try {
         const emailResponse = await resend.emails.send({
           from: "Stakerpol <onboarding@resend.dev>",
           to: [to],
+          reply_to: lead.email || undefined,
           subject,
           html,
         });
-        console.log("Email sent successfully:", JSON.stringify(emailResponse));
+        if ((emailResponse as any)?.error) {
+          emailError = JSON.stringify((emailResponse as any).error);
+          console.error("Resend returned error:", emailError);
+        } else {
+          emailSent = true;
+          console.log("Email sent successfully:", JSON.stringify(emailResponse));
+        }
       } catch (e: any) {
-        console.error("Email delivery failed:", e?.message || e, JSON.stringify(e));
+        emailError = e?.message || String(e);
+        console.error("Email delivery failed:", emailError, JSON.stringify(e));
+      }
+
+      // If email failed AND no webhook fallback succeeded, surface error to client
+      if (!emailSent && !webhookUrl) {
+        return new Response(
+          JSON.stringify({ ok: false, error: emailError || "Email delivery failed" }),
+          { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
       }
     }
 
