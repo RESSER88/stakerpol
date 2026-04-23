@@ -26,7 +26,7 @@ export const useChapterCompletion = (
     !!(product as any)?.priceDisplayMode &&
     ((product as any).priceDisplayMode === 'inquiry_only' ||
       ((product as any).netPrice != null && (product as any).netPrice !== ''));
-  const ch05 = !!product?.slogan?.trim() || !!product?.shortMarketingDescription?.trim();
+  const ch05 = !!product?.slogan?.trim() || !!product?.shortMarketingDescription?.trim() || !!(product as any)?.aboutDescription?.trim();
 
   return [
     {

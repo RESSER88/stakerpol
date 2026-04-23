@@ -13,6 +13,7 @@ export interface Product {
   availabilityStatus?: 'available' | 'reserved' | 'sold';
   conditionLabel?: string;
   shortMarketingDescription?: string;
+  aboutDescription?: string;
   leasingMonthlyFromPln?: number | null;
   warrantyMonths?: number;
   isFeatured?: boolean;
