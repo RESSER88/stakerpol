@@ -55,10 +55,11 @@ export const usePublicSupabaseProducts = () => {
       
       return mappedProducts;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    staleTime: 30 * 1000, // 30s — krótki cache, by zmiany z admina były szybko widoczne
     gcTime: 10 * 60 * 1000, // 10 minutes in memory
     retry: 3,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true, // odśwież po powrocie na kartę
+    refetchOnMount: 'always', // zawsze sprawdź świeżość przy wejściu na stronę produktu
   });
 
   // Enhanced realtime subscription for immediate sync with admin panel
