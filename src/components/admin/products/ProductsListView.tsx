@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Product } from '@/types';
-import { Search, Plus, Download, RefreshCw } from 'lucide-react';
+import { Search, Plus, Download, RefreshCw, ArrowUp, Copy, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import StatusDot from '../editorial/StatusDot';
+import PDFQuoteGenerator from '../PDFQuoteGenerator';
 
 interface Props {
   products: Product[];
