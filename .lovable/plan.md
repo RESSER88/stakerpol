@@ -1,111 +1,185 @@
 
+## Diagnoza: po zalogowaniu panel sam wyrzuca użytkownika na `/`, mimo że logowanie i rola admina są poprawne
 
-## Diagnoza: panel admina pokazuje stare dane po powrocie i zawsze resetuje się do rozdziału 01 (Zdjęcia)
+### Co potwierdziłem
+- Logi przeglądarki pokazują zdarzenie `SIGNED_IN`.
+- Request `rpc/has_role` zwraca `200` i `true`, więc konto **ma rolę admina**.
+- W routerze istnieje tylko ścieżka `/admin`; **nie ma dziś** `/admin/dashboard` ani `/panel`.
 
-### Co dokładnie się dzieje
+### Rzeczywista przyczyna
+To nie jest błąd hasła, sesji ani RLS. To jest **race condition w inicjalizacji auth**:
 
-Prześledziłem ścieżkę: `Admin.tsx` (trzyma `selectedProduct`, `isEditDialogOpen`, `productImages`) → `ProductManager` → `ProductEditorView` (trzyma własny lokalny stan `product`, `images`, `benefits`, `activeChapter`).
+1. `useSupabaseAuth.tsx`
+   - po `SIGNED_IN` ustawia `user` i bardzo szybko robi `setLoading(false)`,
+   - właściwe sprawdzenie roli admina uruchamia dopiero chwilę później przez `setTimeout(...checkAdminRole...)`.
 
-**Trzy odrębne błędy nakładają się na siebie:**
+2. `src/pages/Admin.tsx`
+   - w tym krótkim oknie stan wygląda tak:
+     - `user !== null`
+     - `authLoading === false`
+     - `adminLoading === false`
+     - `isAdmin === false` (jeszcze nieustalone)
+   - wtedy odpala się warunek:
+   ```ts
+   if (!isAdmin && !adminLoading) return <Navigate to="/" replace />;
+   ```
+   i użytkownik zostaje odesłany na stronę główną, mimo że za moment `has_role` zwróci `true`.
 
-#### Bug 1 — `activeChapter` zawsze resetuje się do 1 przy każdej hydracji
-W `ProductEditorView.tsx` linia 72:
-```ts
-useEffect(() => {
-  if (!open) return;
-  setProduct(initialProduct);
-  setImages(initialImages);
-  ...
-  setActiveChapter(create ? 2 : 1);   // ← TWARDY RESET
-}, [open, initialProduct?.id]);
-```
-Za każdym razem, gdy modal się otwiera lub zmienia produkt, aktywny rozdział wraca do 1 (Zdjęcia) dla edycji lub 2 (Dane podstawowe) dla nowego. To wyjaśnia objaw „panel wraca zawsze do pierwszej zakładki".
-
-#### Bug 2 — przełączenie sekcji bocznego menu (np. Produkty → Zapytania → Produkty) niszczy edytor
-W `Admin.tsx` `renderSection()` montuje/odmontowuje `ProductManager` zależnie od `activeSection`. Gdy użytkownik wraca do „Produkty":
-- `selectedProduct`, `isEditDialogOpen`, `productImages` są zachowane w `Admin.tsx` (na poziomie wyższym),
-- ale `ProductEditorView` jest świeżo zamontowany ze świeżym `useState(initialProduct)`,
-- effect hydracji odpala się raz (open=true, id znany) i kopiuje `initialProduct` do lokalnego stanu,
-- `activeChapter` ustawia się na 1.
-
-W efekcie: edytor pokazuje **rozdział 01** zamiast tego, który był otwarty wcześniej, oraz wszystkie pola formularza są skopiowane z `initialProduct` — czyli z `selectedProduct` w Admin.tsx, który **nie został odświeżony po zapisie** (bo effect synchronizujący w Admin.tsx pomija wykonanie gdy `isEditDialogOpen` jest `true`, a po zapisie modal nadal jest otwarty).
-
-#### Bug 3 — po zapisie `selectedProduct` w Admin.tsx pozostaje starą referencją
-`Admin.tsx` linie 56–65:
-```ts
-useEffect(() => {
-  if (isEditDialogOpen) return;          // ← blokada gdy modal otwarty
-  if (!selectedProduct?.id) return;
-  const fresh = products.find(p => p.id === selectedProduct.id);
-  if (fresh && fresh !== selectedProduct) {
-    setSelectedProduct(fresh);
-    setProductImages(fresh.images || []);
-  }
-}, [products, isEditDialogOpen, selectedProduct]);
-```
-Blokada `if (isEditDialogOpen) return` była dodana, by chronić edycje w toku. Skutek uboczny: po zapisie modal nadal jest otwarty → `selectedProduct` w Admin pozostaje starą wersją sprzed zapisu. Gdy użytkownik przełączy sekcję i wróci, `ProductEditorView` zostanie zhydratowany właśnie tą starą referencją.
-
-### Realtime i query cache działają poprawnie
-
-Z konsoli widać, że realtime przychodzi (`Admin products realtime update`, `Public product images realtime update detected`) i `useSupabaseProducts` invaliduje query (`staleTime: 5 s`, `refetchOnWindowFocus: true`). Tablica `products` w `Admin.tsx` jest świeża. Problem leży **wyłącznie w propagacji świeżych danych do otwartego edytora**.
+To oznacza, że problem jest **produkcyjny**, nie lokalny. Na deployu zachowa się tak samo.
 
 ---
 
 ## Plan naprawy
 
-### Zmiana 1 — `ProductEditorView.tsx`: rozdziel hydrację od resetu nawigacji
+### 1. Uporządkować stan autoryzacji w `useSupabaseAuth.tsx`
+Zamiast traktować `isAdmin=false` jako „brak uprawnień”, rozdzielić 3 stany:
 
-Rozbić jeden efekt na dwa, żeby:
-- pełna hydracja (włącznie z `activeChapter`) działa tylko przy **pierwszym otwarciu** lub **zmianie produktu** (inne `id`),
-- gdy ten sam produkt zostaje zaktualizowany przez realtime/refetch (nowa referencja `initialProduct`, ten sam `id`), **scalić tylko brakujące/zmienione pola** z bazy nie nadpisując pól, które właśnie edytuje użytkownik.
+- `unknown/checking` — rola jeszcze sprawdzana
+- `granted` — admin potwierdzony
+- `denied` — admin odrzucony
 
-Konkretnie:
-- użyć `useRef<string | null>` przechowującego id ostatnio zhydratowanego produktu,
-- w efekcie sprawdzić: jeśli `initialProduct.id !== lastHydratedId.current` → pełna hydracja + reset `activeChapter` (jak teraz),
-- jeśli ten sam id i modal otwarty → **NIE** resetować `activeChapter`, **NIE** nadpisywać `product` w całości; zamiast tego tylko odświeżyć pola, które nie były edytowane (alternatywa: jeśli `saving === false` i nie ma „dirty flag", zhydratować świeże dane, w przeciwnym razie zostawić lokalny stan).
+Najbezpieczniej:
+- ustawić `adminLoading=true` **natychmiast**, gdy pojawi się zalogowany użytkownik,
+- nie kończyć przepływu auth dopóki bieżąca weryfikacja roli nie zostanie rozstrzygnięta,
+- nie zostawiać przejściowego stanu „user już jest, ale admin jeszcze nie wiadomo”.
 
-Najprostsza i bezpieczna implementacja na start: trzymać `lastHydratedId` w ref i hydrować tylko przy zmianie id. Reszta synchronizacji zachodzi po zamknięciu i ponownym otwarciu modala.
+Praktycznie:
+- albo dodać osobne `authReady` / `roleResolved`,
+- albo poprawić obecne `loading` + `adminLoading`, żeby dla zalogowanego usera zawsze było:
+  - najpierw `adminLoading=true`,
+  - potem dopiero wynik `isAdmin`.
 
-### Zmiana 2 — `ProductEditorView.tsx`: po udanym zapisie zaktualizować lokalny stan świeżymi danymi z mutacji
+### 2. Uszczelnić guard w `src/pages/Admin.tsx`
+Zastąpić obecną logikę warunkową tak, aby:
 
-W `saveBasic` i `saveAll` mutacja zwraca `updatedProduct` (rekord z bazy). Zamiast polegać na realtime → invalidate → propagacja, **bezpośrednio** zmapować zwrócony rekord przez `mapSupabaseProductToProduct` i wywołać `setProduct(...)` na świeżych danych. To gwarantuje, że formularz natychmiast pokazuje to, co rzeczywiście jest w bazie, bez jakichkolwiek wyścigów.
+- `!user` → pokazać `AdminLogin`
+- `user && (authLoading || adminLoading || !roleResolved)` → pokazać loader
+- `user && roleResolved && !isAdmin` → pokazać `PermissionDenied`
+- `user && isAdmin` → renderować panel
 
-Wymaga: wystawić mapper w `ProductEditorView` (import z `@/types/supabase`) i pobrać świeże obrazy/benefits razem z rekordem, albo prostsza wersja — po sukcesie zapisu wywołać własny `refresh()` który czyta produkt + obrazy + benefity z bazy i ustawia stan lokalny.
+Najważniejsze: **usunąć możliwość redirectu do `/` zanim status admina będzie ostatecznie znany**.
 
-### Zmiana 3 — `ProductEditorView.tsx`: zachować `activeChapter` przy zmianach `initialProduct` dla tego samego id
+### 3. Nie używać `/admin/dashboard` jako celu, dopóki ta trasa nie istnieje
+Aktualna aplikacja ma tylko:
+- `/admin`
 
-Wynika z Zmiany 1, ale zaznaczam osobno bo to widoczny objaw „panel wraca zawsze do Zdjęć". Po naprawie: rozdział resetuje się tylko przy zmianie produktu (otwarcie innego rekordu) lub przy nowym tworzeniu.
+Więc poprawne zachowanie po logowaniu powinno być teraz:
+- użytkownik zostaje na `/admin`,
+- formularz logowania znika,
+- od razu pojawia się panel admina.
 
-### Zmiana 4 — `Admin.tsx`: zsynchronizować `selectedProduct` także gdy modal jest otwarty, ale tylko po zmianie zawartości
+Jeśli potrzebny jest adres typu `/admin/dashboard`, to jest osobny krok architektoniczny:
+- dodać route alias w `App.tsx`,
+- zmapować go w `Admin.tsx` na sekcję `start`.
 
-Zmienić warunek tak, aby:
-- gdy modal jest otwarty i przyszła nowa wersja tego samego `selectedProduct.id`, nadal aktualizować referencję w Admin.tsx (żeby zamknięcie+otwarcie pokazało świeże dane),
-- ale `ProductEditorView` (po Zmianie 1) i tak nie nadpisze swojego lokalnego stanu, więc edycje w toku są bezpieczne.
+Do naprawy bug-u nie jest to konieczne.
 
-Innymi słowy: Admin.tsx zawsze trzyma świeżą referencję, edytor sam decyduje kiedy ją zaakceptować.
+### 4. Opcjonalne dopracowanie UX logowania
+W `AdminLogin.tsx` można po sukcesie:
+- nie robić żadnego ręcznego `navigate('/')`,
+- zdać się na stan auth i render panelu na tej samej ścieżce `/admin`.
 
-### Zmiana 5 — `ProductEditorView.tsx`: realtime na otwartym produkcie ładuje świeże benefits
-
-Aktualnie benefits są ładowane raz przy otwarciu. Po zapisie z innej karty/instancji — przestaną być spójne. Dodać subskrypcję realtime na `product_benefits` filtrowaną po `product_id` (lub po prostu re-load po wykryciu eventu) — ale tylko jeśli użytkownik nie ma niezapisanych zmian benefits.
-
-To opcjonalne, można dodać w drugiej iteracji.
+Jeśli kiedyś zostanie dodane `/admin/dashboard`, wtedy dopiero warto po sukcesie robić `navigate('/admin/dashboard', { replace: true })`.
 
 ---
 
-## Pliki do edycji
+## Pliki do zmiany
+- `src/hooks/useSupabaseAuth.tsx`
+- `src/pages/Admin.tsx`
 
-- `src/components/admin/editor/ProductEditorView.tsx` — rozdzielenie effectu hydracji, zachowanie `activeChapter`, hydrowanie świeżymi danymi po zapisie
-- `src/pages/Admin.tsx` — usunięcie blokady `if (isEditDialogOpen) return` lub zmiana jej semantyki
-
-Brak migracji bazy — problem jest wyłącznie w warstwie React state.
+Opcjonalnie, tylko jeśli chcemy osobny URL dashboardu:
+- `src/App.tsx`
+- `src/components/admin/AdminLogin.tsx`
 
 ---
 
-## Test po wdrożeniu
+## Proponowana implementacja techniczna
 
-1. **Reset rozdziału**: otwórz produkt → przejdź do rozdziału 04 (Cena) → zmień coś → Zapisz → kursor zostaje w rozdziale 04, pole pokazuje zapisaną wartość. ✅
-2. **Przełączenie sekcji menu**: otwórz produkt na rozdziale 03 → kliknij „Zapytania" w sidebarze → wróć do „Produkty" → modal otwarty na rozdziale 03 z aktualnymi danymi. ✅
-3. **Powrót na kartę przeglądarki**: otwórz produkt → przejdź na inną kartę na 30 s → wróć → modal otwarty na tym samym rozdziale, pola niezedytowane pokazują świeże wartości z bazy. ✅
-4. **Edycja w drugiej karcie**: w karcie A otwarty edytor produktu X na rozdziale 02; w karcie B zmień Slogan tego samego produktu i zapisz → karta A pokazuje świeży Slogan w rozdziale 02 (jeśli pole nie było aktywnie edytowane). ✅
-5. **Tworzenie nowego**: Dodaj produkt → zapisz rozdział 02 → przejdź do 03 → wpisz dane → Zapisz → po zapisie jesteś nadal w 03, dane zachowane. ✅
+### Wariant rekomendowany
+W `useSupabaseAuth.tsx`:
+- dodać stan typu:
+```ts
+type AdminRoleState = 'unknown' | 'checking' | 'granted' | 'denied';
+```
+albo równoważny zestaw flag.
 
+Zasada:
+- po wykryciu `newSession.user`:
+  - ustaw `adminLoading=true` od razu,
+  - uruchom `checkAdminRole`,
+  - dopiero po zakończeniu ustaw końcowy status.
+
+W `Admin.tsx`:
+- usunąć wczesny redirect:
+```ts
+if (!isAdmin && !adminLoading) return <Navigate to="/" replace />;
+```
+- zastąpić go renderowaniem zależnym od pełnego statusu roli.
+
+### Minimalny hotfix
+Jeśli chcemy najmniejszą zmianę:
+- w `onAuthStateChange` ustawiać `adminLoading=true` synchronnie zanim `setLoading(false)`,
+- w `Admin.tsx` nigdy nie redirectować do `/`, gdy `user` istnieje, ale rola jeszcze nie została potwierdzona.
+
+To prawdopodobnie naprawi błąd już samo w sobie.
+
+---
+
+## QA po wdrożeniu
+
+### Test 1 — zwykłe logowanie
+1. Wejść na `/admin`
+2. Wpisać poprawny email i hasło
+3. Kliknąć „Zaloguj się”
+
+Oczekiwane:
+- brak przejścia na `/`
+- pozostajemy na `/admin`
+- zamiast formularza pojawia się panel admina
+
+### Test 2 — wolniejsza sieć / opóźniony role check
+Zasymulować wolniejsze połączenie lub po prostu obserwować stan po kliknięciu logowania.
+
+Oczekiwane:
+- przez chwilę może być loader
+- ale nie ma redirectu na `/`
+- po odpowiedzi `has_role=true` ładuje się panel
+
+### Test 3 — użytkownik bez roli admin
+Zalogować się kontem bez uprawnień.
+
+Oczekiwane:
+- brak skoku na `/`
+- pokazuje się kontrolowany ekran `PermissionDenied`
+
+### Test 4 — odświeżenie strony na `/admin`
+Będąc zalogowanym, odświeżyć `/admin`.
+
+Oczekiwane:
+- krótki loader / sprawdzenie sesji
+- potem panel
+- bez mignięcia strony głównej
+
+### Test 5 — produkcja
+Sprawdzić ten sam flow na opublikowanej wersji.
+
+Oczekiwane:
+- identycznie stabilne zachowanie
+- brak zależności od HMR/dev mode
+
+---
+
+## Efekt końcowy
+Po naprawie logowanie będzie działało tak:
+- użytkownik loguje się na `/admin`,
+- aplikacja czeka na rozstrzygnięcie sesji i roli,
+- panel otwiera się od razu po pozytywnym `has_role`,
+- użytkownik nie jest już błędnie przekierowywany na stronę główną.
+
+## Uwaga architektoniczna
+Jeśli docelowo chcesz mieć prawdziwe adresy:
+- `/admin/dashboard`
+- `/admin/products`
+- `/admin/faq`
+
+to warto zrobić to jako osobny refactor routera. Obecny bug nie wymaga jednak tej przebudowy; można go naprawić w obecnej architekturze przez poprawne zarządzanie stanem auth.
