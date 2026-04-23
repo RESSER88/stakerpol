@@ -479,6 +479,7 @@ export type Database = {
       }
       products: {
         Row: {
+          about_description: string | null
           additional_options: string | null
           availability_status: Database["public"]["Enums"]["availability_status"]
           battery: string | null
@@ -517,6 +518,7 @@ export type Database = {
           working_hours: number | null
         }
         Insert: {
+          about_description?: string | null
           additional_options?: string | null
           availability_status?: Database["public"]["Enums"]["availability_status"]
           battery?: string | null
@@ -555,6 +557,7 @@ export type Database = {
           working_hours?: number | null
         }
         Update: {
+          about_description?: string | null
           additional_options?: string | null
           availability_status?: Database["public"]["Enums"]["availability_status"]
           battery?: string | null
