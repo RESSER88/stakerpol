@@ -29,12 +29,33 @@ const Chapter05_Marketing = ({
       <SectionHeader number="05" title="Marketing" />
 
       <div className="space-y-6">
+        <div className="space-y-1">
+          <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-editorial-muted">
+            O tym modelu
+          </h3>
+          <p className="text-xs text-editorial-muted">
+            Dwa opisy wyświetlane obok siebie na stronie produktu. Łącznie max 1600 znaków — po 800 na kolumnę.
+          </p>
+        </div>
+
         <EditorialTextarea
-          label="Krótki opis marketingowy"
-          rows={3}
+          label="Opis pierwszy (lewa kolumna)"
+          rows={6}
+          maxLength={800}
           value={product.shortMarketingDescription || ''}
-          onChange={(e) => set({ shortMarketingDescription: e.target.value })}
-          placeholder="2–3 zdania na karcie produktu i w hero"
+          onChange={(e) => set({ shortMarketingDescription: e.target.value.slice(0, 800) })}
+          placeholder="Pierwszy akapit opisu modelu"
+          hint={`${(product.shortMarketingDescription || '').length}/800`}
+        />
+
+        <EditorialTextarea
+          label="Opis drugi (prawa kolumna)"
+          rows={6}
+          maxLength={800}
+          value={(product as any).aboutDescription || ''}
+          onChange={(e) => set({ aboutDescription: e.target.value.slice(0, 800) } as any)}
+          placeholder="Drugi akapit opisu modelu (opcjonalny)"
+          hint={`${((product as any).aboutDescription || '').length}/800`}
         />
 
         <label className="flex items-center gap-3 cursor-pointer select-none">

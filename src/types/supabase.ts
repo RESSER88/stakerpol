@@ -40,6 +40,7 @@ export const mapSupabaseProductToProduct = (supabaseProduct: SupabaseProduct, im
     availabilityStatus: (supabaseProduct as any).availability_status || 'available',
     conditionLabel: (supabaseProduct as any).condition_label || '',
     shortMarketingDescription: (supabaseProduct as any).short_marketing_description || '',
+    aboutDescription: (supabaseProduct as any).about_description || '',
     leasingMonthlyFromPln: (supabaseProduct as any).leasing_monthly_from_pln ?? null,
     warrantyMonths: (supabaseProduct as any).warranty_months ?? 3,
     isFeatured: (supabaseProduct as any).is_featured ?? false,
@@ -101,6 +102,7 @@ export const mapProductToSupabaseInsert = (product: any): SupabaseProductInsert 
     availability_status: product.availabilityStatus || 'available',
     condition_label: product.conditionLabel || null,
     short_marketing_description: product.shortMarketingDescription || null,
+    about_description: product.aboutDescription || null,
     leasing_monthly_from_pln: product.leasingMonthlyFromPln != null && product.leasingMonthlyFromPln !== ''
       ? Number(product.leasingMonthlyFromPln) : null,
     warranty_months: product.warrantyMonths != null && product.warrantyMonths !== ''
