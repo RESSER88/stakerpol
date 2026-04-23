@@ -1,86 +1,72 @@
 
 
-## Plan: Audyt hydracji pól w edytorze produktu (rozdziały 01–05)
+## Diagnoza: strona produktu nie odświeża się po zapisie w adminie
 
-### Diagnoza bug-u „Krótki opis"
+### Przyczyna główna (potwierdzona)
 
-Po prześledzeniu ścieżki danych (`Admin.tsx` → `ProductManager` → `ProductEditorView` → `Chapter02_Basic` → mapper `mapProductToSupabaseInsert/Update` → DB → mapper `mapSupabaseProductToProduct`) wartość `shortDescription` jest poprawnie zapisywana i odczytywana. Bug wynika z **dwóch problemów ze stanem lokalnym edytora**:
+Sprawdziłem w bazie publikację `supabase_realtime`:
 
-1. **`Admin.tsx` przechowuje `selectedProduct` jako odniesienie do obiektu pobranego ze starej tablicy `products`.** Po zapisie React Query unieważnia query, lista produktów dostaje nowe odniesienia, ale `selectedProduct` zostaje stary. Po zamknięciu i ponownym otwarciu edycji tego samego produktu (lub odświeżeniu w tle) widać niespójność.
-2. **W `Chapter02_Basic` onChange dla „Krótki opis" robi `set({ ...(product as any), shortDescription: ... })`** — patch zawiera cały produkt, który następnie jest po raz drugi spreadowany w `set`. Przy szybkim wpisywaniu i równoczesnym refetchu przez realtime (w `useSupabaseProducts` jest subskrypcja `postgres_changes` która unieważnia query po każdym update) powstaje race condition — `useEffect` w edytorze re-fire'uje i resetuje stan do świeżo pobranego produktu, gdzie `short_description` jeszcze nie zostało zapisane.
-
-Realtime invalidation na `products` powoduje też, że po zapisie tablica `products` w `Admin.tsx` jest świeża, ale `selectedProduct` (przekazywany jako `initialProduct`) wskazuje na stary obiekt lub na obiekt z innego renderu. `useEffect` w `ProductEditorView` reaguje na zmianę referencji `initialProduct` i resetuje stan lokalny — czasem do wartości sprzed zapisu.
-
-### Audyt pól — co jest poprawne, co wymaga naprawy
-
-**01 Zdjęcia** — `images` przekazywane jako prop, hydracja OK (z `selectedProduct.images` w `handleEdit`). ✅
-
-**02 Podstawowe**
-- `model`, `serialNumber`, `productionYear`, `condition`, `conditionLabel`, `battery`, `availabilityStatus`, `slug` — hydracja OK ✅
-- **`shortDescription`** — onChange spreaduje cały `product` w patchu (nadmiarowe i ryzykowne); `as any` cast ukrywa typowanie. Bug hydracji po zapisie. ❌
-- **`slogan`** — przeniesiony, zapis OK, hydracja OK ✅
-
-**03 Techniczne** — wszystkie pola przez `setSpec(k, v)` w obiekcie `product.specs`. Mapper poprawnie hydratuje wszystkie pola. ✅
-
-**04 Cena & Leasing**
-- `priceDisplayMode`, `netPrice`, `priceCurrency` — używają `as any` w obie strony, ale działa ✅
-- `leasingMonthlyFromPln`, `warrantyMonths` — poprawne ✅
-
-**05 Marketing**
-- `shortMarketingDescription`, `aboutDescription` — onChange poprawne, hydracja OK ✅
-- `isFeatured`, `faqIds` — OK ✅
-- `benefits` — ładowane osobno z `product_benefits` w `useEffect` w `ProductEditorView`. Po zapisie nie są re-hydratowane (tylko przy otwarciu modala). Akceptowalne, ale do poprawy.
-
-### Naprawa — plan zmian
-
-#### 1. `src/components/admin/editor/chapters/Chapter02_Basic.tsx`
-Uprościć onChange „Krótki opis" do spójnego wzorca jak inne pola:
-```ts
-onChange={(e) => set({ shortDescription: e.target.value.slice(0, 300) })}
 ```
-Usunąć `(product as any)` cast — `shortDescription` jest w typie `Product`. Zmienna `shortDesc` czytana bezpośrednio jako `product.shortDescription || ''`.
-
-#### 2. `src/pages/Admin.tsx`
-Wyciągnąć `defaultNewProduct` poza komponent (lub do `useMemo`), żeby nie dostawał nowej referencji przy każdym renderze:
-```ts
-const DEFAULT_NEW_PRODUCT: Product = { ... };
+SELECT * FROM pg_publication_tables WHERE pubname='supabase_realtime';
+→ [] (pusta)
 ```
-To eliminuje niepotrzebne re-firowanie `useEffect` w `ProductEditorView` przy renderach Admin spowodowanych aktualizacjami React Query.
 
-#### 3. `src/components/admin/editor/ProductEditorView.tsx`
-Po pomyślnym zapisie (`saveBasic`, `saveAll`) zsynchronizować stan lokalny z odpowiedzią serwera, żeby uniknąć rozbiegu z realtime'em:
-- `addProductAsync`/`updateProductAsync` zwracają `newProduct`/`updatedProduct` (raw row z Supabase). Po zapisie zmapować przez `mapSupabaseProductToProduct(updatedProduct, [...obecne images jako mock])` lub po prostu zachować obecny `product` state (bo był wysłany przez użytkownika).
-- Zmienić `useEffect` resetujący stan, żeby reagował tylko na **otwarcie** modala (`open` z false→true) lub zmianę `initialProduct.id`, a nie na każdą zmianę referencji `initialProduct`. Przykład:
-```ts
-useEffect(() => {
-  if (!open) return;
-  setProduct(initialProduct);
-  setImages(initialImages);
-  // ...
-}, [open, initialProduct.id]);
-```
-To zapobiega nadpisywaniu lokalnych zmian przez realtime invalidation.
+**Żadna tabela nie jest dodana do publikacji realtime.** W konsekwencji:
 
-#### 4. (opcjonalnie) `src/components/admin/ProductManager.tsx`
-Po zapisie zaktualizować `selectedProduct` w `Admin.tsx` świeżą wersją z listy `products` (po refetchu), żeby ponowne otwarcie tego samego produktu pokazywało aktualne dane. Można dodać `useEffect` w `Admin.tsx`:
-```ts
-useEffect(() => {
-  if (!selectedProduct?.id) return;
-  const fresh = products.find(p => p.id === selectedProduct.id);
-  if (fresh && fresh !== selectedProduct) setSelectedProduct(fresh);
-}, [products]);
+- W `src/hooks/usePublicSupabaseProducts.ts` jest subskrypcja `postgres_changes` na `products` i `product_images` z wywołaniem `refetch()` — ale **nigdy się nie odpala**, bo Postgres nie wysyła zmian dla tych tabel.
+- W `src/hooks/useSupabaseProducts.ts` (panel admina) ta sama subskrypcja również nie działa.
+- Inwalidacja `queryClient.invalidateQueries({ queryKey: ['public-products'] })` w mutacjach `addProduct/updateProduct/deleteProduct` działa **tylko w tej samej instancji aplikacji** (ten sam tab/SPA). Jeśli admin i strona produktu są w osobnych kartach/oknach, mają osobne `QueryClient` i invalidacja jednego nie wpływa na drugi — dlatego strona pokazuje stare dane.
+
+### Przyczyny pomocnicze
+
+W `usePublicSupabaseProducts.ts`:
+- `staleTime: 5 * 60 * 1000` (5 minut) — przez 5 minut React Query nie pobiera świeżych danych.
+- `refetchOnWindowFocus: false` — powrót na kartę nie wymusza odświeżenia.
+
+Łącznie: brak realtime + 5 min stale + brak refetch on focus = strona pokazuje cache aż do twardego F5.
+
+### Plan naprawy
+
+#### 1. Włączyć realtime na tabelach (migracja SQL)
+
+Dodać `products`, `product_images`, `product_benefits` do publikacji `supabase_realtime` oraz ustawić `REPLICA IDENTITY FULL`, żeby payload zawierał pełny wiersz:
+
+```sql
+ALTER TABLE public.products REPLICA IDENTITY FULL;
+ALTER TABLE public.product_images REPLICA IDENTITY FULL;
+ALTER TABLE public.product_benefits REPLICA IDENTITY FULL;
+
+ALTER PUBLICATION supabase_realtime ADD TABLE public.products;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.product_images;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.product_benefits;
 ```
-Ale tylko gdy modal jest **zamknięty** — żeby nie zakłócać edycji.
+
+To naprawia główny przypadek: użytkownik ma otwartą stronę produktu, w drugim oknie zapisuje w adminie → karta publiczna dostaje event i odświeża dane w 1–2 s.
+
+#### 2. Zaostrzyć cache na stronie publicznej (`src/hooks/usePublicSupabaseProducts.ts`)
+
+- `staleTime: 30 * 1000` (30 s) zamiast 5 min — kompromis między wydajnością a świeżością.
+- `refetchOnWindowFocus: true` — powrót na kartę po edycji w adminie wymusza pobranie świeżych danych. To działa nawet gdyby realtime padł.
+- `refetchOnMount: 'always'` dla pewności przy nawigacji wewnątrz SPA.
+
+#### 3. Bezpiecznik dla `ProductDetail` (`src/pages/ProductDetail.tsx`)
+
+Dodać `refetch()` przy zmianie `id` w `useEffect`, żeby kliknięcie linka do produktu zawsze pobrało aktualne dane (jeśli stare są starsze niż `staleTime`). React Query i tak to zrobi przy `refetchOnMount: 'always'`, ale jawne wywołanie nie zaszkodzi.
+
+### Odpowiedź na pytanie z zgłoszenia
+
+**Czy to wystąpi też na produkcji?** Tak — to nie jest problem HMR. Realtime nie jest skonfigurowany w bazie (zweryfikowane), `staleTime` i brak refetch on focus są ustawione w kodzie i działają identycznie na dev i prod. Dlatego na produkcji efekt będzie ten sam: do 5 min lub do twardego odświeżenia widać stare dane.
 
 ### Pliki do edycji
-- `src/components/admin/editor/chapters/Chapter02_Basic.tsx` — uproszczenie onChange „Krótki opis"
-- `src/pages/Admin.tsx` — `DEFAULT_NEW_PRODUCT` poza komponentem + sync `selectedProduct` po refetchu (gdy modal zamknięty)
-- `src/components/admin/editor/ProductEditorView.tsx` — `useEffect` zależny od `[open, initialProduct.id]` zamiast całego obiektu
+
+- nowa migracja `supabase/migrations/<timestamp>_enable_realtime_products.sql` — dodanie tabel do publikacji + REPLICA IDENTITY FULL
+- `src/hooks/usePublicSupabaseProducts.ts` — `staleTime`, `refetchOnWindowFocus`, `refetchOnMount`
+- `src/pages/ProductDetail.tsx` — opcjonalny `refetch()` przy zmianie `id`
 
 ### QA po wdrożeniu
-1. Edycja produktu → wpisać tekst w „Krótki opis" → Zapisz → pole nadal pokazuje wpisany tekst ✅
-2. Zamknąć modal → Edytuj ten sam produkt → pole pokazuje zapisaną wartość ✅
-3. To samo dla wszystkich pól w sekcjach 02–05.
-4. Realtime: zmienić produkt z drugiej karty → otwarty edytor nie nadpisuje stanu lokalnego.
-5. Tworzenie nowego produktu → po zapisie sekcji 02 odblokowują się rozdziały 01, 03, 04, 05 ✅
+
+1. Otwórz stronę produktu w karcie A. W karcie B w adminie zmień Slogan i zapisz → karta A aktualizuje się bez F5 w ciągu 1–2 s (realtime).
+2. Wyłącz realtime (np. tryb offline subskrypcji): edytuj w adminie, wróć na kartę A (focus) → dane się odświeżają (refetchOnWindowFocus).
+3. Nawiguj wewnątrz SPA: lista produktów → klik w produkt po edycji → świeże dane (refetchOnMount: always + krótki staleTime).
+4. Sprawdzić w konsoli logi `Public products realtime update detected:` po zapisie — wcześniej ich nie było.
 
