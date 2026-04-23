@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Navigate } from 'react-router-dom';
+
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useSupabaseProducts } from '@/hooks/useSupabaseProducts';
 import { Button } from '@/components/ui/button';
