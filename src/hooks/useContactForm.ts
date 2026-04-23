@@ -91,7 +91,8 @@ export function useContactForm() {
       }).select('id').single();
       if (error) throw error;
 
-      await supabase.functions.invoke('notify-lead', { body: payload });
+      // notify-lead is triggered automatically by DB trigger on leads INSERT
+      void payload;
       trackFormSubmit('contact_widget', productModel);
       trackGenerateLead(
         leadData?.id || crypto.randomUUID(),

@@ -54,14 +54,6 @@ const ContactLeadForm = () => {
     if (!validate()) return;
     setStatus('loading');
     try {
-      const payload = {
-        product_model: formData.interest || 'Zapytanie ogólne',
-        language: 'pl',
-        message: `Imię: ${formData.name}\nTelefon: ${formData.phone}${formData.email ? `\nEmail: ${formData.email}` : ''}${formData.interest ? `\nInteresuje mnie: ${formData.interest}` : ''}\n\nTreść:\n${formData.message}`,
-        phone: formData.phone,
-        page_url: window.location.href,
-        user_agent: navigator.userAgent,
-      };
       const { error } = await supabase.from('leads').insert({
         name: formData.name,
         phone: formData.phone,
@@ -74,7 +66,7 @@ const ContactLeadForm = () => {
       });
       if (error) throw error;
 
-      await supabase.functions.invoke('notify-lead', { body: payload });
+      // notify-lead is triggered automatically by DB trigger on leads INSERT
       trackFormSubmit('contact_lead_form');
       setStatus('success');
     } catch {

@@ -19,17 +19,16 @@ const CallbackMiniForm = () => {
     setError('');
     setStatus('loading');
     try {
-      const { error: err } = await supabase.functions.invoke('notify-lead', {
-        body: {
-          product_model: 'Prośba o kontakt zwrotny',
-          language: 'pl',
-          message: `Klient prosi o oddzwonienie.\nTelefon: ${phone}`,
-          phone,
-          page_url: window.location.href,
-          user_agent: navigator.userAgent,
-        },
+      const { error: err } = await supabase.from('leads').insert({
+        phone,
+        message: 'Klient prosi o oddzwonienie (formularz w sekcji „Nie wiesz od czego zacząć").',
+        source: 'callback_card',
+        page_url: window.location.href,
+        user_agent: navigator.userAgent,
+        rodo_accepted: true,
       });
       if (err) throw err;
+      // notify-lead is triggered automatically by DB trigger on leads INSERT
       trackFormSubmit('contact_callback_card');
       setStatus('success');
     } catch {
