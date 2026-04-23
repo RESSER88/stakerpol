@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useSupabaseProducts } from '@/hooks/useSupabaseProducts';
@@ -25,7 +25,9 @@ const Admin = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [productImages, setProductImages] = useState<string[]>([]);
 
-  const defaultNewProduct: Product = {
+  // Stable reference — recreating every render caused the editor's useEffect
+  // to re-fire and wipe locally-edited fields after a save / realtime refetch.
+  const defaultNewProduct: Product = useMemo(() => ({
     id: '',
     model: '',
     image: '',
@@ -55,7 +57,19 @@ const Admin = () => {
       capacity: '0',
       charger: ''
     }
-  };
+  }), []);
+
+  // After a refetch, sync `selectedProduct` with the fresh row from the list
+  // — but ONLY while the editor is closed, so we never overwrite in-flight edits.
+  useEffect(() => {
+    if (isEditDialogOpen) return;
+    if (!selectedProduct?.id) return;
+    const fresh = products.find((p: Product) => p.id === selectedProduct.id);
+    if (fresh && fresh !== selectedProduct) {
+      setSelectedProduct(fresh);
+      setProductImages(fresh.images || []);
+    }
+  }, [products, isEditDialogOpen, selectedProduct]);
 
   const handleEdit = (product: Product) => {
     setSelectedProduct(product);

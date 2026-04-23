@@ -60,34 +60,37 @@ const ProductEditorView = ({
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Hydrate local state ONLY when modal opens or when switching to a different product.
+  // Avoids overwriting user edits when realtime invalidates the products query and
+  // creates a new `initialProduct` reference for the same record.
   useEffect(() => {
-    if (open) {
-      setProduct(initialProduct);
-      setImages(initialImages);
-      const create = initialIsCreate;
-      setMode(create ? 'create' : 'edit');
-      setActiveChapter(create ? 2 : 1);
-      // load benefits for existing product
-      if (!create && initialProduct?.id) {
-        (async () => {
-          const { data } = await supabase
-            .from('product_benefits' as any)
-            .select('icon_name, title, description, sort_order')
-            .eq('product_id', initialProduct.id)
-            .order('sort_order', { ascending: true });
-          setBenefits(
-            ((data as any) || []).map((b: any) => ({
-              icon_name: b.icon_name || 'check',
-              title: b.title || '',
-              description: b.description || '',
-            }))
-          );
-        })();
-      } else {
-        setBenefits([]);
-      }
+    if (!open) return;
+    setProduct(initialProduct);
+    setImages(initialImages);
+    const create = initialIsCreate;
+    setMode(create ? 'create' : 'edit');
+    setActiveChapter(create ? 2 : 1);
+    // load benefits for existing product
+    if (!create && initialProduct?.id) {
+      (async () => {
+        const { data } = await supabase
+          .from('product_benefits' as any)
+          .select('icon_name, title, description, sort_order')
+          .eq('product_id', initialProduct.id)
+          .order('sort_order', { ascending: true });
+        setBenefits(
+          ((data as any) || []).map((b: any) => ({
+            icon_name: b.icon_name || 'check',
+            title: b.title || '',
+            description: b.description || '',
+          }))
+        );
+      })();
+    } else {
+      setBenefits([]);
     }
-  }, [open, initialProduct, initialImages, initialIsCreate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialProduct?.id]);
 
   const chapters = useChapterCompletion(product, images, mode);
   const completedCount = chapters.filter((c) => c.complete).length;
