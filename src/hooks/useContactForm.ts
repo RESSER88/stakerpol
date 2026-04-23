@@ -78,7 +78,7 @@ export function useContactForm() {
         page_url: window.location.href,
         user_agent: navigator.userAgent,
       };
-      const { data: leadData, error } = await supabase.from('leads').insert({
+      const { error } = await supabase.from('leads').insert({
         name: formData.name,
         email: isEmail ? formData.contact : null,
         phone: formData.contact,
@@ -88,14 +88,15 @@ export function useContactForm() {
         page_url: window.location.href,
         user_agent: navigator.userAgent,
         rodo_accepted: consent,
-      }).select('id').single();
+      });
       if (error) throw error;
 
       // notify-lead is triggered automatically by DB trigger on leads INSERT
+      // Anon users have INSERT but not SELECT on leads (RLS), so we don't read back the id.
       void payload;
       trackFormSubmit('contact_widget', productModel);
       trackGenerateLead(
-        leadData?.id || crypto.randomUUID(),
+        crypto.randomUUID(),
         source,
         productId || productModel
           ? { id: productId || '', model: productModel || 'Zapytanie ogólne' }
