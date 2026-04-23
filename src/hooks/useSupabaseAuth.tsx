@@ -133,7 +133,13 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (newSession?.user) {
         const shouldForceCheck = event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED';
-        if (shouldForceCheck || checkedRoleForUserRef.current !== newSession.user.id) {
+        const needsCheck = shouldForceCheck || checkedRoleForUserRef.current !== newSession.user.id;
+        if (needsCheck) {
+          // Set adminLoading=true synchronously to prevent the Admin page guard
+          // from briefly seeing "user present, isAdmin=false, adminLoading=false"
+          // and bouncing the user to "/" before has_role resolves.
+          setAdminLoading(true);
+          setAdminError(null);
           setTimeout(() => {
             if (mounted) void checkAdminRole(newSession.user.id, shouldForceCheck);
           }, 0);
@@ -153,6 +159,8 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
       if (existing) {
         setSession(existing);
         setUser(existing.user);
+        setAdminLoading(true);
+        setAdminError(null);
         setTimeout(() => {
           if (mounted) void checkAdminRole(existing.user.id);
         }, 0);
