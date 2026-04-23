@@ -18,6 +18,8 @@ const Chapter02_Basic = ({ product, onChange, onSave, saving, isCreate }: Props)
 
   const valid = !!product.model?.trim() && !!product.specs?.serialNumber?.trim();
   const shortDesc = (product as any).shortDescription || '';
+  const model = product.model || '';
+  const slogan = product.slogan || '';
 
   return (
     <div className="space-y-6">
@@ -33,9 +35,11 @@ const Chapter02_Basic = ({ product, onChange, onSave, saving, isCreate }: Props)
         <EditorialInput
           label="Model"
           required
-          value={product.model || ''}
-          onChange={(e) => set({ model: e.target.value })}
+          maxLength={22}
+          value={model}
+          onChange={(e) => set({ model: e.target.value.slice(0, 22) })}
           placeholder="np. Toyota SWE200D"
+          hint={`${model.length}/22`}
         />
         <EditorialInput
           label="Numer seryjny"
@@ -54,6 +58,15 @@ const Chapter02_Basic = ({ product, onChange, onSave, saving, isCreate }: Props)
         onChange={(e) => set({ ...(product as any), shortDescription: e.target.value.slice(0, 300) } as any)}
         placeholder="1–2 zdania o produkcie (max 300 znaków)"
         hint={`${shortDesc.length}/300`}
+      />
+
+      <EditorialInput
+        label="Slogan"
+        maxLength={86}
+        value={slogan}
+        onChange={(e) => set({ slogan: e.target.value.slice(0, 86) })}
+        placeholder="np. Niezawodność w każdej zmianie"
+        hint={`${slogan.length}/86 — krótkie hasło wyświetlane nad opisem`}
       />
 
       <div className="grid gap-6 md:grid-cols-2">

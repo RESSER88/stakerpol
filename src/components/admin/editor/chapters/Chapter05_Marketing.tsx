@@ -29,14 +29,6 @@ const Chapter05_Marketing = ({
       <SectionHeader number="05" title="Marketing" />
 
       <div className="space-y-6">
-        <EditorialInput
-          label="Slogan"
-          value={product.slogan || ''}
-          onChange={(e) => set({ slogan: e.target.value })}
-          placeholder="np. Niezawodność w każdej zmianie"
-          hint="Krótkie hasło wyświetlane nad opisem"
-        />
-
         <EditorialTextarea
           label="Krótki opis marketingowy"
           rows={3}
