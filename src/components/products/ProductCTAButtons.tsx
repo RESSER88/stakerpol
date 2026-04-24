@@ -2,6 +2,7 @@ import { Phone, Mail, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import { Product } from '@/types';
 import InquiryModal from '@/components/contact/InquiryModal';
+import { trackPhoneClick, trackWhatsAppClick } from '@/utils/analytics';
 
 interface Props {
   product: Product;
@@ -19,6 +20,7 @@ const ProductCTAButtons = ({ product }: Props) => {
       <div className="grid grid-cols-2 gap-2">
         <a
           href={`tel:${PHONE_TEL}`}
+          onClick={() => trackPhoneClick('product_cta')}
           className="flex items-center justify-center gap-2 rounded-[5px] font-bold text-white bg-orange-cta py-3 text-sm shadow-[0_4px_12px_-4px_hsl(var(--color-orange-cta)/0.5)] hover:opacity-95 transition"
         >
           <Phone size={16} />
@@ -35,6 +37,7 @@ const ProductCTAButtons = ({ product }: Props) => {
       </div>
       <a
         href={`https://wa.me/${PHONE_WA}?text=${waText}`}
+        onClick={() => trackWhatsAppClick('product_cta')}
         target="_blank"
         rel="noopener noreferrer"
         className="flex w-full items-center justify-center gap-2 rounded-[5px] font-bold bg-white text-whatsapp border border-whatsapp py-2.5 text-[12.5px] hover:bg-whatsapp/5 transition"
