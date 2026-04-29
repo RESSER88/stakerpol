@@ -3,7 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
+import { Search } from 'lucide-react';
 import { Product } from '@/types';
 import { useTranslation } from '@/utils/translations';
 import { Language } from '@/contexts/LanguageContext';
@@ -48,14 +50,17 @@ const FilterModal = ({ isOpen, onClose, products, onApplyFilters, language }: Fi
   const [filters, setFilters] = useState({
     year: [ranges.year.min, ranges.year.max],
     hours: [ranges.hours.min, ranges.hours.max],
-    height: [ranges.height.min, ranges.height.max]
+    height: [ranges.height.min, ranges.height.max],
+    serial: ''
   });
 
   const filteredProducts = useMemo(() => {
+    const serialQuery = filters.serial.trim().toLowerCase();
     return products.filter(product => {
       const productYear = Number(product.specs?.productionYear);
       const productHours = Number(product.specs?.workingHours);
       const productHeight = Number(product.specs?.liftHeight);
+      const productSerial = (product.specs?.serialNumber || '').toString().toLowerCase();
 
       const yearMatch = !productYear ||
         (productYear >= filters.year[0] && productYear <= filters.year[1]);
@@ -66,7 +71,9 @@ const FilterModal = ({ isOpen, onClose, products, onApplyFilters, language }: Fi
       const heightMatch = !productHeight ||
         (productHeight >= filters.height[0] && productHeight <= filters.height[1]);
 
-      return yearMatch && hoursMatch && heightMatch;
+      const serialMatch = !serialQuery || productSerial.includes(serialQuery);
+
+      return yearMatch && hoursMatch && heightMatch && serialMatch;
     });
   }, [products, filters]);
 
@@ -79,7 +86,8 @@ const FilterModal = ({ isOpen, onClose, products, onApplyFilters, language }: Fi
     setFilters({
       year: [ranges.year.min, ranges.year.max],
       hours: [ranges.hours.min, ranges.hours.max],
-      height: [ranges.height.min, ranges.height.max]
+      height: [ranges.height.min, ranges.height.max],
+      serial: ''
     });
   };
 
@@ -140,6 +148,32 @@ const FilterModal = ({ isOpen, onClose, products, onApplyFilters, language }: Fi
           <span>{ranges.height.min} mm</span>
           <span>{ranges.height.max} mm</span>
         </div>
+      </div>
+
+      {/* Serial Number Search */}
+      <div className="space-y-3 pt-2 border-t">
+        <Label htmlFor="serial-search" className="text-sm font-medium">
+          Numer seryjny
+        </Label>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input
+            id="serial-search"
+            type="text"
+            inputMode="search"
+            autoComplete="off"
+            maxLength={64}
+            placeholder="np. 6865256"
+            value={filters.serial}
+            onChange={(e) => setFilters(prev => ({ ...prev, serial: e.target.value }))}
+            className="pl-10"
+          />
+        </div>
+        {filters.serial.trim().length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            Wyszukiwanie częściowe — wystarczy fragment numeru
+          </p>
+        )}
       </div>
 
       {/* Results Preview */}
