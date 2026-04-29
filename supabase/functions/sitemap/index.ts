@@ -43,6 +43,7 @@ serve(async (req) => {
       { url: '/products', lastmod: now, changefreq: 'daily', priority: '0.9' },
       { url: '/contact', lastmod: now, changefreq: 'monthly', priority: '0.8' },
       { url: '/testimonials', lastmod: now, changefreq: 'monthly', priority: '0.7' },
+      { url: '/faq', lastmod: now, changefreq: 'monthly', priority: '0.7' },
     ];
 
     // Product pages

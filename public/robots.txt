@@ -29,7 +29,6 @@ User-agent: *
 Allow: /
 
 # Sitemaps
-Sitemap: https://stakerpol.pl/sitemap.xml
 Sitemap: https://peztqgfmmnxaaoapzpbw.supabase.co/functions/v1/sitemap
 
 # GEO Feed for AI Search Engines
