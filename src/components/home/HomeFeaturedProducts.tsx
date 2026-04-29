@@ -19,8 +19,7 @@ const HomeFeaturedProducts = ({ products, isLoading }: Props) => {
           Nasze wózki
         </h2>
         <p className="text-sm md:text-base text-ink-soft mt-2 max-w-2xl">
-          Sprawdź najnowsze egzemplarze. Wszystkie dostępne od ręki, po pełnym
-          przygotowaniu.
+          Wózki po pełnym przygotowaniu dostępne od ręki
         </p>
 
         {isLoading ? (
