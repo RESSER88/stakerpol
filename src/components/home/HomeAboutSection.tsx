@@ -31,9 +31,6 @@ const HomeAboutSection = () => {
   return (
     <section className="bg-surface-soft py-10 md:py-16">
       <div className="container-custom max-w-[1200px] px-4 md:px-6">
-        <div className="font-mono text-xs md:text-sm text-orange-cta tracking-widest mb-2">
-          02
-        </div>
         <h2 className="text-xl md:text-3xl font-extrabold text-navy-brand leading-tight">
           Stakerpol — Twój partner w wyposażeniu magazynu
         </h2>
