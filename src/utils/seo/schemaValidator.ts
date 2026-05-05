@@ -123,8 +123,9 @@ export const validateProductSchema = (schema: ProductSchemaData): ValidationResu
   }
 
   // Review/Rating validation
-  if (schema.aggregateRating) {
-    if (schema.aggregateRating.ratingValue < 1 || schema.aggregateRating.ratingValue > 5) {
+  const aggregateRating = (schema as any).aggregateRating;
+  if (aggregateRating) {
+    if (aggregateRating.ratingValue < 1 || aggregateRating.ratingValue > 5) {
       errors.push({
         field: 'aggregateRating.ratingValue',
         message: 'Rating value must be between 1 and 5',
@@ -132,7 +133,7 @@ export const validateProductSchema = (schema: ProductSchemaData): ValidationResu
       });
     }
 
-    if (schema.aggregateRating.reviewCount <= 0) {
+    if (aggregateRating.reviewCount <= 0) {
       errors.push({
         field: 'aggregateRating.reviewCount',
         message: 'Review count must be greater than 0',
@@ -153,7 +154,7 @@ export const checkGoogleCompliance = (schema: ProductSchemaData): ValidationErro
 
   // Google requires name, image, and either offers or review/aggregateRating
   const hasOffers = schema.offers && (schema.offers.price || schema.offers.availability);
-  const hasReviews = schema.aggregateRating && schema.aggregateRating.reviewCount > 0;
+  const hasReviews = (schema as any).aggregateRating && (schema as any).aggregateRating.reviewCount > 0;
 
   if (!schema.name) {
     issues.push({
