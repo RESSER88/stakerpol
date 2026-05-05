@@ -469,10 +469,10 @@ serve(async (req) => {
       }
 
       case 'get_translation_stats': {
-        // Get API keys usage
-        const { data: apiKeys } = await supabase
+        // Get API keys usage (NEVER return api_key_encrypted)
+        const { data: apiKeysRaw } = await supabase
           .from('deepl_api_keys')
-          .select('*')
+          .select('id, api_key_masked, is_primary, is_active, status, quota_used, quota_remaining, created_at, updated_at')
           .eq('is_active', true);
 
         // Get recent translation logs
@@ -484,7 +484,7 @@ serve(async (req) => {
 
         return new Response(JSON.stringify({
           success: true,
-          apiKeys: apiKeys || [],
+          apiKeys: apiKeysRaw || [],
           recentLogs: recentLogs || []
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
