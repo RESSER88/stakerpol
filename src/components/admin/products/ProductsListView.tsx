@@ -158,11 +158,11 @@ const ProductsListView = ({
                   </div>
                 </button>
 
-                {/* Actions cluster — right side, beside status dot */}
-                <div className="absolute top-1/2 -translate-y-1/2 right-2 md:right-3 flex items-center gap-0.5 md:gap-1">
+                {/* Actions cluster — right side */}
+                <div className="absolute top-1/2 -translate-y-1/2 right-1 md:right-2 flex items-center gap-0 md:gap-0.5">
                   <div
                     className={cn(
-                      'flex items-center gap-0.5 md:gap-1 transition-opacity',
+                      'flex items-center gap-0 md:gap-0.5 transition-opacity',
                       'opacity-100 md:opacity-0 md:group-hover/row:opacity-100 md:focus-within:opacity-100'
                     )}
                   >
@@ -172,7 +172,7 @@ const ProductsListView = ({
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); onCopy(p); }}
-                      className="h-11 w-11 md:h-8 md:w-8 inline-flex items-center justify-center text-editorial-muted hover:text-editorial-ink hover:bg-editorial-line/40 transition-colors rounded-sm"
+                      className="h-10 w-10 md:h-8 md:w-8 inline-flex items-center justify-center text-editorial-muted hover:text-editorial-ink hover:bg-editorial-line/40 transition-colors rounded-sm"
                       title="Duplikuj"
                       aria-label="Duplikuj"
                     >
@@ -181,14 +181,13 @@ const ProductsListView = ({
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); onDelete(p); }}
-                      className="h-11 w-11 md:h-8 md:w-8 inline-flex items-center justify-center text-editorial-bad hover:bg-editorial-bad/10 transition-colors rounded-sm"
+                      className="h-10 w-10 md:h-8 md:w-8 inline-flex items-center justify-center text-editorial-bad hover:bg-editorial-bad/10 transition-colors rounded-sm"
                       title="Usuń"
                       aria-label="Usuń"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
-                  <StatusDot status={p.availabilityStatus} className="ml-1 shrink-0" />
                 </div>
               </li>
             );
