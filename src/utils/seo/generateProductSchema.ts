@@ -1,5 +1,4 @@
 import { Product } from '@/types';
-import { testimonials } from '@/data/testimonials/testimonialsData';
 import { ProductSEOSettings } from '@/hooks/useProductSEO';
 
 export interface ProductSchemaData {
@@ -26,30 +25,6 @@ export interface ProductSchemaData {
     value: string;
     unitCode?: string;
   }>;
-  review: Array<{
-    "@type": string;
-    author: {
-      "@type": string;
-      name: string;
-    };
-    reviewBody: string;
-    reviewRating: {
-      "@type": string;
-      ratingValue: number;
-      bestRating: number;
-    };
-    publisher: {
-      "@type": string;
-      name: string;
-    };
-  }>;
-  aggregateRating: {
-    "@type": string;
-    ratingValue: number;
-    reviewCount: number;
-    bestRating: number;
-    worstRating: number;
-  };
   offers?: {
     "@type": string;
     availability: string;
@@ -62,6 +37,42 @@ export interface ProductSchemaData {
       name: string;
       url: string;
       telephone: string;
+    };
+    hasMerchantReturnPolicy?: {
+      "@type": string;
+      applicableCountry: string;
+      returnPolicyCategory: string;
+    };
+    shippingDetails?: {
+      "@type": string;
+      shippingRate: {
+        "@type": string;
+        currency: string;
+      };
+      shippingDestination: {
+        "@type": string;
+        addressCountry: string;
+      };
+      deliveryTime: {
+        "@type": string;
+        businessDays: {
+          "@type": string;
+          dayOfWeek: string[];
+        };
+        cutoffTime: string;
+        handlingTime: {
+          "@type": string;
+          minValue: number;
+          maxValue: number;
+          unitCode: string;
+        };
+        transitTime: {
+          "@type": string;
+          minValue: number;
+          maxValue: number;
+          unitCode: string;
+        };
+      };
     };
   };
   productionDate?: string;
@@ -174,40 +185,6 @@ const getAdditionalProperties = (product: Product) => {
   return properties;
 };
 
-const getReviewsData = () => {
-  const reviews = testimonials.map((testimonial) => ({
-    "@type": "Review" as const,
-    "author": {
-      "@type": "Person" as const,
-      "name": testimonial.name
-    },
-    "reviewBody": testimonial.content,
-    "reviewRating": {
-      "@type": "Rating" as const,
-      "ratingValue": testimonial.rating,
-      "bestRating": 5
-    },
-    "publisher": {
-      "@type": "Organization" as const, 
-      "name": testimonial.company || "Stakerpol"
-    }
-  }));
-
-  const totalRating = testimonials.reduce((sum, t) => sum + t.rating, 0);
-  const averageRating = Math.round((totalRating / testimonials.length) * 10) / 10;
-
-  return {
-    reviews,
-    aggregateRating: {
-      "@type": "AggregateRating" as const,
-      "ratingValue": averageRating,
-      "reviewCount": testimonials.length,
-      "bestRating": 5,
-      "worstRating": 1
-    }
-  };
-};
-
 const getCurrentUrl = (product: Product) => {
   if (typeof window !== 'undefined') {
     return window.location.href;
@@ -246,8 +223,6 @@ export const generateProductSchema = (
   product: Product, 
   seoSettings?: ProductSEOSettings | null
 ): ProductSchemaData => {
-  const reviewsData = getReviewsData();
-  
   const schema: ProductSchemaData = {
     "@context": "https://schema.org/",
     "@type": "Product",
@@ -267,8 +242,6 @@ export const generateProductSchema = (
     },
     "category": "Wózki widłowe",
     "additionalProperty": getAdditionalProperties(product),
-    "review": reviewsData.reviews,
-    "aggregateRating": reviewsData.aggregateRating,
   };
 
   // Add GTIN/MPN if available from SEO settings
@@ -292,6 +265,48 @@ export const generateProductSchema = (
         "name": "Stakerpol",
         "url": "https://stakerpol.pl",
         "telephone": "+48694133592"
+      },
+      "hasMerchantReturnPolicy": {
+        "@type": "MerchantReturnPolicy",
+        "applicableCountry": "PL",
+        "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"
+      },
+      "shippingDetails": {
+        "@type": "OfferShippingDetails",
+        "shippingRate": {
+          "@type": "MonetaryAmount",
+          "currency": "PLN"
+        },
+        "shippingDestination": {
+          "@type": "DefinedRegion",
+          "addressCountry": "PL"
+        },
+        "deliveryTime": {
+          "@type": "ShippingDeliveryTime",
+          "businessDays": {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "https://schema.org/Monday",
+              "https://schema.org/Tuesday",
+              "https://schema.org/Wednesday",
+              "https://schema.org/Thursday",
+              "https://schema.org/Friday"
+            ]
+          },
+          "cutoffTime": "16:00:00+01:00",
+          "handlingTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 1,
+            "maxValue": 3,
+            "unitCode": "DAY"
+          },
+          "transitTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 1,
+            "maxValue": 5,
+            "unitCode": "DAY"
+          }
+        }
       }
     };
 
