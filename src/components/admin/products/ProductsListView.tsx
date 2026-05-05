@@ -114,6 +114,12 @@ const ProductsListView = ({
         <ul className="border-t border-editorial-line">
           {filtered.map((p, idx) => {
             const num = String(idx + 1).padStart(2, '0');
+            const anyP = p as any;
+            const currency = anyP.priceCurrency || 'PLN';
+            const priceLabel =
+              anyP.priceDisplayMode === 'show_price' && Number(anyP.netPrice) > 0
+                ? new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }).format(Number(anyP.netPrice)) + ' ' + currency
+                : '— ' + currency;
             const meta: string[] = [];
             if (p.specs.serialNumber) meta.push(`#${p.specs.serialNumber}`);
             if (p.specs.productionYear) meta.push(p.specs.productionYear);
@@ -121,15 +127,19 @@ const ProductsListView = ({
             if (p.specs.mastLiftingCapacity || p.specs.capacity)
               meta.push(`${p.specs.mastLiftingCapacity || p.specs.capacity} kg`);
             if (p.specs.liftHeight) meta.push(`${p.specs.liftHeight} mm`);
+            meta.push(priceLabel);
 
             return (
               <li key={p.id} className="border-b border-editorial-line group/row relative">
                 <button
                   onClick={() => onEdit(p)}
-                  className="w-full flex items-start gap-4 py-4 pr-28 md:pr-32 text-left group"
+                  className="w-full flex items-start gap-4 py-4 pr-24 md:pr-28 text-left group"
                 >
-                  <span className="text-[10px] font-bold tracking-[0.2em] text-editorial-accent w-7 pt-1 shrink-0">
-                    {num}
+                  <span className="flex items-center gap-1.5 w-auto pt-1 shrink-0">
+                    <span className="text-[10px] font-bold tracking-[0.2em] text-editorial-accent">
+                      {num}
+                    </span>
+                    <StatusDot status={p.availabilityStatus} />
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
