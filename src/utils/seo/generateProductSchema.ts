@@ -295,12 +295,32 @@ export const generateProductSchema = (
       }
     };
 
-    // Add price if available
-    if (seoSettings?.price) {
-      schema.offers.price = seoSettings.price.toString();
+    // Price source priority:
+    // 1) Main product fields (priceDisplayMode === 'show_price' + netPrice > 0) — primary
+    // 2) Legacy seoSettings.price — fallback ONLY when product has no priceDisplayMode set
+    // 3) Otherwise omit price (inquiry_only or no price configured)
+    const priceDisplayMode = (product as any).priceDisplayMode as string | undefined | null;
+    const netPriceRaw = (product as any).netPrice as number | string | null | undefined;
+    const productCurrency = (product as any).priceCurrency as string | null | undefined;
+    const netPriceNum = netPriceRaw != null && netPriceRaw !== '' ? Number(netPriceRaw) : NaN;
+
+    if (priceDisplayMode === 'show_price' && Number.isFinite(netPriceNum) && netPriceNum > 0) {
+      schema.offers.price = netPriceNum.toFixed(2);
+      schema.offers.priceCurrency = productCurrency || 'PLN';
+      // Preserve legacy priceValidUntil from seoSettings if present
+      if (seoSettings?.price_valid_until) {
+        schema.offers.priceValidUntil = getPriceValidUntil(seoSettings.price_valid_until);
+      }
+    } else if (
+      (priceDisplayMode == null) &&
+      seoSettings?.price &&
+      Number(seoSettings.price) > 0
+    ) {
+      schema.offers.price = Number(seoSettings.price).toString();
       schema.offers.priceCurrency = seoSettings.price_currency || 'PLN';
       schema.offers.priceValidUntil = getPriceValidUntil(seoSettings.price_valid_until);
     }
+    // else: inquiry_only or no price → omit offers.price (no price leak)
   }
 
   // Add production year if available
