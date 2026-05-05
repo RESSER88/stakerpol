@@ -285,6 +285,35 @@ serve(async (req) => {
   }
 
   try {
+    // ===== Authentication & admin authorization =====
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    const userClient = createClient(
+      supabaseUrl,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
+      _user_id: claimsData.claims.sub,
+      _role: 'admin'
+    });
+    if (roleError || !isAdmin) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     const body = await req.json();
     console.log('🚨 INCOMING REQUEST BODY:', JSON.stringify(body, null, 2));
     
@@ -440,10 +469,10 @@ serve(async (req) => {
       }
 
       case 'get_translation_stats': {
-        // Get API keys usage
-        const { data: apiKeys } = await supabase
+        // Get API keys usage (NEVER return api_key_encrypted)
+        const { data: apiKeysRaw } = await supabase
           .from('deepl_api_keys')
-          .select('*')
+          .select('id, api_key_masked, is_primary, is_active, status, quota_used, quota_remaining, created_at, updated_at')
           .eq('is_active', true);
 
         // Get recent translation logs
@@ -455,7 +484,7 @@ serve(async (req) => {
 
         return new Response(JSON.stringify({
           success: true,
-          apiKeys: apiKeys || [],
+          apiKeys: apiKeysRaw || [],
           recentLogs: recentLogs || []
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
