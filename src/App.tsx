@@ -19,6 +19,7 @@ const Contact = lazy(() => import("./pages/Contact"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Admin = lazy(() => import('./pages/Admin'));
 const FAQ = lazy(() => import("./pages/FAQ"));
+const Privacy = lazy(() => import("./pages/Privacy"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +43,7 @@ const AppRoutes = () => {
         <Route path="/testimonials" element={<Testimonials />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
