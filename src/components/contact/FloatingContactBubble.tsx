@@ -100,7 +100,7 @@ const FloatingContactBubble = () => {
                   />
                   <span className="text-[13px] text-gray-700 leading-snug">
                     Akceptuję{' '}
-                    <a href="/polityka-prywatnosci" target="_blank" rel="noopener noreferrer" className="text-[hsl(25,100%,50%)] underline">
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[hsl(25,100%,50%)] underline">
                       politykę prywatności
                     </a>
                     {' *'}
