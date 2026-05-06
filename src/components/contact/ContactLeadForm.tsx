@@ -151,7 +151,7 @@ const ContactLeadForm = () => {
             />
             <span className="text-[13px] text-gray-700 leading-snug">
               Akceptuję{' '}
-              <a href="/polityka-prywatnosci" target="_blank" rel="noopener noreferrer" className="text-stakerpol-orange underline">politykę prywatności</a>
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-stakerpol-orange underline">politykę prywatności</a>
               {' *'}
             </span>
           </label>

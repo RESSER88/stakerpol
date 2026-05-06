@@ -124,7 +124,7 @@ const InquiryModal = ({ isOpen, onClose, source, productId, productModel, serial
                   <span className="text-[13px] text-foreground/85 leading-snug">
                     Akceptuję{' '}
                     <a
-                      href="/polityka-prywatnosci"
+                      href="/privacy"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-stakerpol-orange underline"

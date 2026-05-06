@@ -83,7 +83,7 @@ const HeroContactForm = () => {
                 <span className="text-[13px] text-white/90 leading-snug">
                   Akceptuję{' '}
                   <a
-                    href="/polityka-prywatnosci"
+                    href="/privacy"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[hsl(25,100%,60%)] underline"
