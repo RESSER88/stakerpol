@@ -61,7 +61,7 @@ export const migrateFAQData = async () => {
     
     const { error: insertError } = await supabase
       .from('faqs')
-      .insert(batch);
+      .insert(batch as any);
     
     if (insertError) {
       console.error('Error inserting FAQ batch:', insertError);
