@@ -71,34 +71,49 @@ export type Database = {
       faqs: {
         Row: {
           answer: string
+          category: string
           created_at: string
           display_locations: string[]
           display_order: number
           id: string
+          inline_cta_action: string | null
+          inline_cta_label: string | null
           is_active: boolean
+          is_featured: boolean
           language: string
+          linked_product_ids: string[]
           question: string
           updated_at: string
         }
         Insert: {
           answer: string
+          category: string
           created_at?: string
           display_locations?: string[]
           display_order?: number
           id?: string
+          inline_cta_action?: string | null
+          inline_cta_label?: string | null
           is_active?: boolean
+          is_featured?: boolean
           language: string
+          linked_product_ids?: string[]
           question: string
           updated_at?: string
         }
         Update: {
           answer?: string
+          category?: string
           created_at?: string
           display_locations?: string[]
           display_order?: number
           id?: string
+          inline_cta_action?: string | null
+          inline_cta_label?: string | null
           is_active?: boolean
+          is_featured?: boolean
           language?: string
+          linked_product_ids?: string[]
           question?: string
           updated_at?: string
         }
