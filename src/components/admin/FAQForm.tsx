@@ -299,8 +299,9 @@ const FAQForm: React.FC<FAQFormProps> = ({ faq, onSubmit, onCancel }) => {
           {featuredCount >= 5 && ' — przekroczono zalecaną liczbę.'}
         </p>
       </div>
+      </div>
 
-      <div className="flex justify-end gap-3 pt-4 border-t border-editorial-line">
+      <div className="sticky bottom-0 flex justify-end gap-3 px-6 py-4 border-t border-editorial-line bg-background">
         <EditorialButton type="button" variant="outline" onClick={onCancel}>
           Anuluj
         </EditorialButton>
