@@ -87,7 +87,7 @@ const ProductMultiSelect = ({ value, onChange, maxItems = 3 }: Props) => {
   }
 
   return (
-    <div className="space-y-2">
+    <div ref={containerRef} className="space-y-2">
       <div className="flex items-center justify-between">
         <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-editorial-muted">
           Wybrane: {value.length} / {maxItems}
