@@ -7,6 +7,12 @@ import { COMPANY_PHONE_DISPLAY } from '@/lib/contact';
 interface HomeHeroFormProps {
   variant?: 'light' | 'dark';
   isInHero?: boolean;
+  source?: string;
+  title?: string;
+  subtitle?: string;
+  ctaLabel?: string;
+  prefilledMessage?: string;
+  onSuccess?: () => void;
 }
 
 const phoneRegex = /^(\+48\s?)?[5-9]\d{2}[\s-]?\d{3}[\s-]?\d{3}$/;
