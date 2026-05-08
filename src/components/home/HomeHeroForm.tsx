@@ -33,11 +33,20 @@ const schema = z.object({
 
 type FieldErrors = Partial<Record<'name' | 'email' | 'phone' | 'message' | 'rodo' | '_form', string>>;
 
-const HomeHeroForm = ({ isInHero = false, variant = 'light' }: HomeHeroFormProps) => {
+const HomeHeroForm = ({
+  isInHero = false,
+  variant = 'light',
+  source = 'home_hero_form',
+  title,
+  subtitle,
+  ctaLabel,
+  prefilledMessage = '',
+  onSuccess,
+}: HomeHeroFormProps) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(prefilledMessage);
   const [rodo, setRodo] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
