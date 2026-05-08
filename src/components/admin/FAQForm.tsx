@@ -150,7 +150,8 @@ const FAQForm: React.FC<FAQFormProps> = ({ faq, onSubmit, onCancel }) => {
   const overLimit = labelLength > 40;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="flex flex-col max-h-[70vh] -mx-6 -mb-6">
+      <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-5">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <EditorialSelect
           label="Język"
