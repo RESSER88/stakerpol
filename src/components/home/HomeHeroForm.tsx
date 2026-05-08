@@ -130,9 +130,11 @@ const HomeHeroForm = ({
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <h3 className={isDark ? 'text-base font-extrabold text-white' : 'text-base font-extrabold text-navy-brand'}>Zapytaj o wózek</h3>
+      <h3 className={isDark ? 'text-base font-extrabold text-white' : 'text-base font-extrabold text-navy-brand'}>{title ?? 'Zapytaj o wózek'}</h3>
       <p className={isDark ? 'text-xs text-white/75 mt-1 mb-3.5' : 'text-xs text-ink-soft mt-1 mb-3.5'}>
-        Opisz potrzebę — odpowiemy w ciągu 30 minut. <strong className={isDark ? 'text-white' : 'text-ink'}>Bez zobowiązań.</strong>
+        {subtitle ?? (
+          <>Opisz potrzebę — odpowiemy w ciągu 30 minut. <strong className={isDark ? 'text-white' : 'text-ink'}>Bez zobowiązań.</strong></>
+        )}
       </p>
 
       <div className="space-y-2.5">
