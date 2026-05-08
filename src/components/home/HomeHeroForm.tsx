@@ -240,7 +240,7 @@ const HomeHeroForm = ({
             Wysyłanie...
           </>
         ) : (
-          'Wyślij zapytanie →'
+          ctaLabel ?? 'Wyślij zapytanie →'
         )}
       </button>
 
