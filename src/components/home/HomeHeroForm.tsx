@@ -95,7 +95,7 @@ const HomeHeroForm = ({
         phone: result.data.phone,
         message: result.data.message || null,
         rodo_accepted: true,
-        source: 'home_hero_form',
+        source,
         page_url: typeof window !== 'undefined' ? window.location.href : null,
         user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
       });
@@ -103,6 +103,7 @@ const HomeHeroForm = ({
       if (error) throw error;
 
       setSuccess(true);
+      onSuccess?.();
       setTimeout(reset, 10000);
     } catch (err) {
       setErrors({
