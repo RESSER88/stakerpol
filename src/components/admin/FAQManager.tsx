@@ -15,7 +15,7 @@ const FAQManager: React.FC = () => {
   const { createFAQ, updateFAQ, deleteFAQ, hardDeleteFAQ, toggleFAQActive, getAllFAQsForAdmin } = useSupabaseFAQ();
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedLanguage, setSelectedLanguage] = useState('all');
+  const [selectedLanguage, setSelectedLanguage] = useState('pl');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingFAQ, setEditingFAQ] = useState<FAQ | undefined>();
   const [deletingFAQId, setDeletingFAQId] = useState<string | null>(null);
