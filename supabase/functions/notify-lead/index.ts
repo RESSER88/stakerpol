@@ -30,6 +30,22 @@ interface LeadPayload {
   created_at?: string;
 }
 
+const SOURCE_LABELS: Record<string, string> = {
+  home_hero_form: 'Formularz na stronie głównej',
+  faq_form: 'Formularz pod FAQ',
+  faq_test_drive: 'FAQ — prośba o test wózka',
+  faq_transport: 'FAQ — wycena transportu',
+  faq_callback: 'FAQ — prośba o oddzwonienie',
+  product_inquiry: 'Zapytanie o produkt',
+  chat_widget: 'Floating chat',
+  booking_modal: 'Umów wizytę',
+};
+
+const getSourceLabel = (source?: string | null): string => {
+  if (!source) return '—';
+  return SOURCE_LABELS[source] ?? source;
+};
+
 const formatPlDateTime = (iso?: string) => {
   try {
     const d = iso ? new Date(iso) : new Date();
@@ -108,7 +124,7 @@ const handler = async (req: Request): Promise<Response> => {
             ${lead.phone ? `<p><strong>Telefon:</strong> <a href="${phoneHref}">${lead.phone}</a></p>` : ""}
             ${lead.email ? `<p><strong>E-mail:</strong> ${lead.email}</p>` : ""}
             <p><strong>Język:</strong> ${lead.language}</p>
-            ${lead.source ? `<p><strong>Źródło:</strong> ${lead.source}</p>` : ""}
+            ${lead.source ? `<p><strong>Źródło:</strong> ${getSourceLabel(lead.source)}</p>` : ""}
             ${lead.message ? `<p><strong>Wiadomość:</strong><br/>${(lead.message || "").replace(/\n/g, "<br/>")}</p>` : ""}
             ${lead.page_url ? `<p><strong>Strona:</strong> <a href="${lead.page_url}">${lead.page_url}</a></p>` : ""}
             ${lead.user_agent ? `<p><strong>UA:</strong> ${lead.user_agent}</p>` : ""}

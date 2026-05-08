@@ -7,6 +7,12 @@ import { COMPANY_PHONE_DISPLAY } from '@/lib/contact';
 interface HomeHeroFormProps {
   variant?: 'light' | 'dark';
   isInHero?: boolean;
+  source?: string;
+  title?: string;
+  subtitle?: string;
+  ctaLabel?: string;
+  prefilledMessage?: string;
+  onSuccess?: () => void;
 }
 
 const phoneRegex = /^(\+48\s?)?[5-9]\d{2}[\s-]?\d{3}[\s-]?\d{3}$/;
@@ -27,11 +33,20 @@ const schema = z.object({
 
 type FieldErrors = Partial<Record<'name' | 'email' | 'phone' | 'message' | 'rodo' | '_form', string>>;
 
-const HomeHeroForm = ({ isInHero = false, variant = 'light' }: HomeHeroFormProps) => {
+const HomeHeroForm = ({
+  isInHero = false,
+  variant = 'light',
+  source = 'home_hero_form',
+  title,
+  subtitle,
+  ctaLabel,
+  prefilledMessage = '',
+  onSuccess,
+}: HomeHeroFormProps) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(prefilledMessage);
   const [rodo, setRodo] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -50,7 +65,7 @@ const HomeHeroForm = ({ isInHero = false, variant = 'light' }: HomeHeroFormProps
     setName('');
     setEmail('');
     setPhone('');
-    setMessage('');
+    setMessage(prefilledMessage);
     setRodo(false);
     setErrors({});
     setSuccess(false);
@@ -80,7 +95,7 @@ const HomeHeroForm = ({ isInHero = false, variant = 'light' }: HomeHeroFormProps
         phone: result.data.phone,
         message: result.data.message || null,
         rodo_accepted: true,
-        source: 'home_hero_form',
+        source,
         page_url: typeof window !== 'undefined' ? window.location.href : null,
         user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
       });
@@ -88,6 +103,7 @@ const HomeHeroForm = ({ isInHero = false, variant = 'light' }: HomeHeroFormProps
       if (error) throw error;
 
       setSuccess(true);
+      onSuccess?.();
       setTimeout(reset, 10000);
     } catch (err) {
       setErrors({
@@ -114,9 +130,11 @@ const HomeHeroForm = ({ isInHero = false, variant = 'light' }: HomeHeroFormProps
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <h3 className={isDark ? 'text-base font-extrabold text-white' : 'text-base font-extrabold text-navy-brand'}>Zapytaj o wózek</h3>
+      <h3 className={isDark ? 'text-base font-extrabold text-white' : 'text-base font-extrabold text-navy-brand'}>{title ?? 'Zapytaj o wózek'}</h3>
       <p className={isDark ? 'text-xs text-white/75 mt-1 mb-3.5' : 'text-xs text-ink-soft mt-1 mb-3.5'}>
-        Opisz potrzebę — odpowiemy w ciągu 30 minut. <strong className={isDark ? 'text-white' : 'text-ink'}>Bez zobowiązań.</strong>
+        {subtitle ?? (
+          <>Opisz potrzebę — odpowiemy w ciągu 30 minut. <strong className={isDark ? 'text-white' : 'text-ink'}>Bez zobowiązań.</strong></>
+        )}
       </p>
 
       <div className="space-y-2.5">
@@ -222,7 +240,7 @@ const HomeHeroForm = ({ isInHero = false, variant = 'light' }: HomeHeroFormProps
             Wysyłanie...
           </>
         ) : (
-          'Wyślij zapytanie →'
+          ctaLabel ?? 'Wyślij zapytanie →'
         )}
       </button>
 
