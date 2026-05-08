@@ -139,7 +139,7 @@ const FAQManager: React.FC = () => {
       />
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl p-6 pb-0 overflow-hidden flex flex-col">
           <DialogHeader className="border-b border-editorial-line pb-3 mb-2">
             <DialogTitle
               className="font-editorial text-2xl text-editorial-ink tracking-tight font-normal"
