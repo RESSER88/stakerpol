@@ -65,7 +65,7 @@ const HomeHeroForm = ({
     setName('');
     setEmail('');
     setPhone('');
-    setMessage('');
+    setMessage(prefilledMessage);
     setRodo(false);
     setErrors({});
     setSuccess(false);
