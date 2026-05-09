@@ -9,7 +9,7 @@ const LocalBusinessSchema = ({ includeOfferCatalog = true }: LocalBusinessSchema
     "@id": "https://stakerpol.pl#organization",
     "name": "Stakerpol",
     "legalName": "Stakerpol",
-    "description": "Profesjonalna sprzedaż i serwis wózków widłowych BT Toyota. Oferujemy wysokiej jakości używane wózki elektryczne i spalinowe wraz z kompleksowym serwisem.",
+    "description": "Profesjonalna sprzedaż i serwis wózków paletowych BT Toyota. Oferujemy wysokiej jakości używane wózki elektryczne i spalinowe wraz z kompleksowym serwisem.",
     "url": "https://stakerpol.pl",
     "telephone": "+48694133592",
     "email": "info@stakerpol.pl",
@@ -80,7 +80,7 @@ const LocalBusinessSchema = ({ includeOfferCatalog = true }: LocalBusinessSchema
       "Sprzedaż używanych wózków"
     ],
     "serviceType": [
-      "Sprzedaż wózków widłowych",
+      "Sprzedaż wózków paletowych",
       "Serwis i naprawa",
       "Części zamienne",
       "Wynajem krótkoterminowy",

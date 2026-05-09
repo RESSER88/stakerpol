@@ -28,7 +28,7 @@ export const SITE_CONFIG = {
     de: 'Wir bieten eine große Auswahl an BT Toyota Palettenhubwagen, perfekt angepasst an verschiedene Anwendungen und Bedürfnisse.',
   } as Record<string, string>,
   DESCRIPTION_LEGACY: {
-    pl: 'Oferujemy szeroki wybór wózków widłowych BT Toyota, idealnie dopasowanych do różnych zastosowań i potrzeb.',
+    pl: 'Oferujemy szeroki wybór wózków paletowych BT Toyota, idealnie dopasowanych do różnych zastosowań i potrzeb.',
     en: 'We offer a wide selection of BT Toyota forklifts, perfectly adapted to various applications and needs.',
     cs: 'Nabízíme široký výběr vysokozdvižných vozíků BT Toyota, ideálně přizpůsobených různým aplikacím a potřebám.',
     sk: 'Ponúkame široký výber vysokozdvižných vozíkov BT Toyota, ideálne prispôsobených rôznym aplikáciám a potrebám.',
