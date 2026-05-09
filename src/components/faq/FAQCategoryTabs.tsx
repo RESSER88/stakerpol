@@ -1,5 +1,6 @@
 import React from 'react';
 import { FAQCategory } from '@/hooks/useSupabaseFAQ';
+import { trackFAQCategorySelect } from '@/utils/analytics';
 
 export type CategoryFilter = 'all' | FAQCategory;
 
@@ -29,7 +30,10 @@ const FAQCategoryTabs: React.FC<FAQCategoryTabsProps> = ({ selected, onChange, c
           <button
             key={t.value}
             type="button"
-            onClick={() => onChange(t.value)}
+            onClick={() => {
+              trackFAQCategorySelect({ category: t.value, count: getCount(t.value) });
+              onChange(t.value);
+            }}
             className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
               active
                 ? 'bg-orange-cta text-white border-orange-cta shadow-sm'

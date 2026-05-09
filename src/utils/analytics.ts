@@ -162,3 +162,40 @@ export const trackSearch = (filterDescription: string, resultsCount: number) => 
     results_count: resultsCount,
   });
 };
+
+// ============================================================
+// FAQ events
+// ============================================================
+
+export const trackFAQOpen = (params: {
+  faq_id: string;
+  question: string;
+  category: string;
+  language: string;
+}) => {
+  gtag('event', 'faq_open', params);
+  pushDataLayer('faq_open', params);
+};
+
+export const trackFAQCTAClick = (params: {
+  faq_id: string;
+  cta_action: string;
+  cta_label: string;
+  category: string;
+}) => {
+  gtag('event', 'faq_cta_click', params);
+  pushDataLayer('faq_cta_click', params);
+};
+
+export const trackFAQCategorySelect = (params: {
+  category: string;
+  count: number;
+}) => {
+  gtag('event', 'faq_category_select', params);
+  pushDataLayer('faq_category_select', params);
+};
+
+export const trackFAQLeadSubmit = (params: { source: string }) => {
+  gtag('event', 'faq_lead_submit', params);
+  pushDataLayer('faq_lead_submit', params);
+};

@@ -6,6 +6,7 @@ import { Product } from '@/types';
 import PriceInquiryModal from '@/components/products/PriceInquiryModal';
 import InquiryModal from '@/components/contact/InquiryModal';
 import FormModal from './FormModal';
+import { trackFAQOpen, trackFAQCTAClick } from '@/utils/analytics';
 
 interface FAQItemEnhancedProps {
   faq: FAQ;
@@ -36,7 +37,27 @@ const FAQItemEnhanced: React.FC<FAQItemEnhancedProps> = ({ faq, products }) => {
   const badge = CATEGORY_BADGE[faq.category];
   const ctaActive = !!faq.inline_cta_action && faq.inline_cta_action !== 'none' && !!faq.inline_cta_label;
 
+  const handleToggle = () => {
+    setOpen((o) => {
+      if (!o) {
+        trackFAQOpen({
+          faq_id: faq.id,
+          question: (faq.question || '').substring(0, 100),
+          category: faq.category,
+          language: faq.language,
+        });
+      }
+      return !o;
+    });
+  };
+
   const handleCTA = () => {
+    trackFAQCTAClick({
+      faq_id: faq.id,
+      cta_action: faq.inline_cta_action ?? '',
+      cta_label: faq.inline_cta_label ?? '',
+      category: faq.category,
+    });
     switch (faq.inline_cta_action) {
       case 'open_inquiry_modal':
         setActiveModal('inquiry');
@@ -69,7 +90,7 @@ const FAQItemEnhanced: React.FC<FAQItemEnhancedProps> = ({ faq, products }) => {
       <div className="border border-border rounded-lg bg-card overflow-hidden">
         <button
           type="button"
-          onClick={() => setOpen((o) => !o)}
+          onClick={handleToggle}
           className="w-full flex items-start gap-3 p-4 md:p-5 text-left hover:bg-muted/40 transition-colors"
           aria-expanded={open}
         >

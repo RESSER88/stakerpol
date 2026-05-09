@@ -3,6 +3,7 @@ import { Loader2, Check } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { COMPANY_PHONE_DISPLAY } from '@/lib/contact';
+import { trackFAQLeadSubmit } from '@/utils/analytics';
 
 interface HomeHeroFormProps {
   variant?: 'light' | 'dark';
@@ -103,6 +104,9 @@ const HomeHeroForm = ({
       if (error) throw error;
 
       setSuccess(true);
+      if (source === 'faq_form') {
+        trackFAQLeadSubmit({ source });
+      }
       onSuccess?.();
       setTimeout(reset, 10000);
     } catch (err) {
