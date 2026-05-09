@@ -174,7 +174,7 @@ const ProductSchema = ({ product }: ProductSchemaProps) => {
       "@type": "Organization",
       "name": getBrand()
     },
-    "category": "Wózki widłowe",
+    "category": "Wózki paletowe BT Toyota",
     "additionalProperty": getAdditionalProperties(),
     "review": reviewsData.reviews,
     "aggregateRating": reviewsData.aggregateRating,

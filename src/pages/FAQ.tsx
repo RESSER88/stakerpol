@@ -72,14 +72,14 @@ const FAQ: React.FC = () => {
   }, [langFaqs, selected, searchTerm]);
 
   const schemaItems = useMemo(
-    () => visibleFaqs.map((f) => ({ question: f.question, answer: f.answer })),
-    [visibleFaqs]
+    () => langFaqs.map((f) => ({ question: f.question, answer: f.answer })),
+    [langFaqs]
   );
 
   const meta = {
-    title: 'FAQ wózki widłowe – najczęstsze pytania | Stakerpol',
+    title: 'FAQ paleciaki elektryczne – najczęstsze pytania | Stakerpol',
     description:
-      'Kompletne FAQ o wózkach widłowych Toyota BT: eksploatacja, serwis, UDT, bateria, dostawa.',
+      'Kompletne FAQ o paleciakach elektrycznych BT Toyota: eksploatacja, serwis, UDT, bateria, dostawa.',
   };
 
   return (
@@ -90,16 +90,13 @@ const FAQ: React.FC = () => {
         <link rel="canonical" href={`https://stakerpol.pl/${language}/faq`} />
       </Helmet>
       <main>
-        <section className="section-padding bg-white" aria-labelledby="faq-page-heading">
+        <section className="pt-6 md:pt-8 pb-12 md:pb-16 bg-white" aria-labelledby="faq-page-heading">
           <div className="container-custom">
-            <h1 id="faq-page-heading" className="section-title text-center">
+            <h1 id="faq-page-heading" className="section-title text-center mb-4">
               {t('faq_section_title')}
             </h1>
-            <p className="text-center text-muted-foreground max-w-2xl mx-auto mt-2">
-              {t('faq_page_description')}
-            </p>
 
-            <div className="mt-8 max-w-md mx-auto">
+            <div className="max-w-md mx-auto">
               <SearchInput
                 value={searchTerm}
                 onChange={setSearchTerm}
@@ -108,7 +105,7 @@ const FAQ: React.FC = () => {
               />
             </div>
 
-            <div className="mt-8">
+            <div className="mt-4">
               <FAQCategoryTabs
                 selected={selected}
                 onChange={setSelected}

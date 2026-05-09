@@ -9,7 +9,7 @@ const LocalBusinessSchema = ({ includeOfferCatalog = true }: LocalBusinessSchema
     "@id": "https://stakerpol.pl#organization",
     "name": "Stakerpol",
     "legalName": "Stakerpol",
-    "description": "Profesjonalna sprzedaż i serwis wózków widłowych BT Toyota. Oferujemy wysokiej jakości używane wózki elektryczne i spalinowe wraz z kompleksowym serwisem.",
+    "description": "Profesjonalna sprzedaż i serwis wózków paletowych BT Toyota. Oferujemy wysokiej jakości używane wózki elektryczne i spalinowe wraz z kompleksowym serwisem.",
     "url": "https://stakerpol.pl",
     "telephone": "+48694133592",
     "email": "info@stakerpol.pl",
@@ -52,35 +52,35 @@ const LocalBusinessSchema = ({ includeOfferCatalog = true }: LocalBusinessSchema
 
     "hasOfferCatalog": includeOfferCatalog ? {
       "@type": "OfferCatalog",
-      "name": "Wózki widłowe BT Toyota",
+      "name": "Wózki paletowe BT Toyota",
       "itemListElement": [
         {
           "@type": "OfferCatalog",
           "name": "Wózki elektryczne",
-          "description": "Elektyczne wózki widłowe BT Toyota - ekonomiczne, ciche i przyjazne środowisku"
+          "description": "Elektryczne wózki paletowe BT Toyota - ekonomiczne, ciche i przyjazne środowisku"
         },
         {
           "@type": "OfferCatalog", 
           "name": "Wózki spalinowe",
-          "description": "Spalinowe wózki widłowe Toyota - wydajne rozwiązania do intensywnej pracy"
+          "description": "Spalinowe wózki paletowe Toyota - wydajne rozwiązania do intensywnej pracy"
         },
         {
           "@type": "OfferCatalog",
           "name": "Serwis i części",
-          "description": "Kompleksowy serwis wózków widłowych i oryginalne części zamienne"
+          "description": "Kompleksowy serwis wózków paletowych i oryginalne części zamienne"
         }
       ]
     } : undefined,
     "knowsAbout": [
-      "Wózki widłowe Toyota",
+      "Wózki paletowe Toyota",
       "Wózki elektryczne BT",
-      "Serwis wózków widłowych", 
+      "Serwis wózków paletowych", 
       "Części zamienne Toyota",
-      "Wynajem wózków widłowych",
+      "Wynajem wózków paletowych",
       "Sprzedaż używanych wózków"
     ],
     "serviceType": [
-      "Sprzedaż wózków widłowych",
+      "Sprzedaż wózków paletowych",
       "Serwis i naprawa",
       "Części zamienne",
       "Wynajem krótkoterminowy",

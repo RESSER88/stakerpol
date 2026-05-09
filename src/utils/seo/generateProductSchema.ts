@@ -240,7 +240,7 @@ export const generateProductSchema = (
       "@type": "Organization",
       "name": getBrand(product)
     },
-    "category": "Wózki widłowe",
+    "category": "Wózki paletowe BT Toyota",
     "additionalProperty": getAdditionalProperties(product),
   };
 

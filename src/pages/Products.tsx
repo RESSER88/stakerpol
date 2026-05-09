@@ -69,10 +69,10 @@ const Products = () => {
   return (
     <Layout>
       <Helmet>
-        <title>Wózki widłowe BT Toyota – oferta | Stakerpol</title>
+        <title>Paleciaki elektryczne BT Toyota – oferta | Stakerpol</title>
         <meta name="description" content={getPageDescription()} />
         <link rel="canonical" href="https://stakerpol.pl/products" />
-        <meta property="og:title" content="Wózki widłowe BT Toyota – oferta | Stakerpol" />
+        <meta property="og:title" content="Paleciaki elektryczne BT Toyota – oferta | Stakerpol" />
         <meta property="og:description" content={getPageDescription()} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://stakerpol.pl/products" />
@@ -80,7 +80,7 @@ const Products = () => {
       </Helmet>
       <section className="bg-gradient-to-b from-stakerpol-lightgray to-white py-8 relative">
         <div className="container-custom relative">
-          <h1 className="sr-only">Wózki widłowe BT Toyota – oferta</h1>
+          <h1 className="sr-only">Paleciaki elektryczne BT Toyota – oferta</h1>
 
           <Link
             to="/admin"

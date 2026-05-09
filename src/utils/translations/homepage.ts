@@ -3,7 +3,7 @@ import { Translations } from './types';
 
 export const homepageTranslations: Translations = {
   hero: {
-    pl: 'Profesjonalna sprzedaż i serwis wózków widłowych BT Toyota',
+    pl: 'Profesjonalna sprzedaż i serwis wózków paletowych BT Toyota',
     en: 'Professional sales and service of BT Toyota forklifts',
     cs: 'Profesionální prodej a servis vysokozdvižných vozíků BT Toyota',
     sk: 'Profesionálny predaj a servis vysokozdvižných vozíkov BT Toyota',

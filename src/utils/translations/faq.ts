@@ -241,7 +241,7 @@ export const faqTranslations: Translations = {
     sk: 'Áno, poskytujeme pozáručný servis.'
   },
   faq_18_question: {
-    pl: 'Czy posiadacie autoryzację do konserwacji wózków widłowych?',
+    pl: 'Czy posiadacie autoryzację do konserwacji paleciaków elektrycznych?',
     de: 'Haben Sie eine Autorisierung für die Wartung von Gabelstaplern?',
     en: 'Do you have authorization for forklift maintenance?',
     cs: 'Máte autorizaci pro údržbu vysokozdvižných vozíků?',
