@@ -13,11 +13,11 @@ const Contact = () => {
   return (
     <Layout>
       <Helmet>
-        <title>Kontakt – Stakerpol | Wózki widłowe BT Toyota</title>
-        <meta name="description" content="Skontaktuj się ze Stakerpol: wózki widłowe BT Toyota, serwis i części. Godziny: Pon-Pt 8:00–17:00. Adres: ul. Szewska 6, 32-043 Skała." />
+        <title>Kontakt – Stakerpol | Paleciaki elektryczne BT Toyota</title>
+        <meta name="description" content="Skontaktuj się ze Stakerpol: paleciaki elektryczne BT Toyota, serwis i części. Godziny: Pon-Pt 8:00–17:00. Adres: ul. Szewska 6, 32-043 Skała." />
         <link rel="canonical" href="https://stakerpol.pl/contact" />
         <meta property="og:title" content="Kontakt – Stakerpol" />
-        <meta property="og:description" content="Wózki widłowe BT Toyota – kontakt, doradztwo, serwis. Odpowiadamy tego samego dnia." />
+        <meta property="og:description" content="Paleciaki elektryczne BT Toyota – kontakt, doradztwo, serwis. Odpowiadamy tego samego dnia." />
         <meta property="og:type" content="website" />
       </Helmet>
 

@@ -156,7 +156,7 @@ const Testimonials = () => {
     <Layout>
       <Helmet>
         <title>Opinie klientów – Stakerpol</title>
-        <meta name="description" content="Opinie klientów o Stakerpol: wózki widłowe BT Toyota, sprzedaż, serwis i wynajem. Sprawdź rekomendacje i dodaj własną opinię." />
+        <meta name="description" content="Opinie klientów o Stakerpol: wózki paletowe BT Toyota, sprzedaż, serwis i wynajem. Sprawdź rekomendacje i dodaj własną opinię." />
         <link rel="canonical" href="https://stakerpol.pl/testimonials" />
         <meta property="og:title" content="Opinie klientów – Stakerpol" />
         <meta property="og:description" content="Sprawdź opinie klientów o Stakerpol i dodaj własną recenzję." />

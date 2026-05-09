@@ -52,31 +52,31 @@ const LocalBusinessSchema = ({ includeOfferCatalog = true }: LocalBusinessSchema
 
     "hasOfferCatalog": includeOfferCatalog ? {
       "@type": "OfferCatalog",
-      "name": "Wózki widłowe BT Toyota",
+      "name": "Wózki paletowe BT Toyota",
       "itemListElement": [
         {
           "@type": "OfferCatalog",
           "name": "Wózki elektryczne",
-          "description": "Elektyczne wózki widłowe BT Toyota - ekonomiczne, ciche i przyjazne środowisku"
+          "description": "Elektryczne wózki paletowe BT Toyota - ekonomiczne, ciche i przyjazne środowisku"
         },
         {
           "@type": "OfferCatalog", 
           "name": "Wózki spalinowe",
-          "description": "Spalinowe wózki widłowe Toyota - wydajne rozwiązania do intensywnej pracy"
+          "description": "Spalinowe wózki paletowe Toyota - wydajne rozwiązania do intensywnej pracy"
         },
         {
           "@type": "OfferCatalog",
           "name": "Serwis i części",
-          "description": "Kompleksowy serwis wózków widłowych i oryginalne części zamienne"
+          "description": "Kompleksowy serwis wózków paletowych i oryginalne części zamienne"
         }
       ]
     } : undefined,
     "knowsAbout": [
-      "Wózki widłowe Toyota",
+      "Wózki paletowe Toyota",
       "Wózki elektryczne BT",
-      "Serwis wózków widłowych", 
+      "Serwis wózków paletowych", 
       "Części zamienne Toyota",
-      "Wynajem wózków widłowych",
+      "Wynajem wózków paletowych",
       "Sprzedaż używanych wózków"
     ],
     "serviceType": [
