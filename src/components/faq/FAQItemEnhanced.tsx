@@ -57,7 +57,7 @@ const FAQItemEnhanced: React.FC<FAQItemEnhancedProps> = ({ faq, products }) => {
         navigate('/kontakt');
         break;
       case 'link_to_leasing':
-        navigate('/kontakt');
+        window.location.href = 'tel:+48694133592';
         break;
       default:
         break;
@@ -102,7 +102,13 @@ const FAQItemEnhanced: React.FC<FAQItemEnhancedProps> = ({ faq, products }) => {
                         className="flex items-center gap-3 border border-border rounded-md p-2.5 hover:border-orange-cta/60 transition-colors group"
                       >
                         {p.image && (
-                          <img src={p.image} alt={p.model} loading="lazy" className="w-12 h-12 object-contain bg-muted rounded shrink-0" />
+                          <img
+                            src={p.image}
+                            alt={p.model}
+                            loading="lazy"
+                            className="w-12 h-12 object-contain bg-muted rounded shrink-0"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-semibold text-foreground truncate group-hover:text-orange-cta transition-colors">
