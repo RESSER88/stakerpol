@@ -28,12 +28,12 @@ const FAQ: React.FC = () => {
   const { products } = usePublicSupabaseProducts();
 
   useEffect(() => {
-    fetchFAQs(language);
-  }, [language]);
+    fetchFAQs('pl');
+  }, []);
 
   const langFaqs = useMemo(
-    () => faqs.filter((f) => f.is_active && f.language === language),
-    [faqs, language]
+    () => faqs.filter((f) => f.is_active && f.language === 'pl'),
+    [faqs]
   );
 
   const counts = useMemo(() => {
