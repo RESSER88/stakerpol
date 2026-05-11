@@ -94,9 +94,6 @@ const FAQItemEnhanced: React.FC<FAQItemEnhancedProps> = ({ faq, products }) => {
           className="w-full flex items-start gap-3 p-4 md:p-5 text-left hover:bg-muted/40 transition-colors"
           aria-expanded={open}
         >
-          <span className={`inline-flex items-center px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold border rounded-sm shrink-0 mt-1 ${badge.cls}`}>
-            {badge.label}
-          </span>
           <span className="flex-1 font-medium text-foreground leading-snug">{faq.question}</span>
           {faq.is_featured && <Star className="w-4 h-4 text-orange-cta fill-orange-cta shrink-0 mt-1" />}
           <ChevronDown className={`w-4 h-4 shrink-0 mt-1 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
