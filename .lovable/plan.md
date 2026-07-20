@@ -1,48 +1,67 @@
-## Cel
+# Plan: utworzenie `PROTOKOL_UZGODNIEN.md`
 
-W modalu „Filtruj produkty" (`FilterModal`) na samym dole — pod istniejącymi suwakami (Rok, Motogodziny, Wysokość podnoszenia), a **nad** licznikiem „Znaleziono produktów" — dodać dodatkową sekcję wyszukiwania po **numerze seryjnym**. Działanie analogiczne do panelu admina: wpisanie np. `6865256` filtruje listę produktów do tych, których numer seryjny zawiera tę frazę. Wygląd spójny z resztą modalu, identyczny na desktopie i mobile.
+Utworzę nowy plik `PROTOKOL_UZGODNIEN.md` w katalogu głównym repozytorium, oparty na moim wcześniejszym raporcie audytowym (3 problemy: udźwig, ALT, migracja URL), zaktualizowany o wszystkie 10 uwag redakcyjnych.
 
-## Zakres zmian
+## Struktura nowego dokumentu
 
-Jeden plik: `src/components/products/FilterModal.tsx`.
+1. **Nagłówek / metryka** — tytuł, data, strony uzgodnienia, przedmiot audytu.
+2. **Rozdział 1 — Błąd danych produktu (udźwig 1200 vs 2000 kg)** — bez zmian merytorycznych względem audytu; formalny język protokołu.
+3. **Rozdział 2 — Automatyczne generowanie ALT dla zdjęć** — przeredagowany zgodnie z uwagą #1:
+   - jasno zapisane, że audyt rekomendował **rozwiązanie hybrydowe (Opcja D)**,
+   - podstawą jest **automatyczny generator ALT z danych produktu**,
+   - administrator ma **możliwość ręcznej edycji** ALT,
+   - **AI jako opcja** dla wybranych przypadków, nie jako podstawa,
+   - usunięcie sformułowań typu „rekomendacja audytora (AI) odrzucona" i zastąpienie ich formułą uzgodnioną w uwadze #2.
+4. **Rozdział 3 — Zmiana adresów URL** — zgodnie z uwagą #3:
+   - `/paleciaki` jako **najbardziej obiecujący kierunek**, a nie „zatwierdzony warunkowo",
+   - **ostateczna decyzja po analizie danych** z: Google Search Console, Google Keyword Planner, Senuto, Ahrefs,
+   - decyzja **oparta na danych, nie na intuicji**,
+   - konsekwentne używanie terminu **„Nawigacja okruszkowa (Breadcrumbs)"** (uwaga #5),
+   - **usunięcie punktu** o refaktorze `ProductPage → PalletTruckPage`, `ProductsList → PalletTruckList` (uwaga #6).
+5. **Rozdział 4 (NOWY) — Ocena ryzyka migracji URL** (uwaga #4):
+   - migracja URL to jedyna zmiana mogąca wpłynąć na pozycje w Google,
+   - powinna być wykonana jako **osobny etap projektu**,
+   - poprzedzona wdrożeniem poprawek niskiego ryzyka,
+   - zakres: przekierowania 301, monitoring GSC, monitoring indeksacji, monitoring ruchu organicznego.
+6. **Rozdział 5 (NOWY) — Zakres zmian niewymagających migracji SEO** (uwaga #7):
+   - poprawa wyświetlania parametrów produktu,
+   - ujednolicenie komponentów,
+   - wdrożenie generatora ALT,
+   - poprawa danych Schema.org,
+   - poprawa metadanych obrazów,
+   - podkreślenie: mogą zostać wdrożone niezależnie od migracji URL.
+7. **Rozdział 6 — Tabela priorytetów** (uwaga #8) — dokładnie wg podanej treści (P0–P4).
+8. **Rozdział 7 — Wniosek końcowy** (uwaga #9) — formalne podsumowanie w tonie protokołu, bez języka marketingowego:
+   - audyt prawidłowo identyfikuje główne problemy techniczne,
+   - wymaga doprecyzowania strategii ALT,
+   - migracja URL powinna zostać poprzedzona analizą danych SEO,
+   - pozostałe rekomendacje uznano za zasadne,
+   - kolejność wdrożenia powinna minimalizować ryzyko dla SEO.
+9. **Załącznik — Lista zmian względem raportu audytowego** (uwaga #10, kontrola jakości) — krótka lista wszystkich 10 wprowadzonych korekt względem pierwotnego audytu.
 
-Brak zmian w `ProductFilter.tsx`, brak zmian w `Products.tsx`, brak nowych komponentów.
+## Reguły stylistyczne dokumentu
 
-## Szczegóły implementacji
+- Formalny, protokolarny język (bez emoji, bez języka marketingowego, bez „🚀", „✅").
+- Zachowana pełna treść — bez skracania, bez dopisywania własnych założeń.
+- Spójna numeracja rozdziałów (1–7 + załącznik).
+- Konsekwentne pojęcie **„Nawigacja okruszkowa (Breadcrumbs)"** w całym dokumencie.
+- Wszystkie „kategoryczne" sformułowania („odrzucona", „zatwierdzona") zastąpione formułami typu „po analizie uznano, że…", „obecnie uznaje się za najbardziej obiecujące…".
+- Brak sprzecznych zapisów między rozdziałami (rozdział 4 spójny z rozdziałem 3, rozdział 5 spójny z tabelą priorytetów P0–P3).
 
-1. **Import**: dodać `Input` z `@/components/ui/input` oraz ikonę `Search` z `lucide-react`.
+## Kontrola jakości (przed oddaniem)
 
-2. **Stan filtra**: rozszerzyć `useState` o pole `serial: ''`. Reset (`handleReset`) również czyści `serial` do pustego stringa.
+Po napisaniu przejdę dokument i sprawdzę:
+- spójność numeracji rozdziałów i podpunktów,
+- spójność terminologii („Nawigacja okruszkowa (Breadcrumbs)", „generator szablonowy ALT", „migracja URL"),
+- spójność decyzji między rozdziałami (np. rozdz. 2 vs załącznik, rozdz. 3 vs rozdz. 4),
+- brak sprzecznych zapisów,
+- zgodność z dobrymi praktykami SEO (301, canonical, sitemap, GSC),
+- profesjonalny styl dokumentacji technicznej.
 
-3. **Logika filtrowania** (`useMemo` dla `filteredProducts`):
-   - Pobrać `product.specs?.serialNumber` jako string.
-   - Porównanie: `productSerial.toLowerCase().includes(query.toLowerCase().trim())`.
-   - Jeśli pole puste → warunek pomijany (jak przy pozostałych filtrach).
-   - Łączone z istniejącymi warunkami operatorem AND.
+Na końcu dokumentu (załącznik) załączę listę 10 wprowadzonych zmian względem pierwotnego audytu.
 
-4. **UI sekcji** (`FilterFields`, na samym dole, **przed** blokiem „Znaleziono produktów"):
-   - Spójna struktura z innymi sekcjami: `<div className="space-y-3">` + `<Label className="text-sm font-medium">`.
-   - Etykieta: „Numer seryjny" (PL) — dla pełnej spójności i prostoty hardcodowane PL (zgodnie z core memory: strona PL-only, przełącznik języka usunięty wcześniej).
-   - `<Input>` z ikoną `Search` po lewej (`relative` wrapper, `Search` `absolute left-3`, padding `pl-10`).
-   - Placeholder: „np. 6865256".
-   - Atrybuty: `inputMode="search"`, `autoComplete="off"`, `maxLength={64}` (walidacja długości — bezpieczeństwo).
-   - Po wpisaniu znaków pod inputem mała etykieta-podpowiedź `text-xs text-muted-foreground`: „Wyszukiwanie częściowe — wystarczy fragment numeru".
+## Zakres pracy
 
-5. **Zachowanie**:
-   - Filtrowanie odbywa się reaktywnie w `useMemo` (licznik „Znaleziono produktów" aktualizuje się natychmiast podczas pisania).
-   - Lista na stronie aktualizuje się dopiero po kliknięciu „Zastosuj filtry" (zachowanie spójne z pozostałymi filtrami — bez zmian w mechanizmie apply).
-
-6. **Spójność desktop ↔ mobile**: pole jest częścią `FilterFields`, który jest renderowany w obu wariantach (`Sheet` na mobile, `Dialog` na desktopie) — automatycznie wygląda tak samo.
-
-## Co się NIE zmienia
-
-- Logika suwaków Rok / Motogodziny / Wysokość — bez zmian.
-- Mechanizm apply / reset / licznik — bez zmian (tylko rozszerzony o pole `serial`).
-- `ProductFilter.tsx`, `Products.tsx` — bez zmian.
-- Translations — nie dodajemy nowych kluczy, używamy hardcoded PL (zgodnie z faktycznym stanem strony PL-only).
-
-## Walidacja / bezpieczeństwo
-
-- `maxLength={64}` na inpucie.
-- `.trim()` przed dopasowaniem.
-- Brak interpolacji do SQL/URL — czyste filtrowanie po stronie klienta na już pobranych danych.
+- **Nowy plik:** `PROTOKOL_UZGODNIEN.md` (ok. 350–500 linii Markdown).
+- **Bez zmian w kodzie aplikacji** — to wyłącznie dokument.
+- **Bez modyfikacji** istniejących raportów (`RAPORT_OPTYMALIZACJI.md`, `PRODUCTION_READINESS_REPORT.md` itd.).
