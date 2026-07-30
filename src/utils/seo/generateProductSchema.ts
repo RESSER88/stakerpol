@@ -28,10 +28,12 @@ export interface ProductSchemaData {
   offers?: {
     "@type": string;
     availability: string;
+    itemCondition?: string;
     priceValidUntil?: string;
     price?: string;
     priceCurrency?: string;
     businessFunction: string;
+
     seller: {
       "@type": string;
       name: string;
@@ -209,15 +211,29 @@ const mapAvailabilityToSchemaOrg = (availability: string) => {
   return mapping[availability] || 'https://schema.org/InStock';
 };
 
-const mapConditionToSchemaOrg = (condition: string) => {
-  const mapping: Record<string, string> = {
-    'NewCondition': 'https://schema.org/NewCondition',
-    'UsedCondition': 'https://schema.org/UsedCondition',
-    'RefurbishedCondition': 'https://schema.org/RefurbishedCondition',
-    'DamagedCondition': 'https://schema.org/DamagedCondition',
-  };
-  return mapping[condition] || 'https://schema.org/UsedCondition';
+// products.availability_status → schema.org availability
+const mapProductAvailabilityStatus = (status?: string | null) => {
+  switch (status) {
+    case 'reserved':
+      return 'PreOrder';
+    case 'sold':
+      return 'OutOfStock';
+    case 'available':
+    default:
+      return 'InStock';
+  }
 };
+
+// products.condition (free text, PL) → schema.org itemCondition
+const mapProductConditionToSchemaOrg = (condition?: string | null) => {
+  const value = (condition || '').toLowerCase();
+  const refurbishedHints = ['odnowion', 'odnowien', 'refurb', 'po renowacji', 'renowacj', 'regenerowan'];
+  if (refurbishedHints.some((hint) => value.includes(hint))) {
+    return 'https://schema.org/RefurbishedCondition';
+  }
+  return 'https://schema.org/UsedCondition';
+};
+
 
 export const generateProductSchema = (
   product: Product, 
