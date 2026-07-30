@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '@/types';
+import { getMainImageAlt } from '@/utils/productImageAlt';
 import LazyImage from '@/components/ui/LazyImage';
 
 interface Props {

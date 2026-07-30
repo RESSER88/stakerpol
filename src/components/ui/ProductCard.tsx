@@ -2,6 +2,7 @@ import { memo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MoveVertical, Calendar, Clock, Package } from 'lucide-react';
 import { Product } from '@/types';
+import { getMainImageAlt } from '@/utils/productImageAlt';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/utils/translations';
 import OptimizedImage from '@/components/ui/OptimizedImage';
