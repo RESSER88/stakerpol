@@ -168,43 +168,6 @@ const SEOManagerTool = () => {
                 </div>
 
 
-                {/* Availability */}
-                <div className="space-y-2">
-                  <Label htmlFor="availability">Dostępność</Label>
-                  <Select
-                    value={formData.availability ?? seoSettings?.availability ?? 'InStock'}
-                    onValueChange={(value) => handleUpdateField('availability', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="InStock">W magazynie</SelectItem>
-                      <SelectItem value="OutOfStock">Brak w magazynie</SelectItem>
-                      <SelectItem value="PreOrder">Przedsprzedaż</SelectItem>
-                      <SelectItem value="Discontinued">Wycofany</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Condition */}
-                <div className="space-y-2">
-                  <Label htmlFor="condition">Stan</Label>
-                  <Select
-                    value={formData.item_condition ?? seoSettings?.item_condition ?? 'UsedCondition'}
-                    onValueChange={(value) => handleUpdateField('item_condition', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="NewCondition">Nowy</SelectItem>
-                      <SelectItem value="UsedCondition">Używany</SelectItem>
-                      <SelectItem value="RefurbishedCondition">Odnowiony</SelectItem>
-                      <SelectItem value="DamagedCondition">Uszkodzony</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
 
                 {/* GTIN */}
                 <div className="space-y-2">
