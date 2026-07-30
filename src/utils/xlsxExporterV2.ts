@@ -3,10 +3,10 @@ import { Product } from '@/types';
 
 const NAVY = 'FF1E3A5F';
 const ORANGE = 'FFF97316';
-const GRAY_BORDER = 'FFE5E7EB';
-const ZEBRA = 'FFF9FAFB';
+const LIGHT_GRAY = 'FFF4F6F8';
+const ROW_LINE = 'FFE8EAED';
 const GRAY_TEXT = 'FF6B7280';
-const LINK_BLUE = 'FF2563EB';
+const MUTED = 'FF9CA3AF';
 
 const COMPANY = {
   name: 'FHU Stakerpol',
@@ -41,13 +41,35 @@ const COLUMNS: { header: string; key: string; width: number; align: 'left' | 'ri
   { header: 'Zdjęcia', key: 'photos', width: 16, align: 'center' },
 ];
 
-const FALLBACK_GROUP = 'SWE 120L 140L';
+const FALLBACK_GROUP = 'Pozostałe';
 const SERIES_ORDER = ['SWE', 'LWE', 'SPE', 'RRE', 'LSE'];
+const MODEL_ALIASES: Record<string, string> = { 'SWE 200': 'SWE 200D' };
 
-const modelKey = (model?: string) => {
-  const m = (model || '').match(/\b(SWE|LWE|SPE|RRE|LSE)\s*(\d+[A-Z]*)\b/i);
-  if (!m) return FALLBACK_GROUP;
-  return `${m[1].toUpperCase()} ${m[2].toUpperCase()}`;
+const NOISE = /\b(toyota|bt|staxio|staker|levio|sztaplarka|elektryczny|paleciak|paletowy)\b/gi;
+
+/** Returns { display, group } — display may include " EX", group never does. */
+const normalizeModel = (raw?: string): { display: string; group: string } => {
+  const original = (raw || '').trim();
+  const cleaned = original.replace(NOISE, ' ');
+  const m = cleaned.match(/\b(SWE|LWE|SPE|RRE|LSE)\s*(\d+)\s*([A-Z]{0,2})\b/i);
+  if (!m) return { display: original, group: FALLBACK_GROUP };
+  let base = `${m[1].toUpperCase()} ${m[2]}${(m[3] || '').toUpperCase()}`;
+  base = MODEL_ALIASES[base] || base;
+  const isEx = /\bEX\b/i.test(original);
+  return { display: isEx ? `${base} EX` : base, group: base };
+};
+
+const normalizeMast = (raw?: string) => {
+  const v = (raw || '').toLowerCase();
+  if (v.includes('triplex')) return 'Triplex';
+  if (v.includes('duplex')) return 'Duplex';
+  if (v.includes('simplex')) return 'Simplex';
+  return 'Brak';
+};
+
+const normalizeBattery = (raw?: string) => {
+  const m = (raw || '').match(/(\d{3})\s*Ah/i);
+  return m ? `${m[1]} Ah` : '—';
 };
 
 const seriesRank = (key: string) => {
@@ -56,12 +78,9 @@ const seriesRank = (key: string) => {
   return idx === -1 ? 500 : idx;
 };
 
-const thinBorder = {
-  top: { style: 'thin' as const, color: { argb: GRAY_BORDER } },
-  left: { style: 'thin' as const, color: { argb: GRAY_BORDER } },
-  bottom: { style: 'thin' as const, color: { argb: GRAY_BORDER } },
-  right: { style: 'thin' as const, color: { argb: GRAY_BORDER } },
-};
+const bottomLine = (color: string, style: 'thin' | 'medium' = 'thin') => ({
+  bottom: { style, color: { argb: color } },
+});
 
 const lastColLetter = () => String.fromCharCode(64 + COLUMNS.length);
 
@@ -86,8 +105,8 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
   const last = lastColLetter();
 
   // --- 1. NAGŁÓWEK PLIKU ---
-  sheet.getRow(1).height = 34;
-  for (let r = 2; r <= 4; r++) sheet.getRow(r).height = 18;
+  sheet.getRow(1).height = 32;
+  for (let r = 2; r <= 4; r++) sheet.getRow(r).height = 16;
 
   const today = new Date();
   const dd = String(today.getDate()).padStart(2, '0');
@@ -97,13 +116,13 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
   sheet.mergeCells('A1:C1');
   const brand = sheet.getCell('A1');
   brand.value = 'STAKERPOL';
-  brand.font = { name: 'Arial', size: 24, bold: true, color: { argb: NAVY } };
+  brand.font = { name: 'Arial', size: 22, bold: true, color: { argb: NAVY } };
   brand.alignment = { horizontal: 'left', vertical: 'middle' };
 
   sheet.mergeCells('A2:C2');
   const tagline = sheet.getCell('A2');
   tagline.value = 'Sprzedaż paleciaków elektrycznych BT Toyota';
-  tagline.font = { name: 'Arial', size: 10, color: { argb: GRAY_TEXT } };
+  tagline.font = { name: 'Arial', size: 9, color: { argb: GRAY_TEXT } };
   tagline.alignment = { horizontal: 'left', vertical: 'middle' };
 
   const infoLines = [
@@ -117,37 +136,40 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
     const cell = sheet.getCell(`F${row}`);
     cell.value = text;
     cell.alignment = { horizontal: 'right', vertical: 'middle' };
-    cell.font = { name: 'Arial', size: 10, bold: idx === 0, color: { argb: idx === 0 ? NAVY : GRAY_TEXT } };
+    cell.font = { name: 'Arial', size: 9, color: { argb: GRAY_TEXT } };
   });
 
   sheet.mergeCells(`F1:${last}1`);
   const dateCell = sheet.getCell('F1');
   dateCell.value = `Stan magazynu na ${dateLabel}`;
   dateCell.alignment = { horizontal: 'right', vertical: 'middle' };
-  dateCell.font = { name: 'Arial', size: 11, bold: true, color: { argb: NAVY } };
+  dateCell.font = { name: 'Arial', size: 10, bold: true, color: { argb: NAVY } };
 
-  sheet.mergeCells(`A5:${last}5`);
-  sheet.getRow(5).height = 4;
+  // pomarańczowa kreska akcentu pod "STAKERPOL"
+  sheet.mergeCells('A5:C5');
+  sheet.getRow(5).height = 3;
   sheet.getCell('A5').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ORANGE } };
 
   // --- 2. NAGŁÓWEK TABELI ---
   const HEADER_ROW = 6;
   const headerRow = sheet.getRow(HEADER_ROW);
-  headerRow.values = COLUMNS.map((c) => c.header);
-  headerRow.height = 22;
-  headerRow.eachCell((cell) => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } };
-    cell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
-    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-    cell.border = thinBorder;
+  headerRow.values = COLUMNS.map((c) => c.header.toUpperCase());
+  headerRow.height = 20;
+  COLUMNS.forEach((c, i) => {
+    const cell = headerRow.getCell(i + 1);
+    cell.font = { name: 'Arial', size: 9, bold: true, color: { argb: NAVY } };
+    cell.alignment = { horizontal: c.align, vertical: 'middle', wrapText: true };
+    cell.border = bottomLine(NAVY, 'medium');
   });
 
   // --- 3. GRUPOWANIE ---
   const groups = new Map<string, Product[]>();
+  const displayNames = new Map<string, string>();
   products.forEach((p) => {
-    const key = modelKey(p.model);
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(p);
+    const { display, group } = normalizeModel(p.model);
+    displayNames.set(p.id, display);
+    if (!groups.has(group)) groups.set(group, []);
+    groups.get(group)!.push(p);
   });
 
   const sortedKeys = Array.from(groups.keys()).sort((a, b) => {
@@ -159,6 +181,7 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
 
   let rowIndex = HEADER_ROW;
   let counter = 0;
+  let firstGroup = true;
 
   for (const key of sortedKeys) {
     const items = groups.get(key)!.slice().sort((a, b) => {
@@ -170,57 +193,79 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
       return ha - hb;
     });
 
+    if (!firstGroup) {
+      rowIndex++;
+      sheet.getRow(rowIndex).height = 8;
+    }
+    firstGroup = false;
+
     rowIndex++;
     sheet.mergeCells(`A${rowIndex}:${last}${rowIndex}`);
-    sheet.getRow(rowIndex).height = 22;
+    sheet.getRow(rowIndex).height = 24;
+    const groupRow = sheet.getRow(rowIndex);
+    for (let i = 1; i <= COLUMNS.length; i++) {
+      const cell = groupRow.getCell(i);
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: LIGHT_GRAY } };
+      cell.border = bottomLine(NAVY, 'medium');
+    }
     const gCell = sheet.getCell(`A${rowIndex}`);
-    gCell.value = `Toyota BT ${key}`;
-    gCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ORANGE } };
-    gCell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
-    gCell.alignment = { horizontal: 'left', vertical: 'middle' };
-    gCell.border = thinBorder;
+    gCell.value = key === FALLBACK_GROUP ? key : `Toyota BT ${key}`;
+    gCell.font = { name: 'Arial', size: 11, bold: true, color: { argb: NAVY } };
+    gCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
 
     for (const p of items) {
       rowIndex++;
       counter++;
       const row = sheet.getRow(rowIndex);
-      row.height = 15;
+      row.height = 17;
 
       const netPrice = (p as any).netPrice;
+      const isSold = p.availabilityStatus === 'sold';
+
       row.values = [
         counter,
-        p.model || '',
+        displayNames.get(p.id) || p.model || '',
         p.specs?.serialNumber || '',
         p.specs?.productionYear || '',
         Number(p.specs?.workingHours) || (p.specs?.workingHours as any) || '',
         formatCapacity(p.specs?.mastLiftingCapacity),
         formatLift(p.specs?.liftHeight),
-        p.specs?.mast || '',
-        p.specs?.battery || '',
+        normalizeMast(p.specs?.mast),
+        normalizeBattery(p.specs?.battery),
         availabilityLabel(p.availabilityStatus),
         typeof netPrice === 'number' ? netPrice : Number(netPrice) || '',
         (p as any).priceCurrency || 'PLN',
         '',
       ];
 
-      const zebra = counter % 2 === 1;
       COLUMNS.forEach((c, i) => {
         const cell = row.getCell(i + 1);
-        cell.border = thinBorder;
-        cell.font = { name: 'Arial', size: 10 };
+        cell.border = bottomLine(ROW_LINE);
         cell.alignment = { horizontal: c.align, vertical: 'middle' };
-        if (zebra) {
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ZEBRA } };
+        let color = isSold ? MUTED : 'FF000000';
+        let bold = false;
+        if (c.key === 'index') color = MUTED;
+        if (c.key === 'netPrice') {
+          cell.numFmt = '#,##0.00';
+          if (!isSold) {
+            color = NAVY;
+            bold = true;
+          }
         }
-        if (c.key === 'netPrice') cell.numFmt = '#,##0.00';
+        cell.font = { name: 'Arial', size: 10, color: { argb: color }, bold };
       });
 
       const photoCell = row.getCell(COLUMNS.length);
       photoCell.value = {
-        text: 'Zobacz zdjęcia',
+        text: 'Kliknij',
         hyperlink: `https://stakerpol.pl/products/${(p as any).slug || p.id}`,
       };
-      photoCell.font = { name: 'Arial', size: 10, color: { argb: LINK_BLUE }, underline: true };
+      photoCell.font = {
+        name: 'Arial',
+        size: 10,
+        color: { argb: isSold ? MUTED : NAVY },
+        underline: true,
+      };
       photoCell.alignment = { horizontal: 'center', vertical: 'middle' };
     }
   }
@@ -233,23 +278,31 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
   const sCell = sheet.getCell(`A${summaryRow}`);
   sCell.value = `Łącznie pozycji: ${counter} · dostępnych: ${availableCount} · zarezerwowanych: ${reservedCount}`;
   sCell.alignment = { horizontal: 'right', vertical: 'middle' };
-  sCell.font = { name: 'Arial', size: 10, bold: true, color: { argb: NAVY } };
+  sCell.font = { name: 'Arial', size: 9, color: { argb: NAVY } };
 
   // --- STOPKA ---
   const footer1 = summaryRow + 2;
   const footer2 = summaryRow + 3;
 
+  const separatorRow = sheet.getRow(footer1 - 1);
+  separatorRow.height = 6;
+  for (let i = 1; i <= COLUMNS.length; i++) {
+    separatorRow.getCell(i).border = bottomLine(ROW_LINE);
+  }
+
   sheet.mergeCells(`A${footer1}:${last}${footer1}`);
   const f1 = sheet.getCell(`A${footer1}`);
   f1.value = `www.stakerpol.pl · tel. ${COMPANY.phone} · ${COMPANY.email}`;
-  f1.alignment = { horizontal: 'center', vertical: 'middle' };
-  f1.font = { name: 'Arial', size: 10, bold: true, color: { argb: NAVY } };
+  f1.alignment = { horizontal: 'left', vertical: 'middle' };
+  f1.font = { name: 'Arial', size: 8, color: { argb: GRAY_TEXT } };
 
   sheet.mergeCells(`A${footer2}:${last}${footer2}`);
   const f2 = sheet.getCell(`A${footer2}`);
   f2.value = `${COMPANY.name}, ${COMPANY.address} · NIP 6492111954 · REGON 120724080`;
-  f2.alignment = { horizontal: 'center', vertical: 'middle' };
-  f2.font = { name: 'Arial', size: 9, color: { argb: GRAY_TEXT } };
+  f2.alignment = { horizontal: 'left', vertical: 'middle' };
+  f2.font = { name: 'Arial', size: 8, color: { argb: GRAY_TEXT } };
+
+  sheet.views = [{ state: 'frozen', ySplit: HEADER_ROW }];
 
   sheet.pageSetup = {
     orientation: 'landscape',
