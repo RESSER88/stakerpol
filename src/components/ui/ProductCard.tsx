@@ -27,6 +27,8 @@ const ProductCard = memo(({ product, priority = false }: ProductCardProps) => {
 
   const displayImage = product.images?.[0] || product.image;
   const productLink = `/products/${product.slug || product.id}`;
+  const availability = getAvailabilityBadge(product.availabilityStatus);
+
 
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
