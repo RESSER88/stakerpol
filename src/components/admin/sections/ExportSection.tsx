@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { Product } from '@/types';
 import { exportProductListToPDF, exportProductListToJPG } from '@/utils/listExporter';
-import { exportProductListToXLSX } from '@/utils/xlsxExporter';
+import { exportProductListToBrandedXLSX } from '@/utils/xlsxExporterV2';
 import { useToast } from '@/hooks/use-toast';
 import SectionHeader from '../editorial/SectionHeader';
 
@@ -81,7 +81,7 @@ const ExportSection = ({ products }: Props) => {
     if (empty) return;
     setExportingXLSX(true);
     try {
-      exportProductListToXLSX(products);
+      await exportProductListToBrandedXLSX(products);
       toast({ title: '✓ Zapisano', description: `Stan magazynu XLSX (${products.length} produktów)` });
     } catch {
       toast({ title: 'Błąd eksportu', description: 'Nie udało się wygenerować XLSX', variant: 'destructive' });
