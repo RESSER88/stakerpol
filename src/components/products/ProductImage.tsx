@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import LazyImage from '@/components/ui/LazyImage';
 import ProductImageBadges from './ProductImageBadges';
+import { getGalleryImageAlt, ProductAltSource } from '@/utils/productImageAlt';
 
 interface ProductImageProps {
   image: string;
@@ -10,9 +11,12 @@ interface ProductImageProps {
   productionYear?: string | number;
   availabilityStatus?: 'available' | 'reserved' | 'sold';
   isFeatured?: boolean;
+  product?: ProductAltSource | null;
 }
 
-const ProductImage = ({ image, alt, images, productionYear, availabilityStatus, isFeatured }: ProductImageProps) => {
+const ProductImage = ({ image, alt, images, productionYear, availabilityStatus, isFeatured, product }: ProductImageProps) => {
+  const altSource: ProductAltSource = product ?? { model: alt, specs: { productionYear } };
+  const thumbAlt = (index: number) => (index === 0 ? alt : getGalleryImageAlt(altSource, index));
   // Use images array if provided, otherwise fallback to single image
   const allImages = images && images.length > 0 ? images : [image].filter(Boolean);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -145,7 +149,7 @@ const ProductImage = ({ image, alt, images, productionYear, availabilityStatus, 
             >
               <LazyImage
                 src={img}
-                alt={`${alt} - zdjęcie ${index + 1}`}
+                alt={thumbAlt(index)}
                 aspectRatio="3:4"
                 width={120}
                 height={120}

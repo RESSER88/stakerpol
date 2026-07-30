@@ -13,6 +13,7 @@ import ProductHeader from '@/components/products/ProductHeader';
 import RelatedProducts from '@/components/products/RelatedProducts';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import { generateProductSchema } from '@/utils/seo/generateProductSchema';
+import { getMainImageAlt } from '@/utils/productImageAlt';
 import { useProductSEO } from '@/hooks/useProductSEO';
 import { trackViewItem } from '@/utils/analytics';
 import { Loader2 } from 'lucide-react';
@@ -152,6 +153,7 @@ const ProductDetail = () => {
         <meta property="og:title" content={getMetaTitle()} />
         <meta property="og:description" content={getMetaDescription()} />
         <meta property="og:image" content={getOgImage()} />
+        <meta property="og:image:alt" content={getMainImageAlt(product as any)} />
         <meta property="og:url" content={`https://stakerpol.pl/products/${product.slug || product.id}`} />
         <meta property="og:type" content="product" />
         <meta name="twitter:card" content="summary_large_image" />
@@ -173,7 +175,8 @@ const ProductDetail = () => {
           <div className="grid lg:grid-cols-[1.2fr_1fr] gap-6 lg:gap-8">
             <ProductImage
               image={product.image}
-              alt={product.model}
+              alt={getMainImageAlt(product as any)}
+              product={product as any}
               images={product.images}
               productionYear={product.specs?.productionYear}
               availabilityStatus={(product as any).availabilityStatus}

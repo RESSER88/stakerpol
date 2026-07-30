@@ -2,6 +2,7 @@ import { memo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MoveVertical, Calendar, Clock, Package } from 'lucide-react';
 import { Product } from '@/types';
+import { getMainImageAlt } from '@/utils/productImageAlt';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/utils/translations';
 import OptimizedImage from '@/components/ui/OptimizedImage';
@@ -42,7 +43,7 @@ const ProductCard = memo(({ product, priority = false }: ProductCardProps) => {
           <div className="aspect-[3/4] overflow-hidden bg-stakerpol-lightgray relative">
             <OptimizedImage
               src={displayImage}
-              alt={product.model}
+              alt={getMainImageAlt(product as any)}
               aspectRatio="3:4"
               priority={priority}
               width={300}
