@@ -28,10 +28,12 @@ export interface ProductSchemaData {
   offers?: {
     "@type": string;
     availability: string;
+    itemCondition?: string;
     priceValidUntil?: string;
     price?: string;
     priceCurrency?: string;
     businessFunction: string;
+
     seller: {
       "@type": string;
       name: string;
@@ -209,15 +211,29 @@ const mapAvailabilityToSchemaOrg = (availability: string) => {
   return mapping[availability] || 'https://schema.org/InStock';
 };
 
-const mapConditionToSchemaOrg = (condition: string) => {
-  const mapping: Record<string, string> = {
-    'NewCondition': 'https://schema.org/NewCondition',
-    'UsedCondition': 'https://schema.org/UsedCondition',
-    'RefurbishedCondition': 'https://schema.org/RefurbishedCondition',
-    'DamagedCondition': 'https://schema.org/DamagedCondition',
-  };
-  return mapping[condition] || 'https://schema.org/UsedCondition';
+// products.availability_status → schema.org availability
+const mapProductAvailabilityStatus = (status?: string | null) => {
+  switch (status) {
+    case 'reserved':
+      return 'PreOrder';
+    case 'sold':
+      return 'OutOfStock';
+    case 'available':
+    default:
+      return 'InStock';
+  }
 };
+
+// products.condition (free text, PL) → schema.org itemCondition
+const mapProductConditionToSchemaOrg = (condition?: string | null) => {
+  const value = (condition || '').toLowerCase();
+  const refurbishedHints = ['odnowion', 'odnowien', 'refurb', 'po renowacji', 'renowacj', 'regenerowan'];
+  if (refurbishedHints.some((hint) => value.includes(hint))) {
+    return 'https://schema.org/RefurbishedCondition';
+  }
+  return 'https://schema.org/UsedCondition';
+};
+
 
 export const generateProductSchema = (
   product: Product, 
@@ -254,12 +270,14 @@ export const generateProductSchema = (
 
   // Add offers section only if enabled in SEO settings or if no settings exist
   if (!seoSettings || seoSettings.enable_schema) {
-    const availability = seoSettings?.availability || 'InStock';
-    
+    const availability = mapProductAvailabilityStatus((product as any).availabilityStatus);
+
     schema.offers = {
       "@type": "Offer",
       "availability": mapAvailabilityToSchemaOrg(availability),
+      "itemCondition": mapProductConditionToSchemaOrg(product.specs?.condition),
       "businessFunction": "https://schema.org/Sell",
+
       "seller": {
         "@type": "Organization",
         "name": "Stakerpol",
@@ -310,10 +328,9 @@ export const generateProductSchema = (
       }
     };
 
-    // Price source priority:
-    // 1) Main product fields (priceDisplayMode === 'show_price' + netPrice > 0) — primary
-    // 2) Legacy seoSettings.price — fallback ONLY when product has no priceDisplayMode set
-    // 3) Otherwise omit price (inquiry_only or no price configured)
+    // Price source: main product fields only.
+    // Emitted solely when priceDisplayMode === 'show_price' and netPrice > 0.
+    // For 'inquiry_only' or missing price → price omitted entirely (no price leak).
     const priceDisplayMode = (product as any).priceDisplayMode as string | undefined | null;
     const netPriceRaw = (product as any).netPrice as number | string | null | undefined;
     const productCurrency = (product as any).priceCurrency as string | null | undefined;
@@ -322,20 +339,12 @@ export const generateProductSchema = (
     if (priceDisplayMode === 'show_price' && Number.isFinite(netPriceNum) && netPriceNum > 0) {
       schema.offers.price = netPriceNum.toFixed(2);
       schema.offers.priceCurrency = productCurrency || 'PLN';
-      // Preserve legacy priceValidUntil from seoSettings if present
+      // priceValidUntil remains a technical SEO field
       if (seoSettings?.price_valid_until) {
         schema.offers.priceValidUntil = getPriceValidUntil(seoSettings.price_valid_until);
       }
-    } else if (
-      (priceDisplayMode == null) &&
-      seoSettings?.price &&
-      Number(seoSettings.price) > 0
-    ) {
-      schema.offers.price = Number(seoSettings.price).toString();
-      schema.offers.priceCurrency = seoSettings.price_currency || 'PLN';
-      schema.offers.priceValidUntil = getPriceValidUntil(seoSettings.price_valid_until);
     }
-    // else: inquiry_only or no price → omit offers.price (no price leak)
+
   }
 
   // Add production year if available
