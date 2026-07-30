@@ -18,6 +18,7 @@ export interface Product {
   warrantyMonths?: number;
   isFeatured?: boolean;
   slogan?: string;
+  mainImageAlt?: string;
   specs: {
     // Main section (always visible)
     productionYear: string;

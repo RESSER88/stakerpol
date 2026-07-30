@@ -45,6 +45,7 @@ export const mapSupabaseProductToProduct = (supabaseProduct: SupabaseProduct, im
     warrantyMonths: (supabaseProduct as any).warranty_months ?? 3,
     isFeatured: (supabaseProduct as any).is_featured ?? false,
     slogan: (supabaseProduct as any).slogan || '',
+    mainImageAlt: (supabaseProduct as any).main_image_alt || '',
     priceDisplayMode: (supabaseProduct as any).price_display_mode || 'inquiry_only',
     netPrice: (supabaseProduct as any).net_price ?? null,
     priceCurrency: (supabaseProduct as any).price_currency || 'PLN',
@@ -109,6 +110,7 @@ export const mapProductToSupabaseInsert = (product: any): SupabaseProductInsert 
       ? Number(product.warrantyMonths) : 3,
     is_featured: !!product.isFeatured,
     slogan: product.slogan || null,
+    main_image_alt: product.mainImageAlt ? String(product.mainImageAlt).trim() : null,
     price_display_mode: product.priceDisplayMode || 'inquiry_only',
     net_price: product.netPrice != null && product.netPrice !== ''
       ? Number(product.netPrice) : null,

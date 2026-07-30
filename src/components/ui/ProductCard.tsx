@@ -42,7 +42,7 @@ const ProductCard = memo(({ product, priority = false }: ProductCardProps) => {
           <div className="aspect-[3/4] overflow-hidden bg-stakerpol-lightgray relative">
             <OptimizedImage
               src={displayImage}
-              alt={product.model}
+              alt={getMainImageAlt(product as any)}
               aspectRatio="3:4"
               priority={priority}
               width={300}
