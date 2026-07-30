@@ -515,6 +515,7 @@ export type Database = {
           lift_capacity_initial: number | null
           lift_capacity_mast: number | null
           lift_height: number | null
+          main_image_alt: string | null
           mast: string | null
           min_height: number | null
           name: string
@@ -554,6 +555,7 @@ export type Database = {
           lift_capacity_initial?: number | null
           lift_capacity_mast?: number | null
           lift_height?: number | null
+          main_image_alt?: string | null
           mast?: string | null
           min_height?: number | null
           name: string
@@ -593,6 +595,7 @@ export type Database = {
           lift_capacity_initial?: number | null
           lift_capacity_mast?: number | null
           lift_height?: number | null
+          main_image_alt?: string | null
           mast?: string | null
           min_height?: number | null
           name?: string
