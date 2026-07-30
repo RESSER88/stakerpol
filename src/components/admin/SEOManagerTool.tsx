@@ -153,36 +153,8 @@ const SEOManagerTool = () => {
               </div>
 
               <div className="grid gap-6 md:grid-cols-2">
-                {/* Price */}
-                <div className="space-y-2">
-                  <Label htmlFor="price">Cena</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={formData.price ?? seoSettings?.price ?? ''}
-                    onChange={(e) => handleUpdateField('price', parseFloat(e.target.value))}
-                  />
-                </div>
-
-                {/* Currency */}
-                <div className="space-y-2">
-                  <Label htmlFor="currency">Waluta</Label>
-                  <Select
-                    value={formData.price_currency ?? seoSettings?.price_currency ?? 'PLN'}
-                    onValueChange={(value) => handleUpdateField('price_currency', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="PLN">PLN</SelectItem>
-                      <SelectItem value="EUR">EUR</SelectItem>
-                      <SelectItem value="USD">USD</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Cena, waluta, dostępność i stan pochodzą teraz z danych produktu
+                    (sekcja Cennik / Podstawowe) i nie są już edytowalne tutaj. */}
 
                 {/* Price Valid Until */}
                 <div className="space-y-2">
@@ -194,6 +166,7 @@ const SEOManagerTool = () => {
                     onChange={(e) => handleUpdateField('price_valid_until', e.target.value)}
                   />
                 </div>
+
 
                 {/* Availability */}
                 <div className="space-y-2">
