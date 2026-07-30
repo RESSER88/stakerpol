@@ -248,6 +248,8 @@ const ProductEditorView = ({
             <Chapter01_Images
               images={images}
               onChange={setImages}
+              product={product}
+              onProductChange={setProduct}
               onSave={saveAll}
               saving={saving}
             />
