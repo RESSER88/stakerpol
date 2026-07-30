@@ -17,8 +17,8 @@ const ProductKeySpecsBar = ({ product }: Props) => {
   const year = product.specs?.productionYear;
   const hours = product.specs?.workingHours;
   const mast = Number(product.specs?.mastLiftingCapacity || 0);
-  const initial = Number(product.specs?.preliminaryLiftingCapacity || 0);
-  const capacity = Math.max(mast, initial);
+  const capacity = mast > 0 ? mast : 0;
+
   const capacityStr = capacity > 0 ? String(capacity) : '';
 
   const cells = [
