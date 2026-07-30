@@ -7,6 +7,8 @@ import { useTranslation } from '@/utils/translations';
 import OptimizedImage from '@/components/ui/OptimizedImage';
 import InquiryModal from '@/components/contact/InquiryModal';
 import { trackPhoneClick } from '@/utils/analytics';
+import { getAvailabilityBadge } from '@/components/products/availabilityBadge';
+
 
 interface ProductCardProps {
   product: Product;
