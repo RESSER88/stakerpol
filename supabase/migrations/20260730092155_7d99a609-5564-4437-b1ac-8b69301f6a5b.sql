@@ -1,0 +1,1 @@
+ALTER TABLE public.products ADD COLUMN main_image_alt text NULL;
