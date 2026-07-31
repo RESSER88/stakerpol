@@ -291,6 +291,12 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
     }
   }
 
+  maxLens.forEach((len, i) => {
+    sheet.getColumn(i + 1).width = Math.min(COL_MAX, Math.max(COL_MIN, len + COL_MARGIN));
+  });
+
+
+
   // --- PODSUMOWANIE ---
   const availableCount = products.filter((p) => p.availabilityStatus === 'available').length;
   const reservedCount = products.filter((p) => p.availabilityStatus === 'reserved').length;
