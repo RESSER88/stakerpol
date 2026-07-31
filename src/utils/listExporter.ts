@@ -291,6 +291,8 @@ export const exportProductListToPDF = async (products: Product[]): Promise<void>
     },
   });
 
+  drawPageNumbers();
+
   doc.save(`Stan_magazynu_${fileDateStamp()}.pdf`);
 };
 
