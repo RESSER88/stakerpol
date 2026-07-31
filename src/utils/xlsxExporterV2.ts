@@ -234,22 +234,8 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
       const netPrice = (p as any).netPrice;
       const isSold = p.availabilityStatus === 'sold';
 
-      const values: unknown[] = [
-        counter,
-        displayNames.get(p.id) || p.model || '',
-        p.specs?.serialNumber || '',
-        p.specs?.productionYear || '',
-        Number(p.specs?.workingHours) || (p.specs?.workingHours as any) || '',
-        formatCapacity(p.specs?.mastLiftingCapacity),
-        formatLift(p.specs?.liftHeight),
-        normalizeMast(p.specs?.mast),
-        normalizeBattery(p.specs?.battery),
-        availabilityLabel(p.availabilityStatus),
-        typeof netPrice === 'number' ? netPrice : Number(netPrice) || '',
-        (p as any).priceCurrency || 'PLN',
-        'Kliknij',
-      ];
-      row.values = values;
+      const values: any[] = [
+
 
       COLUMNS.forEach((c, i) => {
         const len = displayLength(values[i], c.key);
