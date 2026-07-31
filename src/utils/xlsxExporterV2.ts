@@ -54,24 +54,6 @@ const displayLength = (v: unknown, key: string) => {
 };
 
 
-const FALLBACK_GROUP = 'Pozostałe';
-const SERIES_ORDER = ['SWE', 'LWE', 'SPE', 'RRE', 'LSE'];
-const MODEL_ALIASES: Record<string, string> = { 'SWE 200': 'SWE 200D' };
-
-const NOISE = /\b(toyota|bt|staxio|staker|levio|sztaplarka|elektryczny|paleciak|paletowy)\b/gi;
-
-/** Returns { display, group } — display may include " EX", group never does. */
-const normalizeModel = (raw?: string): { display: string; group: string } => {
-  const original = (raw || '').trim();
-  const cleaned = original.replace(NOISE, ' ');
-  const m = cleaned.match(/\b(SWE|LWE|SPE|RRE|LSE)\s*(\d+)\s*([A-Z]{0,2})\b/i);
-  if (!m) return { display: original, group: FALLBACK_GROUP };
-  let base = `${m[1].toUpperCase()} ${m[2]}${(m[3] || '').toUpperCase()}`;
-  base = MODEL_ALIASES[base] || base;
-  const isEx = /\bEX\b/i.test(original);
-  return { display: isEx ? `${base} EX` : base, group: base };
-};
-
 const normalizeMast = (raw?: string) => {
   const v = (raw || '').toLowerCase();
   if (v.includes('triplex')) return 'Triplex';
@@ -85,11 +67,6 @@ const normalizeBattery = (raw?: string) => {
   return m ? `${m[1]} Ah` : '—';
 };
 
-const seriesRank = (key: string) => {
-  if (key === FALLBACK_GROUP) return 999;
-  const idx = SERIES_ORDER.indexOf(key.split(' ')[0]);
-  return idx === -1 ? 500 : idx;
-};
 
 const bottomLine = (color: string, style: 'thin' | 'medium' = 'thin') => ({
   bottom: { style, color: { argb: color } },
