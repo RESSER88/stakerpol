@@ -233,6 +233,10 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
 
       const netPrice = (p as any).netPrice;
       const isSold = p.availabilityStatus === 'sold';
+      const priceMode = (p as any).priceDisplayMode || 'inquiry_with_pricelist';
+      const numericPrice = typeof netPrice === 'number' ? netPrice : Number(netPrice) || 0;
+      const showPrice =
+        (priceMode === 'show_price' || priceMode === 'inquiry_with_pricelist') && numericPrice > 0;
 
       const values: any[] = [
         counter,
@@ -245,8 +249,8 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
         normalizeMast(p.specs?.mast),
         normalizeBattery(p.specs?.battery),
         availabilityLabel(p.availabilityStatus),
-        typeof netPrice === 'number' ? netPrice : Number(netPrice) || '',
-        (p as any).priceCurrency || 'PLN',
+        showPrice ? numericPrice : 'Zapytaj o cenę',
+        showPrice ? (p as any).priceCurrency || 'PLN' : '',
         'Kliknij',
       ];
       row.values = values;
