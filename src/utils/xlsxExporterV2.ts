@@ -25,21 +25,34 @@ const availabilityLabel = (s?: string) => {
   }
 };
 
-const COLUMNS: { header: string; key: string; width: number; align: 'left' | 'right' | 'center' }[] = [
-  { header: 'Nr', key: 'index', width: 5, align: 'center' },
-  { header: 'Model', key: 'model', width: 30, align: 'left' },
-  { header: 'Numer seryjny', key: 'serialNumber', width: 14, align: 'left' },
-  { header: 'Rok', key: 'productionYear', width: 8, align: 'center' },
-  { header: 'Godziny (mh)', key: 'workingHours', width: 10, align: 'right' },
-  { header: 'Udźwig', key: 'mastLiftingCapacity', width: 12, align: 'right' },
-  { header: 'Podnoszenie', key: 'liftHeight', width: 13, align: 'right' },
-  { header: 'Maszt', key: 'mast', width: 12, align: 'left' },
-  { header: 'Bateria', key: 'battery', width: 22, align: 'left' },
-  { header: 'Dostępność', key: 'availability', width: 12, align: 'left' },
-  { header: 'Cena netto', key: 'netPrice', width: 12, align: 'right' },
-  { header: 'Waluta', key: 'priceCurrency', width: 8, align: 'left' },
-  { header: 'Zdjęcia', key: 'photos', width: 16, align: 'center' },
+const COLUMNS: { header: string; key: string; align: 'left' | 'right' | 'center' }[] = [
+  { header: 'Nr', key: 'index', align: 'center' },
+  { header: 'Model', key: 'model', align: 'left' },
+  { header: 'Nr. seryjny', key: 'serialNumber', align: 'left' },
+  { header: 'Rok', key: 'productionYear', align: 'center' },
+  { header: 'Godziny (mh)', key: 'workingHours', align: 'right' },
+  { header: 'Udźwig', key: 'mastLiftingCapacity', align: 'right' },
+  { header: 'Podnoszenie', key: 'liftHeight', align: 'right' },
+  { header: 'Maszt', key: 'mast', align: 'left' },
+  { header: 'Bateria', key: 'battery', align: 'left' },
+  { header: 'Dostępność', key: 'availability', align: 'left' },
+  { header: 'Cena netto', key: 'netPrice', align: 'right' },
+  { header: 'Waluta', key: 'priceCurrency', align: 'left' },
+  { header: 'Zdjęcia', key: 'photos', align: 'center' },
 ];
+
+const COL_MARGIN = 2;
+const COL_MIN = 6;
+const COL_MAX = 34;
+
+const displayLength = (v: unknown, key: string) => {
+  if (v === null || v === undefined || v === '') return 0;
+  if (key === 'netPrice' && typeof v === 'number') {
+    return v.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).length;
+  }
+  return String(v).length;
+};
+
 
 const FALLBACK_GROUP = 'Pozostałe';
 const SERIES_ORDER = ['SWE', 'LWE', 'SPE', 'RRE', 'LSE'];
@@ -98,9 +111,8 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet('Stan magazynu');
 
-  COLUMNS.forEach((c, i) => {
-    sheet.getColumn(i + 1).width = c.width;
-  });
+  const maxLens = COLUMNS.map((c) => c.header.toUpperCase().length);
+
 
   const last = lastColLetter();
 
@@ -222,7 +234,7 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
       const netPrice = (p as any).netPrice;
       const isSold = p.availabilityStatus === 'sold';
 
-      row.values = [
+      const values: any[] = [
         counter,
         displayNames.get(p.id) || p.model || '',
         p.specs?.serialNumber || '',
@@ -235,8 +247,17 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
         availabilityLabel(p.availabilityStatus),
         typeof netPrice === 'number' ? netPrice : Number(netPrice) || '',
         (p as any).priceCurrency || 'PLN',
-        '',
+        'Kliknij',
       ];
+      row.values = values;
+
+      COLUMNS.forEach((c, i) => {
+        const len = displayLength(values[i], c.key);
+        if (len > maxLens[i]) maxLens[i] = len;
+      });
+
+
+
 
       COLUMNS.forEach((c, i) => {
         const cell = row.getCell(i + 1);
@@ -269,6 +290,12 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
       photoCell.alignment = { horizontal: 'center', vertical: 'middle' };
     }
   }
+
+  maxLens.forEach((len, i) => {
+    sheet.getColumn(i + 1).width = Math.min(COL_MAX, Math.max(COL_MIN, len + COL_MARGIN));
+  });
+
+
 
   // --- PODSUMOWANIE ---
   const availableCount = products.filter((p) => p.availabilityStatus === 'available').length;
