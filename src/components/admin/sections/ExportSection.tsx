@@ -49,16 +49,23 @@ const ExportSection = ({ products }: Props) => {
   const [exportingPDF, setExportingPDF] = useState(false);
   const [exportingJPG, setExportingJPG] = useState(false);
   const [exportingXLSX, setExportingXLSX] = useState(false);
+  const [filtered, setFiltered] = useState<Product[]>(products);
   const { toast } = useToast();
 
-  const empty = products.length === 0;
+  useEffect(() => {
+    setFiltered(products);
+  }, [products]);
+
+  const handleFilterChange = useCallback((list: Product[]) => setFiltered(list), []);
+
+  const empty = filtered.length === 0;
 
   const handlePDF = async () => {
     if (empty) return;
     setExportingPDF(true);
     try {
-      await exportProductListToPDF(products);
-      toast({ title: '✓ Zapisano', description: `Stan magazynu PDF (${products.length} produktów)` });
+      await exportProductListToPDF(filtered);
+      toast({ title: '✓ Zapisano', description: `Stan magazynu PDF (${filtered.length} produktów)` });
     } catch {
       toast({ title: 'Błąd eksportu', description: 'Nie udało się wygenerować PDF', variant: 'destructive' });
     } finally {
@@ -70,8 +77,8 @@ const ExportSection = ({ products }: Props) => {
     if (empty) return;
     setExportingJPG(true);
     try {
-      await exportProductListToJPG(products);
-      toast({ title: '✓ Zapisano', description: `Stan magazynu JPG (${products.length} produktów)` });
+      await exportProductListToJPG(filtered);
+      toast({ title: '✓ Zapisano', description: `Stan magazynu JPG (${filtered.length} produktów)` });
     } catch {
       toast({ title: 'Błąd eksportu', description: 'Nie udało się wygenerować JPG', variant: 'destructive' });
     } finally {
@@ -83,8 +90,8 @@ const ExportSection = ({ products }: Props) => {
     if (empty) return;
     setExportingXLSX(true);
     try {
-      await exportProductListToBrandedXLSX(products);
-      toast({ title: '✓ Zapisano', description: `Stan magazynu XLSX (${products.length} produktów)` });
+      await exportProductListToBrandedXLSX(filtered);
+      toast({ title: '✓ Zapisano', description: `Stan magazynu XLSX (${filtered.length} produktów)` });
     } catch {
       toast({ title: 'Błąd eksportu', description: 'Nie udało się wygenerować XLSX', variant: 'destructive' });
     } finally {
@@ -96,12 +103,18 @@ const ExportSection = ({ products }: Props) => {
     <div className="max-w-2xl">
       <SectionHeader number="—" title="Eksport stanu magazynu" />
 
+      <ExportFilterPanel products={products} onChange={handleFilterChange} />
+
+      <div className="text-xs font-bold tracking-[0.15em] uppercase text-editorial-muted mb-2">
+        Do eksportu: {filtered.length} z {products.length} produktów
+      </div>
+
       <div className="border-t border-editorial-line">
         <ExportRow
           number="01"
           title="Pobierz jako PDF"
           description="Dokument do druku i archiwizacji"
-          count={products.length}
+          count={filtered.length}
           loading={exportingPDF}
           disabled={empty}
           onClick={handlePDF}
@@ -110,7 +123,7 @@ const ExportSection = ({ products }: Props) => {
           number="02"
           title="Pobierz jako JPG"
           description="Obraz do publikacji w mediach społecznościowych"
-          count={products.length}
+          count={filtered.length}
           loading={exportingJPG}
           disabled={empty}
           onClick={handleJPG}
@@ -119,7 +132,7 @@ const ExportSection = ({ products }: Props) => {
           number="03"
           title="Pobierz jako XLSX"
           description="Arkusz Excel ze stanem magazynu"
-          count={products.length}
+          count={filtered.length}
           loading={exportingXLSX}
           disabled={empty}
           onClick={handleXLSX}
@@ -128,11 +141,12 @@ const ExportSection = ({ products }: Props) => {
 
       {empty && (
         <p className="text-xs text-editorial-muted mt-6 italic">
-          Brak produktów do eksportu.
+          Brak produktów spełniających kryteria.
         </p>
       )}
     </div>
   );
 };
+
 
 export default ExportSection;
