@@ -12,7 +12,13 @@ interface Props {
 
 const Chapter04_Pricing = ({ product, onChange, onSave, saving }: Props) => {
   const set = (patch: Partial<Product>) => onChange({ ...product, ...patch });
-  const mode = (product as any).priceDisplayMode || 'inquiry_only';
+  const mode = (product as any).priceDisplayMode || 'inquiry_with_pricelist';
+
+  const MODE_HINTS: Record<string, string> = {
+    inquiry_with_pricelist: 'Na stronie: zapytaj o cenę. W cenniku: cena widoczna.',
+    inquiry_only: 'Na stronie: zapytaj o cenę. W cenniku: cena ukryta.',
+    show_price: 'Na stronie: cena widoczna. W cenniku: cena widoczna.',
+  };
 
   return (
     <div className="space-y-6">
@@ -24,10 +30,11 @@ const Chapter04_Pricing = ({ product, onChange, onSave, saving }: Props) => {
           value={mode}
           onChange={(e) => set({ ...(product as any), priceDisplayMode: e.target.value } as any)}
           options={[
+            { value: 'inquiry_with_pricelist', label: 'Zapytanie i cennik' },
             { value: 'inquiry_only', label: 'Tylko zapytanie' },
             { value: 'show_price', label: 'Pokaż cenę' },
           ]}
-          hint='Tryb "Tylko zapytanie" ukrywa cenę netto na stronie produktu'
+          hint={MODE_HINTS[mode] || MODE_HINTS.inquiry_with_pricelist}
         />
         <EditorialInput
           label="Cena netto"

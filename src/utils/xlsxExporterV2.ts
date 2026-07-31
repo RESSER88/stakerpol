@@ -233,6 +233,10 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
 
       const netPrice = (p as any).netPrice;
       const isSold = p.availabilityStatus === 'sold';
+      const priceMode = (p as any).priceDisplayMode || 'inquiry_with_pricelist';
+      const numericPrice = typeof netPrice === 'number' ? netPrice : Number(netPrice) || 0;
+      const showPrice =
+        (priceMode === 'show_price' || priceMode === 'inquiry_with_pricelist') && numericPrice > 0;
 
       const values: any[] = [
         counter,
@@ -245,8 +249,8 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
         normalizeMast(p.specs?.mast),
         normalizeBattery(p.specs?.battery),
         availabilityLabel(p.availabilityStatus),
-        typeof netPrice === 'number' ? netPrice : Number(netPrice) || '',
-        (p as any).priceCurrency || 'PLN',
+        showPrice ? numericPrice : 'Zapytaj o cenę',
+        showPrice ? (p as any).priceCurrency || 'PLN' : '',
         'Kliknij',
       ];
       row.values = values;
@@ -266,7 +270,7 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
         let color = isSold ? MUTED : 'FF000000';
         let bold = false;
         if (c.key === 'index') color = MUTED;
-        if (c.key === 'netPrice') {
+        if (c.key === 'netPrice' && showPrice) {
           cell.numFmt = '#,##0.00';
           if (!isSold) {
             color = NAVY;
@@ -275,6 +279,26 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
         }
         cell.font = { name: 'Arial', size: 10, color: { argb: color }, bold };
       });
+
+      if (!showPrice) {
+        const priceIdx = COLUMNS.findIndex((c) => c.key === 'netPrice') + 1;
+        const priceCell = row.getCell(priceIdx);
+        const subject = `Zapytanie o cenę - ${displayNames.get(p.id) || p.model || ''} ${p.specs?.serialNumber || ''}`.trim();
+        priceCell.value = {
+          text: 'Zapytaj o cenę',
+          hyperlink: `mailto:info@stakerpol.pl?subject=${encodeURIComponent(subject)}`,
+        };
+        priceCell.numFmt = 'General';
+        priceCell.font = {
+          name: 'Arial',
+          size: 9,
+          color: { argb: NAVY },
+          underline: true,
+          bold: false,
+        };
+        priceCell.alignment = { horizontal: 'right', vertical: 'middle' };
+      }
+
 
       const photoCell = row.getCell(COLUMNS.length);
       photoCell.value = {
