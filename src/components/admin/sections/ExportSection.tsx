@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { Product } from '@/types';
 import { exportProductListToPDF, exportProductListToJPG } from '@/utils/listExporter';
 import { exportProductListToBrandedXLSX } from '@/utils/xlsxExporterV2';
 import { useToast } from '@/hooks/use-toast';
 import SectionHeader from '../editorial/SectionHeader';
+import ExportFilterPanel from './ExportFilterPanel';
+
 
 interface Props {
   products: Product[];
