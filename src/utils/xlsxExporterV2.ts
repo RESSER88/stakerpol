@@ -1,5 +1,7 @@
 import ExcelJS from 'exceljs';
 import { Product } from '@/types';
+import { normalizeModel, seriesRank, FALLBACK_GROUP } from '@/utils/productNormalization';
+
 
 const NAVY = 'FF1E3A5F';
 const ORANGE = 'FFF97316';
