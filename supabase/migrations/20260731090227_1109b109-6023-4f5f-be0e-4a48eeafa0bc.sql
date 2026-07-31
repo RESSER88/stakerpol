@@ -1,0 +1,1 @@
+ALTER TABLE public.products ALTER COLUMN price_display_mode SET DEFAULT 'inquiry_with_pricelist';
