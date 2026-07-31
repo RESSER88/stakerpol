@@ -46,7 +46,7 @@ export const mapSupabaseProductToProduct = (supabaseProduct: SupabaseProduct, im
     isFeatured: (supabaseProduct as any).is_featured ?? false,
     slogan: (supabaseProduct as any).slogan || '',
     mainImageAlt: (supabaseProduct as any).main_image_alt || '',
-    priceDisplayMode: (supabaseProduct as any).price_display_mode || 'inquiry_only',
+    priceDisplayMode: (supabaseProduct as any).price_display_mode || 'inquiry_with_pricelist',
     netPrice: (supabaseProduct as any).net_price ?? null,
     priceCurrency: (supabaseProduct as any).price_currency || 'PLN',
     specs: {
@@ -111,7 +111,7 @@ export const mapProductToSupabaseInsert = (product: any): SupabaseProductInsert 
     is_featured: !!product.isFeatured,
     slogan: product.slogan || null,
     main_image_alt: product.mainImageAlt ? String(product.mainImageAlt).trim() : null,
-    price_display_mode: product.priceDisplayMode || 'inquiry_only',
+    price_display_mode: product.priceDisplayMode || 'inquiry_with_pricelist',
     net_price: product.netPrice != null && product.netPrice !== ''
       ? Number(product.netPrice) : null,
     price_currency: product.priceCurrency || 'PLN',
