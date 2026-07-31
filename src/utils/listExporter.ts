@@ -188,9 +188,17 @@ export const exportProductListToPDF = async (products: Product[]): Promise<void>
       margin,
       y + 1.5
     );
+  };
 
-    const page = doc.getCurrentPageInfo().pageNumber;
-    doc.text(`Strona ${page}`, pageWidth - margin, y + 1.5, { align: 'right' });
+  const drawPageNumbers = () => {
+    const total = doc.getNumberOfPages();
+    for (let i = 1; i <= total; i++) {
+      doc.setPage(i);
+      doc.setFont(FONT_FAMILY, 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(...RGB.grayText);
+      doc.text(`Strona ${i} z ${total}`, pageWidth - margin, pageHeight - 6.5, { align: 'right' });
+    }
   };
 
   autoTable(doc, {
