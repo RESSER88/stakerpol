@@ -111,9 +111,8 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet('Stan magazynu');
 
-  COLUMNS.forEach((c, i) => {
-    sheet.getColumn(i + 1).width = c.width;
-  });
+  const maxLens = COLUMNS.map((c) => c.header.toUpperCase().length);
+
 
   const last = lastColLetter();
 
