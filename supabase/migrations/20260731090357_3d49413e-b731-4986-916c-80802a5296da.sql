@@ -1,0 +1,2 @@
+ALTER TABLE public.products DROP CONSTRAINT IF EXISTS products_price_display_mode_check;
+ALTER TABLE public.products ADD CONSTRAINT products_price_display_mode_check CHECK (price_display_mode IN ('inquiry_with_pricelist','inquiry_only','show_price'));
