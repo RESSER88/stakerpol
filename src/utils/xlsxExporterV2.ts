@@ -1,7 +1,11 @@
 import ExcelJS from 'exceljs';
 import { Product } from '@/types';
-import { normalizeModel, seriesRank, FALLBACK_GROUP } from '@/utils/productNormalization';
-
+import {
+  COMPANY,
+  EXPORT_COLUMNS as COLUMNS,
+  buildExportRows,
+  formatPrice,
+} from '@/utils/exportListModel';
 
 const NAVY = 'FF1E3A5F';
 const ORANGE = 'FFF97316';
@@ -10,39 +14,6 @@ const ROW_LINE = 'FFE8EAED';
 const GRAY_TEXT = 'FF6B7280';
 const MUTED = 'FF9CA3AF';
 
-const COMPANY = {
-  name: 'FHU Stakerpol',
-  person: 'Michał Seweryn',
-  phone: '+48 694 133 592',
-  email: 'info@stakerpol.pl',
-  address: 'ul. Szewska 6, 32-043 Skała',
-};
-
-const availabilityLabel = (s?: string) => {
-  switch (s) {
-    case 'available': return 'Dostępny';
-    case 'reserved': return 'Zarezerwowany';
-    case 'sold': return 'Sprzedany';
-    default: return '—';
-  }
-};
-
-const COLUMNS: { header: string; key: string; align: 'left' | 'right' | 'center' }[] = [
-  { header: 'Nr', key: 'index', align: 'center' },
-  { header: 'Model', key: 'model', align: 'left' },
-  { header: 'Nr. seryjny', key: 'serialNumber', align: 'left' },
-  { header: 'Rok', key: 'productionYear', align: 'center' },
-  { header: 'Godziny (mh)', key: 'workingHours', align: 'right' },
-  { header: 'Udźwig', key: 'mastLiftingCapacity', align: 'right' },
-  { header: 'Podnoszenie', key: 'liftHeight', align: 'right' },
-  { header: 'Maszt', key: 'mast', align: 'left' },
-  { header: 'Bateria', key: 'battery', align: 'left' },
-  { header: 'Dostępność', key: 'availability', align: 'left' },
-  { header: 'Cena netto', key: 'netPrice', align: 'right' },
-  { header: 'Waluta', key: 'priceCurrency', align: 'left' },
-  { header: 'Zdjęcia', key: 'photos', align: 'center' },
-];
-
 const COL_MARGIN = 2;
 const COL_MIN = 6;
 const COL_MAX = 34;
@@ -50,25 +21,10 @@ const COL_MAX = 34;
 const displayLength = (v: unknown, key: string) => {
   if (v === null || v === undefined || v === '') return 0;
   if (key === 'netPrice' && typeof v === 'number') {
-    return v.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).length;
+    return formatPrice(v).length;
   }
   return String(v).length;
 };
-
-
-const normalizeMast = (raw?: string) => {
-  const v = (raw || '').toLowerCase();
-  if (v.includes('triplex')) return 'Triplex';
-  if (v.includes('duplex')) return 'Duplex';
-  if (v.includes('simplex')) return 'Simplex';
-  return 'Brak';
-};
-
-const normalizeBattery = (raw?: string) => {
-  const m = (raw || '').match(/(\d{3})\s*Ah/i);
-  return m ? `${m[1]} Ah` : '—';
-};
-
 
 const bottomLine = (color: string, style: 'thin' | 'medium' = 'thin') => ({
   bottom: { style, color: { argb: color } },
@@ -76,33 +32,21 @@ const bottomLine = (color: string, style: 'thin' | 'medium' = 'thin') => ({
 
 const lastColLetter = () => String.fromCharCode(64 + COLUMNS.length);
 
-const formatCapacity = (v: unknown) => {
-  const n = Number(v);
-  return Number.isFinite(n) && n > 0 ? `${n}kg` : '';
-};
-
-const formatLift = (v: unknown) => {
-  const n = Number(v);
-  return Number.isFinite(n) && n > 0 ? `${(n / 1000).toFixed(2)}m` : '';
-};
-
 export async function exportProductListToBrandedXLSX(products: Product[]): Promise<void> {
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet('Stan magazynu');
 
   const maxLens = COLUMNS.map((c) => c.header.toUpperCase().length);
 
-
   const last = lastColLetter();
+
+  const model = buildExportRows(products);
 
   // --- 1. NAGŁÓWEK PLIKU ---
   sheet.getRow(1).height = 32;
   for (let r = 2; r <= 4; r++) sheet.getRow(r).height = 16;
 
-  const today = new Date();
-  const dd = String(today.getDate()).padStart(2, '0');
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dateLabel = `${dd}.${mm}.${today.getFullYear()}`;
+  const dateLabel = model.dateLabel;
 
   sheet.mergeCells('A1:C1');
   const brand = sheet.getCell('A1');
@@ -112,7 +56,7 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
 
   sheet.mergeCells('A2:C2');
   const tagline = sheet.getCell('A2');
-  tagline.value = 'Sprzedaż paleciaków elektrycznych BT Toyota';
+  tagline.value = COMPANY.tagline;
   tagline.font = { name: 'Arial', size: 9, color: { argb: GRAY_TEXT } };
   tagline.alignment = { horizontal: 'left', vertical: 'middle' };
 
@@ -154,36 +98,10 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
   });
 
   // --- 3. GRUPOWANIE ---
-  const groups = new Map<string, Product[]>();
-  const displayNames = new Map<string, string>();
-  products.forEach((p) => {
-    const { display, group } = normalizeModel(p.model);
-    displayNames.set(p.id, display);
-    if (!groups.has(group)) groups.set(group, []);
-    groups.get(group)!.push(p);
-  });
-
-  const sortedKeys = Array.from(groups.keys()).sort((a, b) => {
-    const ra = seriesRank(a);
-    const rb = seriesRank(b);
-    if (ra !== rb) return ra - rb;
-    return a.localeCompare(b);
-  });
-
   let rowIndex = HEADER_ROW;
-  let counter = 0;
   let firstGroup = true;
 
-  for (const key of sortedKeys) {
-    const items = groups.get(key)!.slice().sort((a, b) => {
-      const ya = Number(a.specs?.productionYear) || 0;
-      const yb = Number(b.specs?.productionYear) || 0;
-      if (yb !== ya) return yb - ya;
-      const ha = Number(a.specs?.workingHours) || 0;
-      const hb = Number(b.specs?.workingHours) || 0;
-      return ha - hb;
-    });
-
+  for (const group of model.groups) {
     if (!firstGroup) {
       rowIndex++;
       sheet.getRow(rowIndex).height = 8;
@@ -200,36 +118,31 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
       cell.border = bottomLine(NAVY, 'medium');
     }
     const gCell = sheet.getCell(`A${rowIndex}`);
-    gCell.value = key === FALLBACK_GROUP ? key : `Toyota BT ${key}`;
+    gCell.value = group.label;
     gCell.font = { name: 'Arial', size: 11, bold: true, color: { argb: NAVY } };
     gCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
 
-    for (const p of items) {
+    for (const r of group.rows) {
       rowIndex++;
-      counter++;
       const row = sheet.getRow(rowIndex);
       row.height = 17;
 
-      const netPrice = (p as any).netPrice;
-      const isSold = p.availabilityStatus === 'sold';
-      const priceMode = (p as any).priceDisplayMode || 'inquiry_with_pricelist';
-      const numericPrice = typeof netPrice === 'number' ? netPrice : Number(netPrice) || 0;
-      const showPrice =
-        (priceMode === 'show_price' || priceMode === 'inquiry_with_pricelist') && numericPrice > 0;
+      const isSold = r.isSold;
+      const showPrice = r.showPrice;
 
       const values: any[] = [
-        counter,
-        displayNames.get(p.id) || p.model || '',
-        p.specs?.serialNumber || '',
-        p.specs?.productionYear || '',
-        Number(p.specs?.workingHours) || (p.specs?.workingHours as any) || '',
-        formatCapacity(p.specs?.mastLiftingCapacity),
-        formatLift(p.specs?.liftHeight),
-        normalizeMast(p.specs?.mast),
-        normalizeBattery(p.specs?.battery),
-        availabilityLabel(p.availabilityStatus),
-        showPrice ? numericPrice : 'Zapytaj o cenę',
-        showPrice ? (p as any).priceCurrency || 'PLN' : '',
+        r.index,
+        r.model,
+        r.serialNumber,
+        r.productionYear,
+        r.workingHours,
+        r.mastLiftingCapacity,
+        r.liftHeight,
+        r.mast,
+        r.battery,
+        r.availability,
+        showPrice ? r.netPrice : 'Zapytaj o cenę',
+        r.priceCurrency,
         'Kliknij',
       ];
       row.values = values;
@@ -238,9 +151,6 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
         const len = displayLength(values[i], c.key);
         if (len > maxLens[i]) maxLens[i] = len;
       });
-
-
-
 
       COLUMNS.forEach((c, i) => {
         const cell = row.getCell(i + 1);
@@ -262,10 +172,9 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
       if (!showPrice) {
         const priceIdx = COLUMNS.findIndex((c) => c.key === 'netPrice') + 1;
         const priceCell = row.getCell(priceIdx);
-        const subject = `Zapytanie o cenę - ${displayNames.get(p.id) || p.model || ''} ${p.specs?.serialNumber || ''}`.trim();
         priceCell.value = {
           text: 'Zapytaj o cenę',
-          hyperlink: `mailto:info@stakerpol.pl?subject=${encodeURIComponent(subject)}`,
+          hyperlink: r.mailtoHref,
         };
         priceCell.numFmt = 'General';
         priceCell.font = {
@@ -278,11 +187,10 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
         priceCell.alignment = { horizontal: 'right', vertical: 'middle' };
       }
 
-
       const photoCell = row.getCell(COLUMNS.length);
       photoCell.value = {
         text: 'Kliknij',
-        hyperlink: `https://stakerpol.pl/products/${(p as any).slug || p.id}`,
+        hyperlink: r.productUrl,
       };
       photoCell.font = {
         name: 'Arial',
@@ -298,15 +206,11 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
     sheet.getColumn(i + 1).width = Math.min(COL_MAX, Math.max(COL_MIN, len + COL_MARGIN));
   });
 
-
-
   // --- PODSUMOWANIE ---
-  const availableCount = products.filter((p) => p.availabilityStatus === 'available').length;
-  const reservedCount = products.filter((p) => p.availabilityStatus === 'reserved').length;
   const summaryRow = rowIndex + 2;
   sheet.mergeCells(`A${summaryRow}:${last}${summaryRow}`);
   const sCell = sheet.getCell(`A${summaryRow}`);
-  sCell.value = `Łącznie pozycji: ${counter} · dostępnych: ${availableCount} · zarezerwowanych: ${reservedCount}`;
+  sCell.value = model.summary;
   sCell.alignment = { horizontal: 'right', vertical: 'middle' };
   sCell.font = { name: 'Arial', size: 9, color: { argb: NAVY } };
 
@@ -322,13 +226,13 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
 
   sheet.mergeCells(`A${footer1}:${last}${footer1}`);
   const f1 = sheet.getCell(`A${footer1}`);
-  f1.value = `www.stakerpol.pl · tel. ${COMPANY.phone} · ${COMPANY.email}`;
+  f1.value = `${COMPANY.site} · tel. ${COMPANY.phone} · ${COMPANY.email}`;
   f1.alignment = { horizontal: 'left', vertical: 'middle' };
   f1.font = { name: 'Arial', size: 8, color: { argb: GRAY_TEXT } };
 
   sheet.mergeCells(`A${footer2}:${last}${footer2}`);
   const f2 = sheet.getCell(`A${footer2}`);
-  f2.value = `${COMPANY.name}, ${COMPANY.address} · NIP 6492111954 · REGON 120724080`;
+  f2.value = `${COMPANY.name}, ${COMPANY.address} · NIP ${COMPANY.nip} · REGON ${COMPANY.regon}`;
   f2.alignment = { horizontal: 'left', vertical: 'middle' };
   f2.font = { name: 'Arial', size: 8, color: { argb: GRAY_TEXT } };
 
