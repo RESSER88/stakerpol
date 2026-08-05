@@ -1,0 +1,208 @@
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
+import { leadSourceLabel } from './leadSources';
+
+interface StatRow {
+  created_at: string;
+  status: string;
+  source: string;
+  product_id: string | null;
+}
+
+const MONTH_SHORT = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
+
+const InquiryStats = () => {
+  const [rows, setRows] = useState<StatRow[]>([]);
+  const [productNames, setProductNames] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from('leads')
+        .select('created_at, status, source, product_id')
+        .order('created_at', { ascending: false });
+      const list = (data ?? []) as StatRow[];
+
+      const ids = Array.from(new Set(list.map((r) => r.product_id).filter(Boolean) as string[]));
+      let names: Record<string, string> = {};
+      if (ids.length > 0) {
+        const { data: prods } = await supabase.from('products').select('id, name').in('id', ids);
+        names = Object.fromEntries((prods ?? []).map((p) => [p.id, p.name]));
+      }
+      if (cancelled) return;
+      setRows(list);
+      setProductNames(names);
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const stats = useMemo(() => {
+    const now = new Date();
+    const sevenDaysAgo = now.getTime() - 7 * 24 * 60 * 60 * 1000;
+
+    let newCount = 0;
+    let handledCount = 0;
+    let overdue = 0;
+    let thisMonth = 0;
+
+    const sources = new Map<string, number>();
+    const models = new Map<string, number>();
+    let withoutProduct = 0;
+
+    // 12 ostatnich miesięcy (najstarszy pierwszy)
+    const months: { key: string; label: string; count: number }[] = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        key: `${d.getFullYear()}-${d.getMonth()}`,
+        label: MONTH_SHORT[d.getMonth()],
+        count: 0,
+      });
+    }
+    const monthIndex = new Map(months.map((m, i) => [m.key, i]));
+
+    rows.forEach((r) => {
+      const created = new Date(r.created_at);
+      if (r.status === 'handled') handledCount++;
+      if (r.status === 'new') {
+        newCount++;
+        if (created.getTime() < sevenDaysAgo) overdue++;
+      }
+      if (created.getFullYear() === now.getFullYear() && created.getMonth() === now.getMonth()) thisMonth++;
+
+      const mKey = `${created.getFullYear()}-${created.getMonth()}`;
+      const mi = monthIndex.get(mKey);
+      if (mi !== undefined) months[mi].count++;
+
+      sources.set(r.source, (sources.get(r.source) ?? 0) + 1);
+
+      if (r.product_id) {
+        models.set(r.product_id, (models.get(r.product_id) ?? 0) + 1);
+      } else {
+        withoutProduct++;
+      }
+    });
+
+    return {
+      total: rows.length,
+      newCount,
+      handledCount,
+      overdue,
+      thisMonth,
+      months,
+      sources: Array.from(sources.entries()).sort((a, b) => b[1] - a[1]),
+      models: Array.from(models.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5),
+      withoutProduct,
+    };
+  }, [rows]);
+
+  if (loading) {
+    return <p className="py-16 text-center text-sm text-editorial-muted font-editorial italic">Ładowanie…</p>;
+  }
+
+  if (stats.total === 0) {
+    return <p className="py-16 text-center text-sm text-editorial-muted font-editorial italic">Brak danych do statystyk</p>;
+  }
+
+  const maxMonth = Math.max(...stats.months.map((m) => m.count), 1);
+
+  const counters: { value: number; label: string; highlight?: boolean }[] = [
+    { value: stats.newCount, label: 'Nowe' },
+    { value: stats.handledCount, label: 'Obsłużone' },
+    { value: stats.overdue, label: 'Zaległe (>7 dni)', highlight: stats.overdue > 0 },
+    { value: stats.thisMonth, label: 'W tym miesiącu' },
+  ];
+
+  return (
+    <div>
+      <div className="grid grid-cols-2 md:grid-cols-4 border-t border-editorial-line">
+        {counters.map((c) => (
+          <div key={c.label} className="py-6 border-b border-editorial-line">
+            <p
+              className={cn(
+                'font-editorial text-4xl leading-none',
+                c.highlight ? 'text-editorial-accent' : 'text-editorial-ink'
+              )}
+            >
+              {c.value}
+            </p>
+            <p className="mt-2 text-[10px] font-bold tracking-[0.2em] uppercase text-editorial-muted">{c.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <section className="mt-10">
+        <h2 className="text-[10px] font-bold tracking-[0.25em] uppercase text-editorial-muted mb-4">
+          Ostatnie 12 miesięcy
+        </h2>
+        <div className="flex items-end gap-1.5 h-32 border-b border-editorial-line">
+          {stats.months.map((m, i) => (
+            <div key={`${m.key}-${i}`} className="flex-1 flex items-end h-full">
+              <div
+                className="w-full bg-editorial-ink/80"
+                style={{ height: `${Math.max((m.count / maxMonth) * 100, m.count > 0 ? 4 : 1)}%` }}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-1.5 mt-2">
+          {stats.months.map((m, i) => (
+            <span
+              key={`l-${m.key}-${i}`}
+              className="flex-1 text-center text-[9px] font-bold tracking-[0.1em] uppercase text-editorial-muted"
+            >
+              {m.label}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-[10px] font-bold tracking-[0.25em] uppercase text-editorial-muted mb-2">Źródła</h2>
+        <ul className="border-t border-editorial-line">
+          {stats.sources.map(([source, count]) => (
+            <li key={source} className="flex items-baseline justify-between gap-4 py-3 border-b border-editorial-line">
+              <span className="text-sm text-editorial-ink">{leadSourceLabel(source)}</span>
+              <span className="font-editorial text-base text-editorial-ink">{count}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="mt-10 mb-4">
+        <h2 className="text-[10px] font-bold tracking-[0.25em] uppercase text-editorial-muted mb-2">
+          Najczęściej pytane modele
+        </h2>
+        {stats.models.length === 0 ? (
+          <p className="py-6 text-sm text-editorial-muted font-editorial italic">
+            Brak zapytań powiązanych z produktem
+          </p>
+        ) : (
+          <ul className="border-t border-editorial-line">
+            {stats.models.map(([id, count]) => (
+              <li key={id} className="flex items-baseline justify-between gap-4 py-3 border-b border-editorial-line">
+                <span className="text-sm text-editorial-ink">{productNames[id] ?? 'Produkt usunięty'}</span>
+                <span className="font-editorial text-base text-editorial-ink">{count}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="mt-3 text-[10px] font-bold tracking-[0.2em] uppercase text-editorial-muted">
+          Lista nie obejmuje {stats.withoutProduct}{' '}
+          {stats.withoutProduct === 1 ? 'zapytania bez produktu' : 'zapytań bez produktu'}
+        </p>
+      </section>
+    </div>
+  );
+};
+
+export default InquiryStats;
