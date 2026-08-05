@@ -13,12 +13,38 @@ const phoneSchema = z
     message: 'Podaj poprawny numer telefonu',
   });
 
+export interface LeadSubmitOptions {
+  /** Distinguishes the entry point in statistics. Defaults to the inline product form. */
+  source?: string;
+  /** Optional free-text content saved to leads.message */
+  message?: string;
+  /** GDPR consent — stored as rodo_accepted */
+  rodoAccepted?: boolean;
+  /** GA4 form_submit label */
+  formLabel?: string;
+  /** Product model passed to GA4 generate_lead */
+  productModel?: string;
+  /** Success toast copy */
+  successTitle?: string;
+  successDescription?: string;
+}
+
 export const useLeadSubmit = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const submit = async (phone: string, productId?: string) => {
+  const submit = async (phone: string, productId?: string, options: LeadSubmitOptions = {}) => {
+    const {
+      source = 'product_page_inline',
+      message,
+      rodoAccepted,
+      formLabel = 'product_callback_inline',
+      productModel = 'Zapytanie produktowe',
+      successTitle = '✅ Dziękujemy!',
+      successDescription = 'Oddzwonimy w ciągu 30 minut w godzinach pracy.',
+    } = options;
+
     setError(null);
     const parsed = phoneSchema.safeParse(phone);
     if (!parsed.success) {
@@ -31,21 +57,23 @@ export const useLeadSubmit = () => {
       const { error: dbError } = await supabase.from('leads' as any).insert({
         phone: parsed.data,
         product_id: productId || null,
-        source: 'product_page_inline',
+        source,
+        message: message?.trim() ? message.trim().slice(0, 2000) : null,
+        rodo_accepted: rodoAccepted ?? undefined,
         page_url: typeof window !== 'undefined' ? window.location.href : null,
         user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
       } as any);
       if (dbError) throw dbError;
       // notify-lead is triggered automatically by DB trigger on leads INSERT
-      trackFormSubmit('product_callback_inline');
+      trackFormSubmit(formLabel);
       trackGenerateLead(
         crypto.randomUUID(),
-        'product_page_inline',
-        productId ? { id: productId, model: 'Zapytanie produktowe' } : undefined
+        source,
+        productId ? { id: productId, model: productModel } : undefined
       );
       toast({
-        title: '✅ Dziękujemy!',
-        description: 'Oddzwonimy w ciągu 30 minut w godzinach pracy.',
+        title: successTitle,
+        description: successDescription,
       });
       return true;
     } catch (e: any) {
