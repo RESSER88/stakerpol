@@ -12,10 +12,28 @@ interface StatRow {
 
 const MONTH_SHORT = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
 
+type Range = '7d' | '30d' | '12m';
+
+const RANGES: { value: Range; label: string; caption: string }[] = [
+  { value: '7d', label: '7 dni', caption: 'Ostatnie 7 dni' },
+  { value: '30d', label: '30 dni', caption: 'Ostatnie 30 dni' },
+  { value: '12m', label: '12 miesięcy', caption: 'Ostatnie 12 miesięcy' },
+];
+
+interface Bucket {
+  key: string;
+  label: string;
+  full: string;
+  count: number;
+  showLabel: boolean;
+}
+
 const InquiryStats = () => {
   const [rows, setRows] = useState<StatRow[]>([]);
   const [productNames, setProductNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [range, setRange] = useState<Range>('12m');
+  const [activeBucket, setActiveBucket] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,6 +61,7 @@ const InquiryStats = () => {
     };
   }, []);
 
+  // Liczniki i listy — zawsze ze wszystkich zapytań, niezależnie od zakresu wykresu.
   const stats = useMemo(() => {
     const now = new Date();
     const sevenDaysAgo = now.getTime() - 7 * 24 * 60 * 60 * 1000;
@@ -56,18 +75,6 @@ const InquiryStats = () => {
     const models = new Map<string, number>();
     let withoutProduct = 0;
 
-    // 12 ostatnich miesięcy (najstarszy pierwszy)
-    const months: { key: string; label: string; count: number }[] = [];
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push({
-        key: `${d.getFullYear()}-${d.getMonth()}`,
-        label: MONTH_SHORT[d.getMonth()],
-        count: 0,
-      });
-    }
-    const monthIndex = new Map(months.map((m, i) => [m.key, i]));
-
     rows.forEach((r) => {
       const created = new Date(r.created_at);
       if (r.status === 'handled') handledCount++;
@@ -76,10 +83,6 @@ const InquiryStats = () => {
         if (created.getTime() < sevenDaysAgo) overdue++;
       }
       if (created.getFullYear() === now.getFullYear() && created.getMonth() === now.getMonth()) thisMonth++;
-
-      const mKey = `${created.getFullYear()}-${created.getMonth()}`;
-      const mi = monthIndex.get(mKey);
-      if (mi !== undefined) months[mi].count++;
 
       sources.set(r.source, (sources.get(r.source) ?? 0) + 1);
 
@@ -96,7 +99,6 @@ const InquiryStats = () => {
       handledCount,
       overdue,
       thisMonth,
-      months,
       sources: Array.from(sources.entries()).sort((a, b) => b[1] - a[1]),
       models: Array.from(models.entries())
         .sort((a, b) => b[1] - a[1])
@@ -104,6 +106,62 @@ const InquiryStats = () => {
       withoutProduct,
     };
   }, [rows]);
+
+  // Wykres — filtrowanie już pobranych danych, bez nowego zapytania.
+  const buckets = useMemo<Bucket[]>(() => {
+    const now = new Date();
+
+    if (range === '12m') {
+      const list: Bucket[] = [];
+      const index = new Map<string, number>();
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        index.set(key, list.length);
+        list.push({
+          key,
+          label: MONTH_SHORT[d.getMonth()],
+          full: `${MONTH_SHORT[d.getMonth()]} ${d.getFullYear()}`,
+          count: 0,
+          showLabel: true,
+        });
+      }
+      rows.forEach((r) => {
+        const d = new Date(r.created_at);
+        const i = index.get(`${d.getFullYear()}-${d.getMonth()}`);
+        if (i !== undefined) list[i].count++;
+      });
+      return list;
+    }
+
+    const days = range === '7d' ? 7 : 30;
+    const labelEvery = range === '7d' ? 1 : 5;
+    const list: Bucket[] = [];
+    const index = new Map<string, number>();
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      const label = `${d.getDate()}.${String(d.getMonth() + 1).padStart(2, '0')}`;
+      index.set(key, list.length);
+      list.push({
+        key,
+        label,
+        full: label,
+        count: 0,
+        showLabel: false,
+      });
+    }
+    // Podpisujemy co kilka słupków, licząc od ostatniego dnia.
+    list.forEach((b, i) => {
+      b.showLabel = (list.length - 1 - i) % labelEvery === 0;
+    });
+    rows.forEach((r) => {
+      const d = new Date(r.created_at);
+      const i = index.get(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+      if (i !== undefined) list[i].count++;
+    });
+    return list;
+  }, [rows, range]);
 
   if (loading) {
     return <p className="py-16 text-center text-sm text-editorial-muted font-editorial italic">Ładowanie…</p>;
@@ -113,7 +171,9 @@ const InquiryStats = () => {
     return <p className="py-16 text-center text-sm text-editorial-muted font-editorial italic">Brak danych do statystyk</p>;
   }
 
-  const maxMonth = Math.max(...stats.months.map((m) => m.count), 1);
+  const maxBucket = Math.max(...buckets.map((b) => b.count), 1);
+  const active = buckets.find((b) => b.key === activeBucket) ?? null;
+  const caption = RANGES.find((r) => r.value === range)!.caption;
 
   const counters: { value: number; label: string; highlight?: boolean }[] = [
     { value: stats.newCount, label: 'Nowe' },
@@ -141,26 +201,64 @@ const InquiryStats = () => {
       </div>
 
       <section className="mt-10">
-        <h2 className="text-[10px] font-bold tracking-[0.25em] uppercase text-editorial-muted mb-4">
-          Ostatnie 12 miesięcy
-        </h2>
-        <div className="flex items-end gap-1.5 h-32 border-b border-editorial-line">
-          {stats.months.map((m, i) => (
-            <div key={`${m.key}-${i}`} className="flex-1 flex items-end h-full">
-              <div
-                className="w-full bg-editorial-ink/80"
-                style={{ height: `${Math.max((m.count / maxMonth) * 100, m.count > 0 ? 4 : 1)}%` }}
-              />
-            </div>
+        <div className="flex items-center gap-1 mb-3 flex-wrap">
+          {RANGES.map((r) => (
+            <button
+              key={r.value}
+              onClick={() => {
+                setRange(r.value);
+                setActiveBucket(null);
+              }}
+              className={cn(
+                'px-2.5 h-7 text-[10px] font-bold tracking-[0.15em] uppercase transition-colors',
+                range === r.value
+                  ? 'bg-editorial-ink text-white'
+                  : 'text-editorial-muted hover:text-editorial-ink'
+              )}
+            >
+              {r.label}
+            </button>
           ))}
         </div>
-        <div className="flex gap-1.5 mt-2">
-          {stats.months.map((m, i) => (
-            <span
-              key={`l-${m.key}-${i}`}
-              className="flex-1 text-center text-[9px] font-bold tracking-[0.1em] uppercase text-editorial-muted"
+
+        <div className="flex items-baseline justify-between gap-4 mb-3 min-h-[18px]">
+          <h2 className="text-[10px] font-bold tracking-[0.25em] uppercase text-editorial-muted">{caption}</h2>
+          {active && (
+            <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-editorial-ink">
+              {active.full} — {active.count}{' '}
+              {active.count === 1 ? 'zapytanie' : 'zapytań'}
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-end gap-1 h-32 border-b border-editorial-line">
+          {buckets.map((b) => (
+            <button
+              key={b.key}
+              type="button"
+              aria-label={`${b.full}: ${b.count}`}
+              onMouseEnter={() => setActiveBucket(b.key)}
+              onMouseLeave={() => setActiveBucket((k) => (k === b.key ? null : k))}
+              onClick={() => setActiveBucket((k) => (k === b.key ? null : b.key))}
+              className="flex-1 flex items-end h-full min-w-0"
             >
-              {m.label}
+              <span
+                className={cn(
+                  'w-full block transition-colors',
+                  activeBucket === b.key ? 'bg-editorial-ink' : 'bg-editorial-ink/60'
+                )}
+                style={{ height: `${Math.max((b.count / maxBucket) * 100, b.count > 0 ? 4 : 1)}%` }}
+              />
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1 mt-2">
+          {buckets.map((b) => (
+            <span
+              key={`l-${b.key}`}
+              className="flex-1 text-center text-[9px] font-bold tracking-[0.05em] uppercase text-editorial-muted truncate"
+            >
+              {b.showLabel ? b.label : ''}
             </span>
           ))}
         </div>
