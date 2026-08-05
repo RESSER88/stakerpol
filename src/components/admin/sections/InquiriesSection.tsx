@@ -145,7 +145,7 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
         <div className="mt-6 border-b border-editorial-line" />
       </header>
 
-      <div className="flex items-center gap-1 mb-6 flex-wrap">
+      <div className="grid grid-cols-2 gap-1 mb-6 sm:flex sm:items-center">
         {tabs.map((c) => (
           <button
             key={c.value}
@@ -157,7 +157,7 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
               }
             }}
             className={cn(
-              'px-3 h-8 text-[11px] font-bold tracking-[0.15em] uppercase transition-colors',
+              'w-full sm:w-auto px-3 h-8 text-[11px] font-bold tracking-[0.15em] uppercase transition-colors',
               tab === c.value
                 ? 'bg-editorial-ink text-white'
                 : 'text-editorial-muted hover:text-editorial-ink'
