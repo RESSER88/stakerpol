@@ -39,6 +39,8 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [filter, setFilter] = useState<StatusFilter>(initialFilter);
+  const [tab, setTab] = useState<TabValue>(initialFilter);
+
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [updating, setUpdating] = useState<Set<string>>(new Set());
 
@@ -126,10 +128,11 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const filterChips: { value: StatusFilter; label: string }[] = [
+  const tabs: { value: TabValue; label: string }[] = [
     { value: 'new', label: 'Nowe' },
     { value: 'handled', label: 'Obsłużone' },
     { value: 'all', label: 'Wszystkie' },
+    { value: 'stats', label: 'Statystyki' },
   ];
 
   return (
@@ -142,17 +145,20 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
         <div className="mt-6 border-b border-editorial-line" />
       </header>
 
-      <div className="flex items-center gap-1 mb-6">
-        {filterChips.map((c) => (
+      <div className="flex items-center gap-1 mb-6 flex-wrap">
+        {tabs.map((c) => (
           <button
             key={c.value}
             onClick={() => {
-              setFilter(c.value);
-              setPage(0);
+              setTab(c.value);
+              if (c.value !== 'stats') {
+                setFilter(c.value);
+                setPage(0);
+              }
             }}
             className={cn(
               'px-3 h-8 text-[11px] font-bold tracking-[0.15em] uppercase transition-colors',
-              filter === c.value
+              tab === c.value
                 ? 'bg-editorial-ink text-white'
                 : 'text-editorial-muted hover:text-editorial-ink'
             )}
@@ -162,7 +168,12 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
         ))}
       </div>
 
+      {tab === 'stats' ? (
+        <InquiryStats />
+      ) : (
+        <>
       {loading ? (
+
         <p className="py-16 text-center text-sm text-editorial-muted font-editorial italic">Ładowanie…</p>
       ) : leads.length === 0 ? (
         <p className="py-16 text-center text-sm text-editorial-muted font-editorial italic">Brak zapytań</p>
@@ -196,7 +207,7 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                         {lead.name || 'Bez nazwy'}
                       </span>
                       <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-editorial-muted">
-                        {sourceLabel[lead.source] || lead.source}
+                        {leadSourceLabel(lead.source)}
                       </span>
                     </div>
 
@@ -318,7 +329,10 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
           </button>
         </div>
       )}
+        </>
+      )}
     </div>
+
   );
 };
 
