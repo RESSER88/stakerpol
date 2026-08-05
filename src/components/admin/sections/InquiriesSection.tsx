@@ -3,6 +3,9 @@ import { Phone, Mail, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Check, 
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { leadSourceLabel } from './leadSources';
+import InquiryStats from './InquiryStats';
+
 
 interface Lead {
   id: string;
@@ -22,12 +25,8 @@ interface Lead {
 const PAGE_SIZE = 20;
 
 type StatusFilter = 'all' | 'new' | 'handled';
+type TabValue = StatusFilter | 'stats';
 
-const sourceLabel: Record<string, string> = {
-  home_hero_form: 'Strona główna',
-  product_page_inline: 'Strona produktu',
-  contact_form: 'Kontakt',
-};
 
 interface Props {
   initialFilter?: StatusFilter;
