@@ -101,7 +101,7 @@ const PriceInquiryModal = ({ isOpen, onClose, product }: PriceInquiryModalProps)
 
           <div className="space-y-2">
             <label htmlFor="phone" className="text-sm font-medium">
-              {t('phoneNumberPlaceholder') ? 'Numer telefonu' : 'Numer telefonu'} <span className="text-destructive">*</span>
+              Numer telefonu <span className="text-destructive">*</span>
             </label>
             <Input
               id="phone"
