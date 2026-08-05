@@ -1,67 +1,74 @@
-# Plan: utworzenie `PROTOKOL_UZGODNIEN.md`
+# Raport: przekroczony Database Size (0,98 GB / 0,5 GB)
 
-Utworzę nowy plik `PROTOKOL_UZGODNIEN.md` w katalogu głównym repozytorium, oparty na moim wcześniejszym raporcie audytowym (3 problemy: udźwig, ALT, migracja URL), zaktualizowany o wszystkie 10 uwag redakcyjnych.
+## 1. Zadania cron (`cron.job`)
 
-## Struktura nowego dokumentu
+| jobid | nazwa | harmonogram | aktywne | polecenie |
+|---|---|---|---|---|
+| 1 | process-translations-every-minute | `* * * * *` | tak | `net.http_post` -> Edge Function `translation-worker` (nagłówek Authorization = **service_role key wpisany na stałe w treści zadania**) |
+| 2 | process-translations-1min | `* * * * *` | tak | `net.http_post` -> ta sama funkcja `translation-worker` (nagłówek z anon key) |
+| 3 | cleanup-old-handled-leads | `0 3 * * *` | tak | `SELECT public.cleanup_old_handled_leads()` |
 
-1. **Nagłówek / metryka** — tytuł, data, strony uzgodnienia, przedmiot audytu.
-2. **Rozdział 1 — Błąd danych produktu (udźwig 1200 vs 2000 kg)** — bez zmian merytorycznych względem audytu; formalny język protokołu.
-3. **Rozdział 2 — Automatyczne generowanie ALT dla zdjęć** — przeredagowany zgodnie z uwagą #1:
-   - jasno zapisane, że audyt rekomendował **rozwiązanie hybrydowe (Opcja D)**,
-   - podstawą jest **automatyczny generator ALT z danych produktu**,
-   - administrator ma **możliwość ręcznej edycji** ALT,
-   - **AI jako opcja** dla wybranych przypadków, nie jako podstawa,
-   - usunięcie sformułowań typu „rekomendacja audytora (AI) odrzucona" i zastąpienie ich formułą uzgodnioną w uwadze #2.
-4. **Rozdział 3 — Zmiana adresów URL** — zgodnie z uwagą #3:
-   - `/paleciaki` jako **najbardziej obiecujący kierunek**, a nie „zatwierdzony warunkowo",
-   - **ostateczna decyzja po analizie danych** z: Google Search Console, Google Keyword Planner, Senuto, Ahrefs,
-   - decyzja **oparta na danych, nie na intuicji**,
-   - konsekwentne używanie terminu **„Nawigacja okruszkowa (Breadcrumbs)"** (uwaga #5),
-   - **usunięcie punktu** o refaktorze `ProductPage → PalletTruckPage`, `ProductsList → PalletTruckList` (uwaga #6).
-5. **Rozdział 4 (NOWY) — Ocena ryzyka migracji URL** (uwaga #4):
-   - migracja URL to jedyna zmiana mogąca wpłynąć na pozycje w Google,
-   - powinna być wykonana jako **osobny etap projektu**,
-   - poprzedzona wdrożeniem poprawek niskiego ryzyka,
-   - zakres: przekierowania 301, monitoring GSC, monitoring indeksacji, monitoring ruchu organicznego.
-6. **Rozdział 5 (NOWY) — Zakres zmian niewymagających migracji SEO** (uwaga #7):
-   - poprawa wyświetlania parametrów produktu,
-   - ujednolicenie komponentów,
-   - wdrożenie generatora ALT,
-   - poprawa danych Schema.org,
-   - poprawa metadanych obrazów,
-   - podkreślenie: mogą zostać wdrożone niezależnie od migracji URL.
-7. **Rozdział 6 — Tabela priorytetów** (uwaga #8) — dokładnie wg podanej treści (P0–P4).
-8. **Rozdział 7 — Wniosek końcowy** (uwaga #9) — formalne podsumowanie w tonie protokołu, bez języka marketingowego:
-   - audyt prawidłowo identyfikuje główne problemy techniczne,
-   - wymaga doprecyzowania strategii ALT,
-   - migracja URL powinna zostać poprzedzona analizą danych SEO,
-   - pozostałe rekomendacje uznano za zasadne,
-   - kolejność wdrożenia powinna minimalizować ryzyko dla SEO.
-9. **Załącznik — Lista zmian względem raportu audytowego** (uwaga #10, kontrola jakości) — krótka lista wszystkich 10 wprowadzonych korekt względem pierwotnego audytu.
+Wpisy w `cron.job_run_details`:
 
-## Reguły stylistyczne dokumentu
+- job 1: 510 964 wpisy, najstarszy 2025-08-15 13:45 UTC, najnowszy 2026-08-05 09:48. Statusy: 354 453 `failed`, 156 510 `succeeded`.
+- job 2: 508 322 wpisy, najstarszy 2025-08-17 09:47 UTC. Statusy: 351 811 `failed`, 156 510 `succeeded`.
+- job 3: 104 wpisy, najstarszy 2026-04-24 03:00, wszystkie `succeeded`.
 
-- Formalny, protokolarny język (bez emoji, bez języka marketingowego, bez „🚀", „✅").
-- Zachowana pełna treść — bez skracania, bez dopisywania własnych założeń.
-- Spójna numeracja rozdziałów (1–7 + załącznik).
-- Konsekwentne pojęcie **„Nawigacja okruszkowa (Breadcrumbs)"** w całym dokumencie.
-- Wszystkie „kategoryczne" sformułowania („odrzucona", „zatwierdzona") zastąpione formułami typu „po analizie uznano, że…", „obecnie uznaje się za najbardziej obiecujące…".
-- Brak sprzecznych zapisów między rozdziałami (rozdział 4 spójny z rozdziałem 3, rozdział 5 spójny z tabelą priorytetów P0–P3).
+Razem ok. 1 019 390 wierszy — to jest źródło 806 MB tabeli + 22 MB indeksu PK. Dwa zadania minutowe działają równolegle od roku i **dublują się** (to samo wywołanie tej samej funkcji), a większość ich uruchomień kończy się błędem.
 
-## Kontrola jakości (przed oddaniem)
+## 2. Źródło wywołań HTTP
 
-Po napisaniu przejdę dokument i sprawdzę:
-- spójność numeracji rozdziałów i podpunktów,
-- spójność terminologii („Nawigacja okruszkowa (Breadcrumbs)", „generator szablonowy ALT", „migracja URL"),
-- spójność decyzji między rozdziałami (np. rozdz. 2 vs załącznik, rozdz. 3 vs rozdz. 4),
-- brak sprzecznych zapisów,
-- zgodność z dobrymi praktykami SEO (301, canonical, sitemap, GSC),
-- profesjonalny styl dokumentacji technicznej.
+Tak. Zadania 1 i 2 wywołują Edge Function przez `pg_net` (`net.http_post`), każde raz na minutę, czyli ok. 2 880 wywołań HTTP na dobę. Dodatkowo trigger `notify_lead_created` używa rozszerzenia `http` (nie `pg_net`) — nie zapisuje nic w `net._http_response`.
 
-Na końcu dokumentu (załącznik) załączę listę 10 wprowadzonych zmian względem pierwotnego audytu.
+`net._http_response` ma obecnie tylko **720 wierszy** (od 2026-08-05 03:50 do 09:49) — pg_net sam czyści odpowiedzi po ok. 6 godzinach. Fizyczne 164 MB to więc nie dane, a **puchnięcie tabeli (dead tuples / bloat)** po roku wstawiania i usuwania ~3 tys. wierszy dziennie przez oba zadania minutowe. Tak — odpowiadają za to zadania 1 i 2.
 
-## Zakres pracy
+## 3. Przeznaczenie zadań
 
-- **Nowy plik:** `PROTOKOL_UZGODNIEN.md` (ok. 350–500 linii Markdown).
-- **Bez zmian w kodzie aplikacji** — to wyłącznie dokument.
-- **Bez modyfikacji** istniejących raportów (`RAPORT_OPTYMALIZACJI.md`, `PRODUCTION_READINESS_REPORT.md` itd.).
+- **job 1 i job 2 (translation-worker)** — miały przetwarzać kolejkę tłumaczeń DeepL (`translation_jobs`). Obecnie: `FEATURES.DEEPL_ENABLED = false` w `src/config/featureFlags.ts`, `translation_jobs` = 0 wierszy, `product_translations` = 0 wierszy. To **pozostałość po wcześniejszych pracach nad tłumaczeniami AI**; job 2 jest ponadto duplikatem joba 1 (różni się tylko kluczem w nagłówku). Praktycznie nic nie wnoszą do działania serwisu.
+- **job 3 (cleanup-old-handled-leads)** — codzienne usuwanie leadów oznaczonych jako `handled` starszych niż 60 dni. Potrzebne, działa poprawnie, koszt zerowy (104 wpisy).
+
+Brak zadań cron dla sitemap, geo-feed czy powiadomień — te działają na żądanie (Edge Functions), więc ich nic nie dotyczy.
+
+## 4. Zależności od logów
+
+**Nie.** W repozytorium (frontend, panel admina, Edge Functions) nie ma ani jednego odwołania do `cron.job_run_details` ani do `net._http_response` — wyszukiwanie po całym projekcie nie zwraca żadnych trafień poza samą migracją zakładającą cron. Nie istnieją też widoki w `public` czytające te tabele. Usunięcie ich zawartości nie zepsuje żadnej funkcji aplikacji; stracisz wyłącznie historię diagnostyczną uruchomień cron.
+
+## 5. Tabele aplikacji (rozmiar z indeksami / wiersze)
+
+| tabela | rozmiar | wiersze | retencja |
+|---|---|---|---|
+| translation_logs | 1 368 kB | 1 731 | brak — rośnie bez ograniczeń (obecnie martwe, bo DeepL wyłączony) |
+| translation_jobs | 904 kB | 0 | brak, ale puste (bloat po starych zadaniach) |
+| product_translations | 48 kB | 0 | nie dotyczy |
+| price_inquiries | 64 kB | 1 | brak — rośnie bez ograniczeń (wolno) |
+| leads | 112 kB | 13 | jest — job 3, 60 dni od `handled_at` |
+| product_images | 520 kB | 374 | powiązane z produktami |
+| social_media_posts | 88 kB | 77 | czyszczone przy resecie rotacji |
+| products | 672 kB | 43 | nie dotyczy |
+
+Wniosek: **wszystkie tabele aplikacji razem to poniżej 4 MB**. Problem w 100% leży w tabelach systemowych `cron` i `net`. Bez retencji rosną teoretycznie `translation_logs` i `price_inquiries`, ale w tym tempie są nieistotne.
+
+## 6. Możliwości odzyskania miejsca (od najbezpieczniejszej)
+
+1. **Wyłączenie duplikatu — job 2 (`process-translations-1min`)**. Zysk natychmiastowy: 0 MB, ale zatrzymuje ~50% dalszego przyrostu. Przestaje działać: nic (job 1 robi to samo).
+2. **Wyłączenie job 1** — zatrzymuje cały przyrost `cron.job_run_details` i `net._http_response`. Zysk: 0 MB od razu, ~2 MB/dobę zaoszczędzone. Przestaje działać: automatyczne przetwarzanie kolejki tłumaczeń DeepL — dziś i tak wyłączone flagą, do ręcznego uruchomienia zostaje przycisk w panelu (`processPendingTranslations`).
+3. **Czyszczenie `cron.job_run_details`** (usunięcie wpisów starszych niż np. 7 dni). Zysk: ~820 MB (tabela + PK) — czyli praktycznie cały problem. Przestaje działać: nic; tracisz historię uruchomień cron w podglądzie Supabase.
+4. **`translation_logs`** — usunięcie starych logów tłumaczeń. Zysk: ~1 MB. Przestaje działać: nic funkcjonalnego, tracisz historię wywołań DeepL.
+5. **`VACUUM FULL net._http_response`** (lub `TRUNCATE`) — odzyskanie 164 MB bloatu. Ryzyko: `VACUUM FULL` blokuje tabelę na wyłączny lock i przepisuje ją; przy tej wielkości to sekundy, ale w tym czasie każde `net.http_post` (czyli m.in. trigger cron) czeka. `TRUNCATE` usuwa też odpowiedzi na trwające żądania.
+6. **Usunięcie zadań cron (`cron.unschedule`)** — najbardziej nieodwracalne. Przestaje działać: automatyczne tłumaczenia (job 1/2) — a job 3 **musi zostać**, bo to jedyna retencja leadów.
+
+### O odzyskiwaniu miejsca na dysku
+
+Samo `DELETE` nie zwraca miejsca Supabase — wiersze stają się martwe, a rozmiar bazy w raporcie nadal pokazuje ~1 GB do czasu VACUUM. Dlatego po dużym usuwaniu z `cron.job_run_details` konieczny jest `VACUUM FULL` (lub `TRUNCATE`, który od razu zwalnia pliki i nie wymaga VACUUM). Skutki: `VACUUM FULL` bierze `ACCESS EXCLUSIVE LOCK`, wymaga chwilowo dodatkowego miejsca równego rozmiarowi tabeli i unieważnia statystyki. Na tabelach `cron`/`net` nie ma to wpływu na front, bo aplikacja z nich nie czyta.
+
+## Rekomendowana kolejność
+
+1. Wyłączyć job 2 (duplikat), potem job 1 — zatrzymanie przyrostu u źródła.
+2. `TRUNCATE cron.job_run_details` (albo DELETE + `VACUUM FULL`) — odzysk ~820 MB.
+3. `TRUNCATE net._http_response` — odzysk ~164 MB bloatu, bez VACUUM FULL.
+4. Zostawić job 3 bez zmian.
+5. Opcjonalnie: dodać retencję dla `translation_logs`, gdy tłumaczenia zostaną kiedyś włączone ponownie.
+
+Po krokach 1–3 baza powinna spaść z ~0,98 GB do ok. 10–15 MB, czyli daleko poniżej limitu Free.
+
+> Uwaga bezpieczeństwa (poza zakresem zadania, ale istotna): treść joba 1 zawiera zapisany na stałe **service_role key** w `cron.job.command`, a ten sam klucz trafił do pliku migracji w repozytorium.
