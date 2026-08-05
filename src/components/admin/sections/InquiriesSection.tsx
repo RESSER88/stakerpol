@@ -20,7 +20,7 @@ interface Lead {
 }
 
 const PAGE_SIZE = 20;
-const RETENTION_DAYS = 60;
+
 type StatusFilter = 'all' | 'new' | 'handled';
 
 const sourceLabel: Record<string, string> = {
@@ -124,12 +124,6 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
     setTotal((t) => Math.max(0, t - 1));
   };
 
-  const daysUntilDeletion = (handledAt: string | null): number | null => {
-    if (!handledAt) return null;
-    const handled = new Date(handledAt).getTime();
-    const elapsedDays = (Date.now() - handled) / (1000 * 60 * 60 * 24);
-    return Math.max(0, Math.ceil(RETENTION_DAYS - elapsedDays));
-  };
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -181,7 +175,7 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
             const shortMsg = isLong ? `${lead.message!.slice(0, 120)}…` : lead.message;
             const isHandled = lead.status === 'handled';
             const isUpdating = updating.has(lead.id);
-            const daysLeft = isHandled ? daysUntilDeletion(lead.handled_at) : null;
+
 
             return (
               <li key={lead.id} className="border-b border-editorial-line py-5">
@@ -256,11 +250,6 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                       </div>
                     )}
 
-                    {isHandled && daysLeft !== null && (
-                      <p className="mt-2 text-[10px] font-bold tracking-[0.2em] uppercase text-editorial-muted">
-                        Zostanie usunięte za {daysLeft} {daysLeft === 1 ? 'dzień' : 'dni'}
-                      </p>
-                    )}
                   </div>
 
                   <div className="text-[11px] text-editorial-muted whitespace-nowrap">
