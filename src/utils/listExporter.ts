@@ -169,7 +169,31 @@ export const exportProductListToPDF = async (products: Product[]): Promise<void>
     doc.text(`${COMPANY.name} · ${COMPANY.person}`, pageWidth - margin, 14.5, { align: 'right' });
     doc.text(`tel. ${COMPANY.phone} · ${COMPANY.email}`, pageWidth - margin, 18.5, { align: 'right' });
     doc.text(COMPANY.address, pageWidth - margin, 22.5, { align: 'right' });
+
+    // blok "Prowadź do magazynu" — wolna przestrzeń po lewej, pod tagline
+    const whX = margin + 62;
+    const whIconY = 9;
+    const whIconSize = 8;
+    doc.addImage(MAPS_ICON_DATA_URI, 'PNG', whX, whIconY, whIconSize, whIconSize);
+
+    const textX = whX + whIconSize + 2.5;
+    doc.setFont(FONT_FAMILY, 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...RGB.navy);
+    doc.text(WAREHOUSE.label, textX, whIconY + 3.5);
+
+    doc.setFont(FONT_FAMILY, 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...RGB.muted);
+    doc.text(WAREHOUSE.address, textX, whIconY + 7.5);
+
+    const linkWidth = whIconSize + 2.5 + Math.max(
+      doc.getTextWidth(WAREHOUSE.label),
+      doc.getTextWidth(WAREHOUSE.address)
+    );
+    doc.link(whX, whIconY - 1, linkWidth, whIconSize + 3, { url: WAREHOUSE.mapsUrl });
   };
+
 
   const drawFooter = () => {
     const y = pageHeight - 8;
