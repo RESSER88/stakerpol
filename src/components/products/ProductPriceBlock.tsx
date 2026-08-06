@@ -28,6 +28,10 @@ const ProductPriceBlock = ({ product }: Props) => {
     netPrice !== '' &&
     Number(netPrice) > 0;
 
+  if (!showPrice) return null;
+
+
+
   return (
     <div className="flex justify-between items-end bg-surface-soft border border-border-line rounded-md px-3.5 py-3">
       <div>
