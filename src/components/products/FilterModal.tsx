@@ -95,11 +95,13 @@ const FilterModal = ({ isOpen, onClose, products, onApplyFilters, language }: Fi
     };
   }, [products]);
 
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<FilterCriteria>({
     year: [ranges.year.min, ranges.year.max],
     hours: [ranges.hours.min, ranges.hours.max],
     height: [ranges.height.min, ranges.height.max],
-    serial: ''
+    serial: '',
+    availability: [...DEFAULT_AVAILABILITY],
+    platform: 'all'
   });
 
   const filteredProducts = useMemo(
@@ -117,10 +119,29 @@ const FilterModal = ({ isOpen, onClose, products, onApplyFilters, language }: Fi
       year: [ranges.year.min, ranges.year.max],
       hours: [ranges.hours.min, ranges.hours.max],
       height: [ranges.height.min, ranges.height.max],
-      serial: ''
+      serial: '',
+      availability: [...DEFAULT_AVAILABILITY],
+      platform: 'all'
     });
     onApplyFilters(null);
   };
+
+  const toggleAvailability = (status: AvailabilityStatus) => {
+    setFilters(prev => ({
+      ...prev,
+      availability: prev.availability.includes(status)
+        ? prev.availability.filter(s => s !== status)
+        : [...prev.availability, status]
+    }));
+  };
+
+  const AVAILABILITY_ORDER: AvailabilityStatus[] = ['available', 'reserved', 'sold'];
+  const PLATFORM_OPTIONS: { value: PlatformFilter; label: string }[] = [
+    { value: 'all', label: 'Wszystkie' },
+    { value: 'with', label: 'Z podestem' },
+    { value: 'without', label: 'Bez podestu' }
+  ];
+
 
   const FilterFields = (
     <div className="space-y-6 py-4">
