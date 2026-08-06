@@ -380,7 +380,7 @@ const renderListHTML = (model: ExportModel): string => {
 
   const head = EXPORT_COLUMNS.map(
     (c) =>
-      `<th style="padding:6px;text-align:${c.align};color:${COLORS.navy};font-size:11px;font-weight:bold;border-bottom:2px solid ${COLORS.navy};white-space:nowrap;">${escapeHtml(c.header)}</th>`
+      `<th style="padding:6px;text-align:${c.align};vertical-align:middle;color:${COLORS.navy};font-size:11px;font-weight:bold;border-bottom:2px solid ${COLORS.navy};white-space:nowrap;">${escapeHtml(c.header)}</th>`
   ).join('');
 
   return `
@@ -392,7 +392,17 @@ const renderListHTML = (model: ExportModel): string => {
             <div style="width:150px;height:4px;background:${COLORS.orange};margin:8px 0 6px;"></div>
             <div style="font-size:12px;color:${COLORS.grayText};">${escapeHtml(COMPANY.tagline)}</div>
           </td>
+          <td style="text-align:left;vertical-align:top;padding-left:36px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <img id="export-maps-icon" src="${MAPS_ICON_DATA_URI}" width="28" height="28" alt="" style="display:block;width:28px;height:28px;" />
+              <div>
+                <div style="font-size:13px;font-weight:bold;color:${COLORS.navy};">${escapeHtml(WAREHOUSE.label)}</div>
+                <div style="font-size:11px;color:${COLORS.muted};">${escapeHtml(WAREHOUSE.address)}</div>
+              </div>
+            </div>
+          </td>
           <td style="text-align:right;vertical-align:top;">
+
             <div style="font-size:14px;font-weight:bold;color:${COLORS.navy};">Stan magazynu na ${escapeHtml(model.dateLabel)}</div>
             <div style="font-size:12px;color:${COLORS.grayText};margin-top:6px;">${escapeHtml(`${COMPANY.name} · ${COMPANY.person}`)}</div>
             <div style="font-size:12px;color:${COLORS.grayText};">${escapeHtml(`tel. ${COMPANY.phone} · ${COMPANY.email}`)}</div>
