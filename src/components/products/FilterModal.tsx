@@ -11,11 +11,39 @@ import { useTranslation } from '@/utils/translations';
 import { Language } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 
+export interface FilterCriteria {
+  year: number[];
+  hours: number[];
+  height: number[];
+  serial: string;
+}
+
+export const matchesCriteria = (product: Product, criteria: FilterCriteria): boolean => {
+  const serialQuery = criteria.serial.trim().toLowerCase();
+  const productYear = Number(product.specs?.productionYear);
+  const productHours = Number(product.specs?.workingHours);
+  const productHeight = Number(product.specs?.liftHeight);
+  const productSerial = (product.specs?.serialNumber || '').toString().toLowerCase();
+
+  const yearMatch = !productYear ||
+    (productYear >= criteria.year[0] && productYear <= criteria.year[1]);
+
+  const hoursMatch = !productHours ||
+    (productHours >= criteria.hours[0] && productHours <= criteria.hours[1]);
+
+  const heightMatch = !productHeight ||
+    (productHeight >= criteria.height[0] && productHeight <= criteria.height[1]);
+
+  const serialMatch = !serialQuery || productSerial.includes(serialQuery);
+
+  return yearMatch && hoursMatch && heightMatch && serialMatch;
+};
+
 interface FilterModalProps {
   isOpen: boolean;
   onClose: () => void;
   products: Product[];
-  onApplyFilters: (filteredProducts: Product[]) => void;
+  onApplyFilters: (criteria: FilterCriteria | null) => void;
   language: Language;
 }
 
@@ -54,31 +82,13 @@ const FilterModal = ({ isOpen, onClose, products, onApplyFilters, language }: Fi
     serial: ''
   });
 
-  const filteredProducts = useMemo(() => {
-    const serialQuery = filters.serial.trim().toLowerCase();
-    return products.filter(product => {
-      const productYear = Number(product.specs?.productionYear);
-      const productHours = Number(product.specs?.workingHours);
-      const productHeight = Number(product.specs?.liftHeight);
-      const productSerial = (product.specs?.serialNumber || '').toString().toLowerCase();
-
-      const yearMatch = !productYear ||
-        (productYear >= filters.year[0] && productYear <= filters.year[1]);
-
-      const hoursMatch = !productHours ||
-        (productHours >= filters.hours[0] && productHours <= filters.hours[1]);
-
-      const heightMatch = !productHeight ||
-        (productHeight >= filters.height[0] && productHeight <= filters.height[1]);
-
-      const serialMatch = !serialQuery || productSerial.includes(serialQuery);
-
-      return yearMatch && hoursMatch && heightMatch && serialMatch;
-    });
-  }, [products, filters]);
+  const filteredProducts = useMemo(
+    () => products.filter(product => matchesCriteria(product, filters)),
+    [products, filters]
+  );
 
   const handleApplyFilters = () => {
-    onApplyFilters(filteredProducts);
+    onApplyFilters(filters);
     onClose();
   };
 
@@ -89,6 +99,7 @@ const FilterModal = ({ isOpen, onClose, products, onApplyFilters, language }: Fi
       height: [ranges.height.min, ranges.height.max],
       serial: ''
     });
+    onApplyFilters(null);
   };
 
   const FilterFields = (
