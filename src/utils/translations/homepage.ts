@@ -1,5 +1,9 @@
 
 import { Translations } from './types';
+import { getYearsInBusiness } from '../yearsInBusiness';
+
+const YEARS = getYearsInBusiness();
+
 
 export const homepageTranslations: Translations = {
   hero: {
@@ -87,7 +91,7 @@ export const homepageTranslations: Translations = {
     sk: 'overenú techniku Toyota za zlomok ceny nového vozíka,'
   },
   aboutUsBenefit2: {
-    pl: 'doradztwo oparte na 17 latach doświadczenia, a nie na prowizji,',
+    pl: `doradztwo oparte na ${YEARS} latach doświadczenia, a nie na prowizji,`,
     en: 'advice based on 17 years of experience — not on commission,',
     de: 'Beratung auf Basis von 17 Jahren Erfahrung — nicht auf Provisionsbasis,',
     cs: 'poradenství založené na 17 letech zkušeností — nikoli na provizi,',

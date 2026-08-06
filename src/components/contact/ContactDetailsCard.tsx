@@ -1,5 +1,6 @@
 import { Phone, Mail, MessageCircle, Clock, MapPin } from 'lucide-react';
 import michalPhoto from '@/assets/michal-seweryn.jpg';
+import { yearsInBusinessLabel } from '@/utils/yearsInBusiness';
 
 const ContactDetailsCard = () => {
   return (
@@ -63,7 +64,7 @@ const ContactDetailsCard = () => {
           />
           <div className="min-w-0">
             <div className="font-semibold text-gray-900">Michał Seweryn</div>
-            <div className="text-sm text-gray-500">Właściciel · 17 lat w branży</div>
+            <div className="text-sm text-gray-500">Właściciel · {yearsInBusinessLabel()} w branży</div>
             <p className="text-sm text-gray-700 mt-1">Odpiszę Ci osobiście — zwykle w ciągu kilku godzin.</p>
           </div>
         </div>
