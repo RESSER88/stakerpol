@@ -1,7 +1,8 @@
 import { Shield, TrendingUp, Award } from 'lucide-react';
+import { getYearsInBusiness } from '@/utils/yearsInBusiness';
 
 const stats = [
-  { value: '17+', label: 'lat doświadczenia' },
+  { value: `${getYearsInBusiness()}+`, label: 'lat doświadczenia' },
   { value: '850+', label: 'sprzedanych wózków' },
   { value: 'Ten sam dzień', label: 'czas odpowiedzi' },
 ];
