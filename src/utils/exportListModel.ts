@@ -32,7 +32,7 @@ export type ExportAlign = 'left' | 'right' | 'center';
 
 export const EXPORT_COLUMNS: { header: string; key: string; align: ExportAlign }[] = [
   { header: 'Nr', key: 'index', align: 'center' },
-  { header: 'Model', key: 'model', align: 'center' },
+  { header: 'Model', key: 'model', align: 'left' },
   { header: 'Nr. seryjny', key: 'serialNumber', align: 'center' },
   { header: 'Rok', key: 'productionYear', align: 'center' },
   { header: 'Godziny [mth]', key: 'workingHours', align: 'center' },
@@ -41,8 +41,8 @@ export const EXPORT_COLUMNS: { header: string; key: string; align: ExportAlign }
   { header: 'Maszt', key: 'mast', align: 'center' },
   { header: 'Bateria', key: 'battery', align: 'center' },
   { header: 'Dostępność', key: 'availability', align: 'center' },
-  { header: 'Cena netto', key: 'netPrice', align: 'center' },
-  { header: 'Waluta', key: 'priceCurrency', align: 'center' },
+  { header: 'Cena netto', key: 'netPrice', align: 'right' },
+  { header: 'Waluta', key: 'priceCurrency', align: 'left' },
   { header: 'Zdjęcia', key: 'photos', align: 'center' },
 ];
 
