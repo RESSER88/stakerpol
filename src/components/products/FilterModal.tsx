@@ -11,12 +11,21 @@ import { useTranslation } from '@/utils/translations';
 import { Language } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 
+export type PlatformFilter = 'all' | 'with' | 'without';
+
 export interface FilterCriteria {
   year: number[];
   hours: number[];
   height: number[];
   serial: string;
+  availability: AvailabilityStatus[];
+  platform: PlatformFilter;
 }
+
+export const DEFAULT_AVAILABILITY: AvailabilityStatus[] = ['available', 'reserved'];
+
+export const matchesDefaultAvailability = (product: Product): boolean =>
+  DEFAULT_AVAILABILITY.includes((product.availabilityStatus || 'available') as AvailabilityStatus);
 
 export const matchesCriteria = (product: Product, criteria: FilterCriteria): boolean => {
   const serialQuery = criteria.serial.trim().toLowerCase();
@@ -36,8 +45,17 @@ export const matchesCriteria = (product: Product, criteria: FilterCriteria): boo
 
   const serialMatch = !serialQuery || productSerial.includes(serialQuery);
 
-  return yearMatch && hoursMatch && heightMatch && serialMatch;
+  const status = (product.availabilityStatus || 'available') as AvailabilityStatus;
+  const availabilityMatch = criteria.availability.includes(status);
+
+  const hasPlatform = hasOperatorPlatform(product.specs?.operatorPlatform);
+  const platformMatch = criteria.platform === 'all'
+    ? true
+    : criteria.platform === 'with' ? hasPlatform : !hasPlatform;
+
+  return yearMatch && hoursMatch && heightMatch && serialMatch && availabilityMatch && platformMatch;
 };
+
 
 interface FilterModalProps {
   isOpen: boolean;
