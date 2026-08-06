@@ -8,7 +8,7 @@ const ProductTrustStrip = ({ warrantyMonths = 3 }: Props) => {
   const items = [
     { Icon: CheckCircle2, label: 'Sprawdzenie\ntechniczne', sub: 'Każdy wózek' },
     { Icon: Shield, label: `Gwarancja\n${warrantyMonths} mies.`, sub: 'Na wszystkie modele' },
-    { Icon: Truck, label: 'Dostawa\nw całej PL', sub: 'Własny transport' },
+    { Icon: Truck, label: 'Dostawa\nw całej PL', sub: '1-3 dni robocze' },
     { Icon: CreditCard, label: 'Leasing\ndostępny', sub: 'Od 450 zł/mies.' },
   ];
 
