@@ -1,5 +1,9 @@
 
 import { Translations } from './types';
+import { getYearsInBusiness } from '../yearsInBusiness';
+
+const YEARS = getYearsInBusiness();
+
 
 export const homepageTranslations: Translations = {
   hero: {
