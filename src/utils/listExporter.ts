@@ -353,7 +353,7 @@ const renderListHTML = (model: ExportModel): string => {
 
   const head = EXPORT_COLUMNS.map(
     (c) =>
-      `<th style="padding:6px;text-align:${c.align};color:${COLORS.navy};font-size:11px;font-weight:bold;border-bottom:2px solid ${COLORS.navy};white-space:nowrap;">${escapeHtml(c.header.toUpperCase())}</th>`
+      `<th style="padding:6px;text-align:${c.align};color:${COLORS.navy};font-size:11px;font-weight:bold;border-bottom:2px solid ${COLORS.navy};white-space:nowrap;">${escapeHtml(c.header)}</th>`
   ).join('');
 
   return `
