@@ -36,7 +36,7 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet('Stan magazynu');
 
-  const maxLens = COLUMNS.map((c) => c.header.toUpperCase().length);
+  const maxLens = COLUMNS.map((c) => c.header.length);
 
   const last = lastColLetter();
 
