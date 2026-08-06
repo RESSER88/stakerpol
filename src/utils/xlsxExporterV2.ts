@@ -2,10 +2,12 @@ import ExcelJS from 'exceljs';
 import { Product } from '@/types';
 import {
   COMPANY,
+  WAREHOUSE,
   EXPORT_COLUMNS as COLUMNS,
   buildExportRows,
   formatPrice,
 } from '@/utils/exportListModel';
+import { MAPS_ICON_BASE64 } from '@/utils/exportMapsIcon';
 
 const NAVY = 'FF1E3A5F';
 const ORANGE = 'FFF97316';
