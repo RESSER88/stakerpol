@@ -17,6 +17,13 @@ export const COMPANY = {
   regon: '120724080',
 };
 
+/** Magazyn (inna lokalizacja niż siedziba w COMPANY.address). */
+export const WAREHOUSE = {
+  label: 'Prowadź do magazynu',
+  address: 'ul. Międzyleśna 115, 32-095 Celiny',
+  mapsUrl: 'https://maps.app.goo.gl/1CHQFHvBnjvtvtR49',
+};
+
 /** Kolory w zapisie HEX (PDF/HTML). XLSX używa własnych stałych ARGB. */
 export const COLORS = {
   navy: '#1E3A5F',

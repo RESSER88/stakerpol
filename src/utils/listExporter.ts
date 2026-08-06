@@ -4,6 +4,7 @@ import html2canvas from 'html2canvas';
 import { Product } from '@/types';
 import {
   COMPANY,
+  WAREHOUSE,
   COLORS,
   EXPORT_COLUMNS,
   buildExportRows,
@@ -13,6 +14,7 @@ import {
   ExportModel,
   ExportRow,
 } from '@/utils/exportListModel';
+import { MAPS_ICON_DATA_URI } from '@/utils/exportMapsIcon';
 
 /* ------------------------------------------------------------------ */
 /*  FONT Z POLSKIMI ZNAKAMI (ładowany w locie, nie trafia do bundla)   */
@@ -167,7 +169,31 @@ export const exportProductListToPDF = async (products: Product[]): Promise<void>
     doc.text(`${COMPANY.name} · ${COMPANY.person}`, pageWidth - margin, 14.5, { align: 'right' });
     doc.text(`tel. ${COMPANY.phone} · ${COMPANY.email}`, pageWidth - margin, 18.5, { align: 'right' });
     doc.text(COMPANY.address, pageWidth - margin, 22.5, { align: 'right' });
+
+    // blok "Prowadź do magazynu" — wolna przestrzeń po lewej, pod tagline
+    const whX = margin + 62;
+    const whIconY = 9;
+    const whIconSize = 8;
+    doc.addImage(MAPS_ICON_DATA_URI, 'PNG', whX, whIconY, whIconSize, whIconSize);
+
+    const textX = whX + whIconSize + 2.5;
+    doc.setFont(FONT_FAMILY, 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...RGB.navy);
+    doc.text(WAREHOUSE.label, textX, whIconY + 3.5);
+
+    doc.setFont(FONT_FAMILY, 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...RGB.muted);
+    doc.text(WAREHOUSE.address, textX, whIconY + 7.5);
+
+    const linkWidth = whIconSize + 2.5 + Math.max(
+      doc.getTextWidth(WAREHOUSE.label),
+      doc.getTextWidth(WAREHOUSE.address)
+    );
+    doc.link(whX, whIconY - 1, linkWidth, whIconSize + 3, { url: WAREHOUSE.mapsUrl });
   };
+
 
   const drawFooter = () => {
     const y = pageHeight - 8;
@@ -225,6 +251,7 @@ export const exportProductListToPDF = async (products: Product[]): Promise<void>
       fillColor: false as any,
       lineColor: RGB.navy,
       lineWidth: { bottom: 0.5, top: 0, left: 0, right: 0 },
+      valign: 'middle',
     },
     columnStyles,
     didParseCell: (data: CellHookData) => {
@@ -353,7 +380,7 @@ const renderListHTML = (model: ExportModel): string => {
 
   const head = EXPORT_COLUMNS.map(
     (c) =>
-      `<th style="padding:6px;text-align:${c.align};color:${COLORS.navy};font-size:11px;font-weight:bold;border-bottom:2px solid ${COLORS.navy};white-space:nowrap;">${escapeHtml(c.header)}</th>`
+      `<th style="padding:6px;text-align:${c.align};vertical-align:middle;color:${COLORS.navy};font-size:11px;font-weight:bold;border-bottom:2px solid ${COLORS.navy};white-space:nowrap;">${escapeHtml(c.header)}</th>`
   ).join('');
 
   return `
@@ -365,7 +392,17 @@ const renderListHTML = (model: ExportModel): string => {
             <div style="width:150px;height:4px;background:${COLORS.orange};margin:8px 0 6px;"></div>
             <div style="font-size:12px;color:${COLORS.grayText};">${escapeHtml(COMPANY.tagline)}</div>
           </td>
+          <td style="text-align:left;vertical-align:top;padding-left:36px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <img id="export-maps-icon" src="${MAPS_ICON_DATA_URI}" width="28" height="28" alt="" style="display:block;width:28px;height:28px;" />
+              <div>
+                <div style="font-size:13px;font-weight:bold;color:${COLORS.navy};">${escapeHtml(WAREHOUSE.label)}</div>
+                <div style="font-size:11px;color:${COLORS.muted};">${escapeHtml(WAREHOUSE.address)}</div>
+              </div>
+            </div>
+          </td>
           <td style="text-align:right;vertical-align:top;">
+
             <div style="font-size:14px;font-weight:bold;color:${COLORS.navy};">Stan magazynu na ${escapeHtml(model.dateLabel)}</div>
             <div style="font-size:12px;color:${COLORS.grayText};margin-top:6px;">${escapeHtml(`${COMPANY.name} · ${COMPANY.person}`)}</div>
             <div style="font-size:12px;color:${COLORS.grayText};">${escapeHtml(`tel. ${COMPANY.phone} · ${COMPANY.email}`)}</div>
@@ -406,7 +443,23 @@ export const exportProductListToJPG = async (products: Product[]): Promise<void>
 
   document.body.appendChild(tempDiv);
 
+  // html2canvas rysuje tylko już wczytane obrazy — czekamy na dekodowanie ikony
+  const images = Array.from(tempDiv.querySelectorAll('img'));
+  await Promise.all(
+    images.map((img) =>
+      img.complete && img.naturalWidth > 0
+        ? Promise.resolve()
+        : img.decode
+          ? img.decode().catch(() => undefined)
+          : new Promise<void>((resolve) => {
+              img.onload = () => resolve();
+              img.onerror = () => resolve();
+            })
+    )
+  );
+
   try {
+
     const canvas = await html2canvas(tempDiv, {
       backgroundColor: '#ffffff',
       scale: 2,

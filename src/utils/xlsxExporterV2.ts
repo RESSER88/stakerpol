@@ -2,10 +2,12 @@ import ExcelJS from 'exceljs';
 import { Product } from '@/types';
 import {
   COMPANY,
+  WAREHOUSE,
   EXPORT_COLUMNS as COLUMNS,
   buildExportRows,
   formatPrice,
 } from '@/utils/exportListModel';
+import { MAPS_ICON_BASE64 } from '@/utils/exportMapsIcon';
 
 const NAVY = 'FF1E3A5F';
 const ORANGE = 'FFF97316';
@@ -80,10 +82,31 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
   dateCell.alignment = { horizontal: 'right', vertical: 'middle' };
   dateCell.font = { name: 'Arial', size: 10, bold: true, color: { argb: NAVY } };
 
+  // --- blok "Prowadź do magazynu" (po lewej stronie nagłówka) ---
+  const iconId = workbook.addImage({ base64: MAPS_ICON_BASE64, extension: 'png' });
+  sheet.addImage(iconId, {
+    tl: { col: 0.15, row: 2.15 } as any,
+    ext: { width: 28, height: 28 },
+    editAs: 'oneCell',
+  });
+
+  sheet.mergeCells('B3:D3');
+  const whLabel = sheet.getCell('B3');
+  whLabel.value = { text: WAREHOUSE.label, hyperlink: WAREHOUSE.mapsUrl };
+  whLabel.font = { name: 'Arial', size: 9, color: { argb: NAVY }, underline: true };
+  whLabel.alignment = { horizontal: 'left', vertical: 'middle' };
+
+  sheet.mergeCells('B4:D4');
+  const whAddress = sheet.getCell('B4');
+  whAddress.value = WAREHOUSE.address;
+  whAddress.font = { name: 'Arial', size: 8, color: { argb: MUTED } };
+  whAddress.alignment = { horizontal: 'left', vertical: 'middle' };
+
   // pomarańczowa kreska akcentu pod "STAKERPOL"
   sheet.mergeCells('A5:C5');
   sheet.getRow(5).height = 3;
   sheet.getCell('A5').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ORANGE } };
+
 
   // --- 2. NAGŁÓWEK TABELI ---
   const HEADER_ROW = 6;
