@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Filter } from 'lucide-react';
-import FilterModal from './FilterModal';
+import FilterModal, { FilterCriteria } from './FilterModal';
 import { Product } from '@/types';
 import { useTranslation } from '@/utils/translations';
 import { Language } from '@/contexts/LanguageContext';
 
 interface ProductFilterProps {
   products: Product[];
-  onFilterChange: (filteredProducts: Product[]) => void;
+  onFilterChange: (criteria: FilterCriteria | null) => void;
   language: Language;
   variant?: 'default' | 'floating';
 }
