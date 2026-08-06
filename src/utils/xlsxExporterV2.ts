@@ -184,7 +184,11 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
           underline: true,
           bold: false,
         };
-        priceCell.alignment = { horizontal: 'right', vertical: 'middle' };
+        priceCell.alignment = {
+          horizontal: COLUMNS[priceIdx - 1].align,
+          vertical: 'middle',
+        };
+
       }
 
       const photoCell = row.getCell(COLUMNS.length);
