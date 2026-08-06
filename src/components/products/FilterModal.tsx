@@ -10,13 +10,24 @@ import { Product } from '@/types';
 import { useTranslation } from '@/utils/translations';
 import { Language } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { AVAILABILITY_BADGES, AvailabilityStatus } from '@/components/products/availabilityBadge';
+import { hasOperatorPlatform } from '@/utils/productNormalization';
+
+export type PlatformFilter = 'all' | 'with' | 'without';
 
 export interface FilterCriteria {
   year: number[];
   hours: number[];
   height: number[];
   serial: string;
+  availability: AvailabilityStatus[];
+  platform: PlatformFilter;
 }
+
+export const DEFAULT_AVAILABILITY: AvailabilityStatus[] = ['available', 'reserved'];
+
+export const matchesDefaultAvailability = (product: Product): boolean =>
+  DEFAULT_AVAILABILITY.includes((product.availabilityStatus || 'available') as AvailabilityStatus);
 
 export const matchesCriteria = (product: Product, criteria: FilterCriteria): boolean => {
   const serialQuery = criteria.serial.trim().toLowerCase();
@@ -36,8 +47,17 @@ export const matchesCriteria = (product: Product, criteria: FilterCriteria): boo
 
   const serialMatch = !serialQuery || productSerial.includes(serialQuery);
 
-  return yearMatch && hoursMatch && heightMatch && serialMatch;
+  const status = (product.availabilityStatus || 'available') as AvailabilityStatus;
+  const availabilityMatch = criteria.availability.includes(status);
+
+  const hasPlatform = hasOperatorPlatform(product.specs?.operatorPlatform);
+  const platformMatch = criteria.platform === 'all'
+    ? true
+    : criteria.platform === 'with' ? hasPlatform : !hasPlatform;
+
+  return yearMatch && hoursMatch && heightMatch && serialMatch && availabilityMatch && platformMatch;
 };
+
 
 interface FilterModalProps {
   isOpen: boolean;
@@ -75,11 +95,13 @@ const FilterModal = ({ isOpen, onClose, products, onApplyFilters, language }: Fi
     };
   }, [products]);
 
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<FilterCriteria>({
     year: [ranges.year.min, ranges.year.max],
     hours: [ranges.hours.min, ranges.hours.max],
     height: [ranges.height.min, ranges.height.max],
-    serial: ''
+    serial: '',
+    availability: [...DEFAULT_AVAILABILITY],
+    platform: 'all'
   });
 
   const filteredProducts = useMemo(
@@ -97,13 +119,82 @@ const FilterModal = ({ isOpen, onClose, products, onApplyFilters, language }: Fi
       year: [ranges.year.min, ranges.year.max],
       hours: [ranges.hours.min, ranges.hours.max],
       height: [ranges.height.min, ranges.height.max],
-      serial: ''
+      serial: '',
+      availability: [...DEFAULT_AVAILABILITY],
+      platform: 'all'
     });
     onApplyFilters(null);
   };
 
+  const toggleAvailability = (status: AvailabilityStatus) => {
+    setFilters(prev => ({
+      ...prev,
+      availability: prev.availability.includes(status)
+        ? prev.availability.filter(s => s !== status)
+        : [...prev.availability, status]
+    }));
+  };
+
+  const AVAILABILITY_ORDER: AvailabilityStatus[] = ['available', 'reserved', 'sold'];
+  const PLATFORM_OPTIONS: { value: PlatformFilter; label: string }[] = [
+    { value: 'all', label: 'Wszystkie' },
+    { value: 'with', label: 'Z podestem' },
+    { value: 'without', label: 'Bez podestu' }
+  ];
+
+
   const FilterFields = (
     <div className="space-y-6 py-4">
+      {/* Availability Filter */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">Dostępność</Label>
+        <div className="flex flex-wrap gap-2">
+          {AVAILABILITY_ORDER.map(status => {
+            const active = filters.availability.includes(status);
+            return (
+              <button
+                key={status}
+                type="button"
+                onClick={() => toggleAvailability(status)}
+                aria-pressed={active}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  active
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-muted-foreground border-border hover:bg-muted'
+                }`}
+              >
+                {AVAILABILITY_BADGES[status].text}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Operator Platform Filter */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">Podest dla operatora</Label>
+        <div className="flex flex-wrap gap-2">
+          {PLATFORM_OPTIONS.map(option => {
+            const active = filters.platform === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setFilters(prev => ({ ...prev, platform: option.value }))}
+                aria-pressed={active}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  active
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-muted-foreground border-border hover:bg-muted'
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Production Year Filter */}
       <div className="space-y-3">
         <Label className="text-sm font-medium">
