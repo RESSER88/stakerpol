@@ -107,7 +107,7 @@ const Products = () => {
           <div className="hidden md:flex justify-center mb-8">
             <ProductFilter
               products={products}
-              onFilterChange={setFilteredProducts}
+              onFilterChange={setCriteria}
               language={language}
             />
           </div>
@@ -119,7 +119,7 @@ const Products = () => {
         <div className="md:hidden fixed right-4 top-1/2 -translate-y-1/2 z-40">
           <ProductFilter
             products={products}
-            onFilterChange={setFilteredProducts}
+            onFilterChange={setCriteria}
             language={language}
             variant="floating"
           />
