@@ -30,7 +30,7 @@ const Chapter04_Pricing = ({ product, onChange, onSave, saving }: Props) => {
           value={mode}
           onChange={(e) => set({ ...(product as any), priceDisplayMode: e.target.value } as any)}
           options={[
-            { value: 'inquiry_with_pricelist', label: 'Zapytanie i cennik' },
+            { value: 'inquiry_with_pricelist', label: 'Zapytanie a cena w cenniku' },
             { value: 'inquiry_only', label: 'Tylko zapytanie' },
             { value: 'show_price', label: 'Pokaż cenę' },
           ]}
