@@ -23,7 +23,7 @@ const Products = () => {
   const [criteria, setCriteria] = useState<FilterCriteria | null>(null);
 
   const displayProducts = useMemo(() => {
-    if (!criteria) return products;
+    if (!criteria) return products.filter(matchesDefaultAvailability);
     return products.filter(product => matchesCriteria(product, criteria));
   }, [products, criteria]);
 
