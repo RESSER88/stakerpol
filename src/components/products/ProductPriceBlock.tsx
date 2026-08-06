@@ -28,6 +28,8 @@ const ProductPriceBlock = ({ product }: Props) => {
     netPrice !== '' &&
     Number(netPrice) > 0;
 
+  if (!showPrice) return null;
+
   return (
     <div className="flex justify-between items-end bg-surface-soft border border-border-line rounded-md px-3.5 py-3">
       <div>
@@ -35,9 +37,10 @@ const ProductPriceBlock = ({ product }: Props) => {
           Cena netto
         </div>
         <div className="font-extrabold text-base text-navy-brand">
-          {showPrice ? formatPrice(netPrice as number | string, priceCurrency) : 'Zapytaj o ofertę'}
+          {formatPrice(netPrice as number | string, priceCurrency)}
         </div>
       </div>
+
       {hasLeasing && (
         <div className="text-right">
           <div className="uppercase font-semibold text-[10px] text-ink-soft tracking-wider">
