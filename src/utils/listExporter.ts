@@ -202,7 +202,7 @@ export const exportProductListToPDF = async (products: Product[]): Promise<void>
   };
 
   autoTable(doc, {
-    head: [EXPORT_COLUMNS.map((c) => c.header.toUpperCase())],
+    head: [EXPORT_COLUMNS.map((c) => c.header)],
     body,
     startY: 27,
     margin: { top: 27, left: margin, right: margin, bottom: 16 },
