@@ -12,19 +12,21 @@ import FAQSection from '@/components/ui/FAQSection';
 import FAQSchema from '@/components/seo/FAQSchema';
 import { Helmet } from 'react-helmet-async';
 import ProductFilter from '@/components/products/ProductFilter';
+import { FilterCriteria, matchesCriteria } from '@/components/products/FilterModal';
 import React, { useState, useMemo } from 'react';
 import { Product } from '@/types';
+import { Button } from '@/components/ui/button';
 import { getSiteDescription } from '@/config/featureFlags';
 const Products = () => {
   const { language } = useLanguage();
   const t = useTranslation(language);
   const { products, isLoading } = usePublicSupabaseProducts();
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  
-  // Update filtered products when products load
-  React.useEffect(() => {
-    setFilteredProducts(products);
-  }, [products]);
+  const [criteria, setCriteria] = useState<FilterCriteria | null>(null);
+
+  const displayProducts = useMemo(() => {
+    if (!criteria) return products;
+    return products.filter(product => matchesCriteria(product, criteria));
+  }, [products, criteria]);
 
   const getPageDescription = () => getSiteDescription(language);
 
@@ -44,7 +46,19 @@ const Products = () => {
       return <ProductsEmptyState />;
     }
 
-    const displayProducts = filteredProducts.length > 0 ? filteredProducts : products;
+    if (displayProducts.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center text-center py-16 px-4">
+          <h2 className="text-lg font-semibold mb-2">Brak produktów spełniających kryteria</h2>
+          <p className="text-muted-foreground mb-6 max-w-md">
+            Zmień zakresy filtrów lub numer seryjny, aby zobaczyć więcej wyników.
+          </p>
+          <Button variant="outline" onClick={() => setCriteria(null)}>
+            Wyczyść filtry
+          </Button>
+        </div>
+      );
+    }
 
     return (
       <div
