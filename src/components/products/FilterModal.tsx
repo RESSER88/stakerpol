@@ -10,6 +10,8 @@ import { Product } from '@/types';
 import { useTranslation } from '@/utils/translations';
 import { Language } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { AVAILABILITY_BADGES, AvailabilityStatus } from '@/components/products/availabilityBadge';
+import { hasOperatorPlatform } from '@/utils/productNormalization';
 
 export type PlatformFilter = 'all' | 'with' | 'without';
 
