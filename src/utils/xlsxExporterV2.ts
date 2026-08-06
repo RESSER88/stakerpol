@@ -88,7 +88,7 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
   // --- 2. NAGŁÓWEK TABELI ---
   const HEADER_ROW = 6;
   const headerRow = sheet.getRow(HEADER_ROW);
-  headerRow.values = COLUMNS.map((c) => c.header.toUpperCase());
+  headerRow.values = COLUMNS.map((c) => c.header);
   headerRow.height = 20;
   COLUMNS.forEach((c, i) => {
     const cell = headerRow.getCell(i + 1);
