@@ -202,7 +202,7 @@ export const exportProductListToPDF = async (products: Product[]): Promise<void>
   };
 
   autoTable(doc, {
-    head: [EXPORT_COLUMNS.map((c) => c.header.toUpperCase())],
+    head: [EXPORT_COLUMNS.map((c) => c.header)],
     body,
     startY: 27,
     margin: { top: 27, left: margin, right: margin, bottom: 16 },
@@ -325,21 +325,23 @@ const renderListHTML = (model: ExportModel): string => {
               : `color:${COLORS.navy};font-weight:bold;`;
           const photoLabel = r.serialNumber ? `nr ${r.serialNumber}` : '—';
 
+          const al = (i: number) => EXPORT_COLUMNS[i].align;
           const cells = [
-            `<td style="${cellBase('center', `color:${COLORS.muted};`)}">${r.index}</td>`,
-            `<td style="${cellBase('left', `color:${base};`)}">${escapeHtml(r.model)}</td>`,
-            `<td style="${cellBase('left', `color:${base};`)}">${escapeHtml(r.serialNumber)}</td>`,
-            `<td style="${cellBase('center', `color:${base};`)}">${escapeHtml(r.productionYear)}</td>`,
-            `<td style="${cellBase('right', `color:${base};`)}">${escapeHtml(r.workingHours)}</td>`,
-            `<td style="${cellBase('right', `color:${base};`)}">${escapeHtml(r.mastLiftingCapacity)}</td>`,
-            `<td style="${cellBase('right', `color:${base};`)}">${escapeHtml(r.liftHeight)}</td>`,
-            `<td style="${cellBase('left', `color:${base};`)}">${escapeHtml(r.mast)}</td>`,
-            `<td style="${cellBase('left', `color:${base};`)}">${escapeHtml(r.battery)}</td>`,
-            `<td style="${cellBase('left', `color:${base};`)}">${escapeHtml(r.availability)}</td>`,
-            `<td style="${cellBase('right', priceStyle)}">${escapeHtml(priceText(r))}</td>`,
-            `<td style="${cellBase('left', `color:${base};`)}">${escapeHtml(r.priceCurrency)}</td>`,
-            `<td style="${cellBase('center', `color:${r.isSold ? COLORS.muted : COLORS.navy};`)}">${escapeHtml(photoLabel)}</td>`,
+            `<td style="${cellBase(al(0), `color:${COLORS.muted};`)}">${r.index}</td>`,
+            `<td style="${cellBase(al(1), `color:${base};`)}">${escapeHtml(r.model)}</td>`,
+            `<td style="${cellBase(al(2), `color:${base};`)}">${escapeHtml(r.serialNumber)}</td>`,
+            `<td style="${cellBase(al(3), `color:${base};`)}">${escapeHtml(r.productionYear)}</td>`,
+            `<td style="${cellBase(al(4), `color:${base};`)}">${escapeHtml(r.workingHours)}</td>`,
+            `<td style="${cellBase(al(5), `color:${base};`)}">${escapeHtml(r.mastLiftingCapacity)}</td>`,
+            `<td style="${cellBase(al(6), `color:${base};`)}">${escapeHtml(r.liftHeight)}</td>`,
+            `<td style="${cellBase(al(7), `color:${base};`)}">${escapeHtml(r.mast)}</td>`,
+            `<td style="${cellBase(al(8), `color:${base};`)}">${escapeHtml(r.battery)}</td>`,
+            `<td style="${cellBase(al(9), `color:${base};`)}">${escapeHtml(r.availability)}</td>`,
+            `<td style="${cellBase(al(10), priceStyle)}">${escapeHtml(priceText(r))}</td>`,
+            `<td style="${cellBase(al(11), `color:${base};`)}">${escapeHtml(r.priceCurrency)}</td>`,
+            `<td style="${cellBase(al(12), `color:${r.isSold ? COLORS.muted : COLORS.navy};`)}">${escapeHtml(photoLabel)}</td>`,
           ].join('');
+
 
           return `<tr>${cells}</tr>`;
         })
@@ -351,7 +353,7 @@ const renderListHTML = (model: ExportModel): string => {
 
   const head = EXPORT_COLUMNS.map(
     (c) =>
-      `<th style="padding:6px;text-align:${c.align};color:${COLORS.navy};font-size:11px;font-weight:bold;border-bottom:2px solid ${COLORS.navy};white-space:nowrap;">${escapeHtml(c.header.toUpperCase())}</th>`
+      `<th style="padding:6px;text-align:${c.align};color:${COLORS.navy};font-size:11px;font-weight:bold;border-bottom:2px solid ${COLORS.navy};white-space:nowrap;">${escapeHtml(c.header)}</th>`
   ).join('');
 
   return `
