@@ -251,6 +251,7 @@ export const exportProductListToPDF = async (products: Product[]): Promise<void>
       fillColor: false as any,
       lineColor: RGB.navy,
       lineWidth: { bottom: 0.5, top: 0, left: 0, right: 0 },
+      valign: 'middle',
     },
     columnStyles,
     didParseCell: (data: CellHookData) => {
