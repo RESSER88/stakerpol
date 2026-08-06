@@ -14,7 +14,7 @@ const items = [
   {
     Icon: Truck,
     label: 'Dostawa\nw całej PL',
-    sub: 'Własny transport',
+    sub: '1-3 dni robocze',
   },
   {
     Icon: CreditCard,
