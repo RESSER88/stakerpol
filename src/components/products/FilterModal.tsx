@@ -145,6 +145,56 @@ const FilterModal = ({ isOpen, onClose, products, onApplyFilters, language }: Fi
 
   const FilterFields = (
     <div className="space-y-6 py-4">
+      {/* Availability Filter */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">Dostępność</Label>
+        <div className="flex flex-wrap gap-2">
+          {AVAILABILITY_ORDER.map(status => {
+            const active = filters.availability.includes(status);
+            return (
+              <button
+                key={status}
+                type="button"
+                onClick={() => toggleAvailability(status)}
+                aria-pressed={active}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  active
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-muted-foreground border-border hover:bg-muted'
+                }`}
+              >
+                {AVAILABILITY_BADGES[status].text}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Operator Platform Filter */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">Podest dla operatora</Label>
+        <div className="flex flex-wrap gap-2">
+          {PLATFORM_OPTIONS.map(option => {
+            const active = filters.platform === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setFilters(prev => ({ ...prev, platform: option.value }))}
+                aria-pressed={active}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  active
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-muted-foreground border-border hover:bg-muted'
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Production Year Filter */}
       <div className="space-y-3">
         <Label className="text-sm font-medium">
