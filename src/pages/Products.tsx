@@ -14,7 +14,6 @@ import { Helmet } from 'react-helmet-async';
 import ProductFilter from '@/components/products/ProductFilter';
 import { FilterCriteria, matchesCriteria } from '@/components/products/FilterModal';
 import React, { useState, useMemo } from 'react';
-import { Product } from '@/types';
 import { Button } from '@/components/ui/button';
 import { getSiteDescription } from '@/config/featureFlags';
 const Products = () => {
