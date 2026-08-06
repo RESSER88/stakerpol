@@ -443,7 +443,23 @@ export const exportProductListToJPG = async (products: Product[]): Promise<void>
 
   document.body.appendChild(tempDiv);
 
+  // html2canvas rysuje tylko już wczytane obrazy — czekamy na dekodowanie ikony
+  const images = Array.from(tempDiv.querySelectorAll('img'));
+  await Promise.all(
+    images.map((img) =>
+      img.complete && img.naturalWidth > 0
+        ? Promise.resolve()
+        : img.decode
+          ? img.decode().catch(() => undefined)
+          : new Promise<void>((resolve) => {
+              img.onload = () => resolve();
+              img.onerror = () => resolve();
+            })
+    )
+  );
+
   try {
+
     const canvas = await html2canvas(tempDiv, {
       backgroundColor: '#ffffff',
       scale: 2,
