@@ -1,5 +1,6 @@
 import { Phone, Mail, MessageCircle, Clock, MapPin } from 'lucide-react';
 import michalPhoto from '@/assets/michal-seweryn.jpg';
+import { yearsInBusinessLabel } from '@/utils/yearsInBusiness';
 
 const ContactDetailsCard = () => {
   return (

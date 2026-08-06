@@ -11,6 +11,9 @@ import { trackPhoneClick, trackWhatsAppClick } from '@/utils/analytics';
 import { useSupabaseFAQ } from '@/hooks/useSupabaseFAQ';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import FAQSchema from '@/components/seo/FAQSchema';
+import { getYearsInBusiness } from '@/utils/yearsInBusiness';
+
+const YEARS = getYearsInBusiness();
 
 const Testimonials = () => {
   const { language } = useLanguage();
@@ -121,15 +124,15 @@ const Testimonials = () => {
   const getStripContent = () => {
     switch (language) {
       case 'en':
-        return { rating: 'Average Google rating', sold: 'Forklifts sold', years: 'On the market since 2008', yearsValue: '17 years' };
+        return { rating: 'Average Google rating', sold: 'Forklifts sold', years: 'On the market since 2008', yearsValue: `${YEARS} years` };
       case 'cs':
-        return { rating: 'Průměrné hodnocení Google', sold: 'Prodaných vozíků', years: 'Na trhu od 2008', yearsValue: '17 let' };
+        return { rating: 'Průměrné hodnocení Google', sold: 'Prodaných vozíků', years: 'Na trhu od 2008', yearsValue: `${YEARS} let` };
       case 'sk':
-        return { rating: 'Priemerné hodnotenie Google', sold: 'Predaných vozíkov', years: 'Na trhu od 2008', yearsValue: '17 rokov' };
+        return { rating: 'Priemerné hodnotenie Google', sold: 'Predaných vozíkov', years: 'Na trhu od 2008', yearsValue: `${YEARS} rokov` };
       case 'de':
-        return { rating: 'Google-Durchschnittsbewertung', sold: 'Verkaufte Stapler', years: 'Auf dem Markt seit 2008', yearsValue: '17 Jahre' };
+        return { rating: 'Google-Durchschnittsbewertung', sold: 'Verkaufte Stapler', years: 'Auf dem Markt seit 2008', yearsValue: `${YEARS} Jahre` };
       default:
-        return { rating: 'Średnia ocen w Google', sold: 'Sprzedanych wózków', years: 'Na rynku od 2008', yearsValue: '17 lat' };
+        return { rating: 'Średnia ocen w Google', sold: 'Sprzedanych wózków', years: 'Na rynku od 2008', yearsValue: `${YEARS} lat` };
     }
   };
 
