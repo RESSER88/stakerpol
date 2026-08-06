@@ -4,6 +4,7 @@ import html2canvas from 'html2canvas';
 import { Product } from '@/types';
 import {
   COMPANY,
+  WAREHOUSE,
   COLORS,
   EXPORT_COLUMNS,
   buildExportRows,
@@ -13,6 +14,7 @@ import {
   ExportModel,
   ExportRow,
 } from '@/utils/exportListModel';
+import { MAPS_ICON_DATA_URI } from '@/utils/exportMapsIcon';
 
 /* ------------------------------------------------------------------ */
 /*  FONT Z POLSKIMI ZNAKAMI (ładowany w locie, nie trafia do bundla)   */
