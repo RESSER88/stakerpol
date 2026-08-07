@@ -4,13 +4,18 @@ import { Product } from '@/types';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { getModelGroupKey, compareModelGroups, hasOperatorPlatform } from '@/utils/productNormalization';
+import { getModelGroupKey, compareModelGroups } from '@/utils/productNormalization';
+import {
+  ExportFilterCriteria,
+  ExportPlatformFilter,
+  filterProductsByCriteria,
+} from '@/utils/exportFilterCriteria';
 
-type PlatformFilter = 'all' | 'with' | 'without';
+type PlatformFilter = ExportPlatformFilter;
 
 interface Props {
   products: Product[];
-  onChange: (filtered: Product[]) => void;
+  onChange: (filtered: Product[], criteria: ExportFilterCriteria) => void;
 }
 
 const AVAILABILITY_OPTIONS: { value: string; label: string }[] = [
@@ -31,6 +36,7 @@ const rangeOf = (values: (number | null)[], fb: [number, number]): [number, numb
   if (!list.length) return fb;
   return [list[0], list[list.length - 1]];
 };
+
 
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
   <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-editorial-muted mb-2">
