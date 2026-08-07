@@ -615,6 +615,48 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_lists: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string
+          filters: Json
+          id: string
+          label: string | null
+          last_viewed_at: string | null
+          revoked_at: string | null
+          token: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expires_at: string
+          filters?: Json
+          id?: string
+          label?: string | null
+          last_viewed_at?: string | null
+          revoked_at?: string | null
+          token: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          filters?: Json
+          id?: string
+          label?: string | null
+          last_viewed_at?: string | null
+          revoked_at?: string | null
+          token?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       social_media_posts: {
         Row: {
           created_at: string | null
@@ -806,6 +848,7 @@ export type Database = {
     }
     Functions: {
       bytea_to_text: { Args: { data: string }; Returns: string }
+      cleanup_expired_shared_lists: { Args: never; Returns: number }
       cleanup_old_handled_leads: { Args: never; Returns: number }
       generate_product_slug: {
         Args: { product_name: string; serial_number?: string }
