@@ -103,37 +103,29 @@ const ExportFilterPanel = ({ products, onChange }: Props) => {
     setHeight(bounds.height);
   }, [bounds]);
 
-  const filtered = useMemo(() => {
-    const q = serial.trim().toLowerCase();
-    return products.filter((p) => {
-      if (groups.length && !groups.includes(getModelGroupKey(p.model || ''))) return false;
+  const criteria = useMemo<ExportFilterCriteria>(
+    () => ({
+      version: 1,
+      groups,
+      platform,
+      availability,
+      serial,
+      year,
+      hours,
+      height,
+    }),
+    [groups, platform, availability, serial, year, hours, height]
+  );
 
-      if (platform !== 'all') {
-        const has = hasOperatorPlatform(p.specs?.operatorPlatform);
-        if (platform === 'with' && !has) return false;
-        if (platform === 'without' && has) return false;
-      }
-
-      if (availability.length && !availability.includes(p.availabilityStatus || 'available')) return false;
-
-      if (q && !(p.specs?.serialNumber || '').toLowerCase().includes(q)) return false;
-
-      const y = num(p.specs?.productionYear);
-      if (y !== null && (y < year[0] || y > year[1])) return false;
-
-      const h = num(p.specs?.workingHours);
-      if (h !== null && (h < hours[0] || h > hours[1])) return false;
-
-      const lh = num(p.specs?.liftHeight);
-      if (lh !== null && (lh < height[0] || lh > height[1])) return false;
-
-      return true;
-    });
-  }, [products, groups, platform, availability, serial, year, hours, height]);
+  const filtered = useMemo(
+    () => filterProductsByCriteria(products, criteria),
+    [products, criteria]
+  );
 
   useEffect(() => {
-    onChange(filtered);
-  }, [filtered, onChange]);
+    onChange(filtered, criteria);
+  }, [filtered, criteria, onChange]);
+
 
   const reset = () => {
     setGroups([]);
