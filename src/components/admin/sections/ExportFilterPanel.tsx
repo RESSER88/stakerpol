@@ -4,13 +4,18 @@ import { Product } from '@/types';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { getModelGroupKey, compareModelGroups, hasOperatorPlatform } from '@/utils/productNormalization';
+import { getModelGroupKey, compareModelGroups } from '@/utils/productNormalization';
+import {
+  ExportFilterCriteria,
+  ExportPlatformFilter,
+  filterProductsByCriteria,
+} from '@/utils/exportFilterCriteria';
 
-type PlatformFilter = 'all' | 'with' | 'without';
+type PlatformFilter = ExportPlatformFilter;
 
 interface Props {
   products: Product[];
-  onChange: (filtered: Product[]) => void;
+  onChange: (filtered: Product[], criteria: ExportFilterCriteria) => void;
 }
 
 const AVAILABILITY_OPTIONS: { value: string; label: string }[] = [
@@ -31,6 +36,7 @@ const rangeOf = (values: (number | null)[], fb: [number, number]): [number, numb
   if (!list.length) return fb;
   return [list[0], list[list.length - 1]];
 };
+
 
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
   <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-editorial-muted mb-2">
@@ -97,37 +103,29 @@ const ExportFilterPanel = ({ products, onChange }: Props) => {
     setHeight(bounds.height);
   }, [bounds]);
 
-  const filtered = useMemo(() => {
-    const q = serial.trim().toLowerCase();
-    return products.filter((p) => {
-      if (groups.length && !groups.includes(getModelGroupKey(p.model || ''))) return false;
+  const criteria = useMemo<ExportFilterCriteria>(
+    () => ({
+      version: 1,
+      groups,
+      platform,
+      availability,
+      serial,
+      year,
+      hours,
+      height,
+    }),
+    [groups, platform, availability, serial, year, hours, height]
+  );
 
-      if (platform !== 'all') {
-        const has = hasOperatorPlatform(p.specs?.operatorPlatform);
-        if (platform === 'with' && !has) return false;
-        if (platform === 'without' && has) return false;
-      }
-
-      if (availability.length && !availability.includes(p.availabilityStatus || 'available')) return false;
-
-      if (q && !(p.specs?.serialNumber || '').toLowerCase().includes(q)) return false;
-
-      const y = num(p.specs?.productionYear);
-      if (y !== null && (y < year[0] || y > year[1])) return false;
-
-      const h = num(p.specs?.workingHours);
-      if (h !== null && (h < hours[0] || h > hours[1])) return false;
-
-      const lh = num(p.specs?.liftHeight);
-      if (lh !== null && (lh < height[0] || lh > height[1])) return false;
-
-      return true;
-    });
-  }, [products, groups, platform, availability, serial, year, hours, height]);
+  const filtered = useMemo(
+    () => filterProductsByCriteria(products, criteria),
+    [products, criteria]
+  );
 
   useEffect(() => {
-    onChange(filtered);
-  }, [filtered, onChange]);
+    onChange(filtered, criteria);
+  }, [filtered, criteria, onChange]);
+
 
   const reset = () => {
     setGroups([]);

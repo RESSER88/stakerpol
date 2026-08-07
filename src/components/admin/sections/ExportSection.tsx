@@ -6,6 +6,8 @@ import { exportProductListToBrandedXLSX } from '@/utils/xlsxExporterV2';
 import { useToast } from '@/hooks/use-toast';
 import SectionHeader from '../editorial/SectionHeader';
 import ExportFilterPanel from './ExportFilterPanel';
+import { ExportFilterCriteria, DEFAULT_EXPORT_CRITERIA } from '@/utils/exportFilterCriteria';
+
 
 
 interface Props {
@@ -50,13 +52,18 @@ const ExportSection = ({ products }: Props) => {
   const [exportingJPG, setExportingJPG] = useState(false);
   const [exportingXLSX, setExportingXLSX] = useState(false);
   const [filtered, setFiltered] = useState<Product[]>(products);
+  const [criteria, setCriteria] = useState<ExportFilterCriteria>(DEFAULT_EXPORT_CRITERIA);
   const { toast } = useToast();
 
   useEffect(() => {
     setFiltered(products);
   }, [products]);
 
-  const handleFilterChange = useCallback((list: Product[]) => setFiltered(list), []);
+  const handleFilterChange = useCallback((list: Product[], next: ExportFilterCriteria) => {
+    setFiltered(list);
+    setCriteria(next);
+  }, []);
+
 
   const empty = filtered.length === 0;
 
