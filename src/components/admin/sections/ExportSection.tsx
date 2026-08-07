@@ -6,6 +6,8 @@ import { exportProductListToBrandedXLSX } from '@/utils/xlsxExporterV2';
 import { useToast } from '@/hooks/use-toast';
 import SectionHeader from '../editorial/SectionHeader';
 import ExportFilterPanel from './ExportFilterPanel';
+import { ExportFilterCriteria, DEFAULT_EXPORT_CRITERIA } from '@/utils/exportFilterCriteria';
+
 
 
 interface Props {
