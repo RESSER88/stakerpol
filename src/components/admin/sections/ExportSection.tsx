@@ -151,6 +151,9 @@ const ExportSection = ({ products }: Props) => {
           Brak produktów spełniających kryteria.
         </p>
       )}
+
+      <SharedListAccess criteria={criteria} matchedCount={filtered.length} />
+
     </div>
   );
 };
