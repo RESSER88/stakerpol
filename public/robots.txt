@@ -1,32 +1,42 @@
 User-agent: Googlebot
 Allow: /
+Disallow: /oferta/
 
 User-agent: Bingbot
 Allow: /
+Disallow: /oferta/
 
 User-agent: GPTBot
 Allow: /
+Disallow: /oferta/
 
 User-agent: ChatGPT-User
 Allow: /
+Disallow: /oferta/
 
 User-agent: PerplexityBot
 Allow: /
+Disallow: /oferta/
 
 User-agent: Claude-Web
 Allow: /
+Disallow: /oferta/
 
 User-agent: GoogleOther
 Allow: /
+Disallow: /oferta/
 
 User-agent: Twitterbot
 Allow: /
+Disallow: /oferta/
 
 User-agent: facebookexternalhit
 Allow: /
+Disallow: /oferta/
 
 User-agent: *
 Allow: /
+Disallow: /oferta/
 
 # Sitemaps
 Sitemap: https://peztqgfmmnxaaoapzpbw.supabase.co/functions/v1/sitemap
