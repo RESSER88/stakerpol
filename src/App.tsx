@@ -20,6 +20,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Admin = lazy(() => import('./pages/Admin'));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const Privacy = lazy(() => import("./pages/Privacy"));
+const SharedOffer = lazy(() => import("./pages/SharedOffer"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
