@@ -47,7 +47,7 @@ const AppRoutes = () => {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/oferta/:token" element={<SharedOffer />} />
-        <Route path="*" element={<NotFound />} />>
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
   );
