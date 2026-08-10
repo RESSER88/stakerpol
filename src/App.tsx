@@ -38,17 +38,26 @@ const AppRoutes = () => {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Ładowanie...</div>}>
       <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/products/:id" element={<ProductDetail />} />
-        <Route path="/testimonials" element={<Testimonials />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/faq" element={<FAQ />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/oferta/:token" element={<SharedOffer />} />
+        <Route path={ROUTES.home} element={<Index />} />
+        <Route path={ROUTES.products} element={<Products />} />
+        <Route path={ROUTES.productDetail} element={<ProductDetail />} />
+        <Route path={ROUTES.testimonials} element={<Testimonials />} />
+        <Route path={ROUTES.contact} element={<Contact />} />
+        <Route path={ROUTES.faq} element={<FAQ />} />
+        <Route path={ROUTES.privacy} element={<Privacy />} />
+        <Route path={ROUTES.admin} element={<Admin />} />
+        <Route path={ROUTES.sharedOffer} element={<SharedOffer />} />
+
+        {/* Przekierowania ze starych (angielskich) adresów */}
+        <Route path="/products" element={<Navigate to={ROUTES.products} replace />} />
+        <Route path="/products/:id" element={<LegacyProductRedirect />} />
+        <Route path="/contact" element={<Navigate to={ROUTES.contact} replace />} />
+        <Route path="/testimonials" element={<Navigate to={ROUTES.testimonials} replace />} />
+        <Route path="/privacy" element={<Navigate to={ROUTES.privacy} replace />} />
+
         <Route path="*" element={<NotFound />} />
       </Routes>
+
     </Suspense>
   );
 };
