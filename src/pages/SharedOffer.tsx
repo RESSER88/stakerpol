@@ -215,6 +215,8 @@ const SharedOffer = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [fetchedAt] = useState(() => new Date());
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT);
+  const [inquiryProduct, setInquiryProduct] = useState<Product | null>(null);
+
   const { direction: scrollDirection, y: scrollY } = useScrollState(8);
   /** W pobliżu początku listy pasek jest zawsze widoczny. */
   const hideFilterBar = scrollDirection === 'down' && scrollY > STICKY_GROUP_TOP * 2 && !sheetOpen;
