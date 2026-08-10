@@ -25,6 +25,44 @@ import SharedOfferFilters, {
 } from '@/components/shared-offer/SharedOfferFilters';
 import { cn } from '@/lib/utils';
 import { logger } from '@/utils/logger';
+import { useScrollDirection } from '@/hooks/useScrollDirection';
+import {
+  getGroupCommonParams,
+  COMMON_PARAM_KEYS,
+  COMMON_PARAM_LABELS,
+} from '@/utils/sharedOffer/groupCommonParams';
+import { SortKey, DEFAULT_SORT, SORT_OPTIONS, sortExportRows } from '@/utils/sharedOffer/sortRows';
+
+/** Wysokość przyklejonego paska filtrów — offset nagłówka grupy (mobile). */
+const STICKY_GROUP_TOP = 60;
+
+const SortControl = ({
+  value,
+  onChange,
+  className,
+}: {
+  value: SortKey;
+  onChange: (v: SortKey) => void;
+  className?: string;
+}) => (
+  <label className={cn('inline-flex items-center gap-2 text-xs text-gray-700', className)}>
+    <span className="sr-only md:not-sr-only">Sortowanie</span>
+    <select
+      aria-label="Sortowanie listy"
+      value={value}
+      onChange={(e) => onChange(e.target.value as SortKey)}
+      className="h-11 w-full md:w-auto rounded-md border border-gray-300 bg-white px-3 text-sm text-stakerpol-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+    >
+      {SORT_OPTIONS.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  </label>
+);
+
+
 
 type LinkState =
   | { status: 'loading' }
