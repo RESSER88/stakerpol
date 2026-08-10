@@ -119,19 +119,42 @@ const SharedListAccess = ({ criteria, matchedCount }: Props) => {
       return;
     }
     setSaving(true);
+    const labelValue = label.trim();
+    const expiresAt = new Date(Date.now() + weeks * 7 * 24 * 60 * 60 * 1000).toISOString();
     try {
-      const token = generateToken();
-      const expiresAt = new Date(Date.now() + weeks * 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { error } = await supabase.from('shared_lists').insert([
-        {
-          token,
-          filters: JSON.parse(JSON.stringify(criteria)),
-          label: label.trim() || null,
-          created_by: user.id,
-          expires_at: expiresAt,
-        },
-      ]);
-      if (error) throw error;
+      let token = '';
+      let lastError: unknown = null;
+      for (let attempt = 0; attempt < MAX_TOKEN_ATTEMPTS; attempt++) {
+        const candidate = buildToken(labelValue);
+        const { error } = await supabase.from('shared_lists').insert([
+          {
+            token: candidate,
+            filters: JSON.parse(JSON.stringify(criteria)),
+            label: labelValue || null,
+            created_by: user.id,
+            expires_at: expiresAt,
+          },
+        ]);
+        if (!error) {
+          token = candidate;
+          lastError = null;
+          break;
+        }
+        lastError = error;
+        // 23505 = naruszenie unikalności → ponów z nowym przyrostkiem
+        if ((error as { code?: string }).code !== '23505') break;
+      }
+      if (!token) {
+        if (lastError && (lastError as { code?: string }).code === '23505') {
+          toast({
+            title: 'Nie udało się nadać adresu',
+            description: 'Zbyt wiele powtórzeń adresu. Zmień opis linku i spróbuj ponownie.',
+            variant: 'destructive',
+          });
+          return;
+        }
+        throw lastError;
+      }
       const url = buildUrl(token);
       setLastUrl(url);
       setLabel('');
