@@ -217,7 +217,13 @@ const SharedOffer = () => {
             <>
               {/* Filtry */}
               <div className="mb-6">
-                <div className="md:hidden">
+                <div
+                  className={cn(
+                    'md:hidden sticky z-30 -mx-4 px-4 py-2 bg-gray-50 border-b border-gray-200 transition-transform duration-200 flex items-center gap-2',
+                    hideFilterBar ? '-translate-y-[150%]' : 'translate-y-0'
+                  )}
+                  style={{ top: 0 }}
+                >
                   <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                     <SheetTrigger className="inline-flex items-center gap-2 border border-gray-300 rounded-md px-4 h-11 text-sm font-semibold text-stakerpol-navy bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange">
                       <SlidersHorizontal className="h-4 w-4" />
@@ -239,12 +245,16 @@ const SharedOffer = () => {
                       </div>
                     </SheetContent>
                   </Sheet>
+                  <SortControl value={sortKey} onChange={setSortKey} className="flex-1 min-w-0" />
                 </div>
                 <details className="hidden md:block bg-white border border-gray-200 rounded-md">
                   <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-stakerpol-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange">
                     Filtry listy
                   </summary>
                   <div className="px-4 pb-5 pt-2 border-t border-gray-200">
+                    <div className="mb-5 max-w-xs">
+                      <SortControl value={sortKey} onChange={setSortKey} />
+                    </div>
                     <SharedOfferFilters
                       scope={scope}
                       value={viewerFilters}
@@ -253,6 +263,7 @@ const SharedOffer = () => {
                   </div>
                 </details>
               </div>
+
 
               {/* Puste stany */}
               {scope.length === 0 ? (
@@ -287,7 +298,7 @@ const SharedOffer = () => {
 
                   {/* Desktop: tabela */}
                   <div className="hidden md:block space-y-8">
-                    {model.groups.map((group) => (
+                    {sortedGroups.map((group) => (
                       <section key={group.key} aria-labelledby={`grp-${group.key}`}>
                         <h2
                           id={`grp-${group.key}`}
