@@ -6,8 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Edit, Copy, Trash2, Search, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PDFQuoteGenerator from './PDFQuoteGenerator';
-import {
 import { productPath } from '@/config/routes';
+import {
   Table,
   TableBody,
   TableCell,
