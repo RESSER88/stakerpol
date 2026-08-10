@@ -270,14 +270,14 @@ const SharedOffer = () => {
             </div>
           ) : (
             <>
-              {/* Filtry */}
-              <div className="mb-6">
-                <div
-                  className={cn(
-                    'md:hidden sticky top-0 z-30 -mx-4 px-4 py-2 bg-gray-50 border-b border-gray-200 transition-transform duration-200 motion-reduce:transition-none flex items-center gap-2',
-                    hideFilterBar ? '-translate-y-[150%]' : 'translate-y-0'
-                  )}
-                >
+              {/* Filtry — pasek mobilny poza wrapperem, aby przyklejenie działało w całym obszarze listy */}
+              <div
+                className={cn(
+                  'md:hidden sticky top-0 z-30 -mx-4 mb-4 px-4 py-2 bg-gray-50 border-b border-gray-200 transition-transform duration-200 motion-reduce:transition-none flex items-center gap-2',
+                  hideFilterBar ? '-translate-y-[150%]' : 'translate-y-0'
+                )}
+              >
+
                   <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                     <SheetTrigger className="inline-flex items-center gap-2 border border-gray-300 rounded-md px-4 h-11 text-sm font-semibold text-stakerpol-navy bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange">
                       <SlidersHorizontal className="h-4 w-4" />
