@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Mail, Phone, X, Send } from 'lucide-react';
 import { useContactForm } from '@/hooks/useContactForm';
 import { trackCTAClick, trackPhoneClick } from '@/utils/analytics';
+import { ROUTES } from '@/config/routes';
 
 const FloatingContactBubble = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -100,7 +101,7 @@ const FloatingContactBubble = () => {
                   />
                   <span className="text-[13px] text-gray-700 leading-snug">
                     Akceptuję{' '}
-                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[hsl(25,100%,50%)] underline">
+                    <a href={ROUTES.privacy} target="_blank" rel="noopener noreferrer" className="text-[hsl(25,100%,50%)] underline">
                       politykę prywatności
                     </a>
                     {' *'}

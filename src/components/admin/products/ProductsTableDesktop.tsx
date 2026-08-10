@@ -5,6 +5,7 @@ import { Pencil, Copy, Trash2, ArrowUp, ArrowDown, ArrowUpDown, ExternalLink } f
 import { Link } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import ProductStatusChip from './ProductStatusChip';
+import { productPath } from '@/config/routes';
 
 interface Props {
   products: Product[];
@@ -98,7 +99,7 @@ const ProductsTableDesktop = ({ products, onEdit, onCopy, onDelete }: Props) => 
                 </TableCell>
                 <TableCell>
                   <Link
-                    to={`/products/${product.slug || product.id}`}
+                    to={productPath(product)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 font-semibold text-admin-text hover:text-admin-orange group"

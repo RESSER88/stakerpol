@@ -7,6 +7,7 @@ import PriceInquiryModal from '@/components/products/PriceInquiryModal';
 import InquiryModal from '@/components/contact/InquiryModal';
 import FormModal from './FormModal';
 import { trackFAQOpen, trackFAQCTAClick } from '@/utils/analytics';
+import { ROUTES, productPath } from '@/config/routes';
 
 interface FAQItemEnhancedProps {
   faq: FAQ;
@@ -75,7 +76,7 @@ const FAQItemEnhanced: React.FC<FAQItemEnhancedProps> = ({ faq, products }) => {
         setActiveModal('callback');
         break;
       case 'link_to_contact':
-        navigate('/kontakt');
+        navigate(ROUTES.contact);
         break;
       case 'link_to_leasing':
         window.location.href = 'tel:+48694133592';
@@ -116,7 +117,7 @@ const FAQItemEnhanced: React.FC<FAQItemEnhancedProps> = ({ faq, products }) => {
                     return (
                       <a
                         key={p.id}
-                        href={`/products/${p.slug || p.id}`}
+                        href={productPath(p)}
                         className="flex items-center gap-3 border border-border rounded-md p-2.5 hover:border-orange-cta/60 transition-colors group"
                       >
                         {p.image && (
@@ -144,7 +145,7 @@ const FAQItemEnhanced: React.FC<FAQItemEnhancedProps> = ({ faq, products }) => {
                 </div>
                 {allSold && (
                   <a
-                    href="/products"
+                    href={ROUTES.products}
                     className="inline-block text-sm font-medium text-orange-cta hover:underline"
                   >
                     Zobacz podobne dostępne modele →

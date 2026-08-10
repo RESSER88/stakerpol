@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { Product } from '@/types';
 import SimpleRelatedCard from '@/components/products/SimpleRelatedCard';
+import { ROUTES } from '@/config/routes';
 
 interface Props {
   products: Product[];
@@ -33,7 +34,7 @@ const HomeFeaturedProducts = ({ products, isLoading }: Props) => {
 
         <div className="text-center mt-8 md:mt-10">
           <Link
-            to="/products"
+            to={ROUTES.products}
             className="inline-flex items-center gap-2 bg-orange-cta hover:opacity-90 text-white font-bold px-5 py-3 rounded-md transition-opacity"
           >
             Zobacz wszystkie produkty

@@ -4,6 +4,7 @@ import { Phone, Mail, MapPin, Instagram, Youtube, Facebook } from 'lucide-react'
 import { trackPhoneClick, trackEmailClick, trackSocialClick } from '@/utils/analytics';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/utils/translations';
+import { ROUTES } from '@/config/routes';
 
 const Footer = () => {
   const { language } = useLanguage();
@@ -86,19 +87,19 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/products" onClick={handleLinkClick} className="hover:text-stakerpol-orange transition-colors inline-flex items-center group">
+                <Link to={ROUTES.products} onClick={handleLinkClick} className="hover:text-stakerpol-orange transition-colors inline-flex items-center group">
                   <span className="w-1 h-1 bg-stakerpol-orange rounded-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                   {t('products')}
                 </Link>
               </li>
               <li>
-                <Link to="/testimonials" onClick={handleLinkClick} className="hover:text-stakerpol-orange transition-colors inline-flex items-center group">
+                <Link to={ROUTES.testimonials} onClick={handleLinkClick} className="hover:text-stakerpol-orange transition-colors inline-flex items-center group">
                   <span className="w-1 h-1 bg-stakerpol-orange rounded-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                   {t('testimonials')}
                 </Link>
               </li>
               <li>
-                <Link to="/contact" onClick={handleLinkClick} className="hover:text-stakerpol-orange transition-colors inline-flex items-center group">
+                <Link to={ROUTES.contact} onClick={handleLinkClick} className="hover:text-stakerpol-orange transition-colors inline-flex items-center group">
                   <span className="w-1 h-1 bg-stakerpol-orange rounded-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                   {t('contact')}
                 </Link>

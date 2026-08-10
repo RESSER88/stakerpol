@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { COMPANY_PHONE_DISPLAY } from '@/lib/contact';
 import { trackFAQLeadSubmit } from '@/utils/analytics';
+import { ROUTES } from '@/config/routes';
 
 interface HomeHeroFormProps {
   variant?: 'light' | 'dark';
@@ -219,7 +220,7 @@ const HomeHeroForm = ({
           <span className={isDark ? 'text-xs text-white/75 leading-[1.4]' : 'text-xs text-ink-soft leading-[1.4]'}>
             Akceptuję{' '}
             <a
-              href="/privacy"
+              href={ROUTES.privacy}
               className={isDark ? 'underline hover:text-orange-cta text-white transition-colors' : 'underline hover:text-orange-cta transition-colors'}
             >
               politykę prywatności

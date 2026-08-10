@@ -31,6 +31,7 @@ import ProductLeadCallback from '@/components/products/ProductLeadCallback';
 import ProductStickyBar from '@/components/products/ProductStickyBar';
 import ProductProcessSteps from '@/components/products/ProductProcessSteps';
 import InlineContextualCTA from '@/components/products/InlineContextualCTA';
+import { ROUTES, productUrl, absoluteUrl } from '@/config/routes';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -108,7 +109,7 @@ const ProductDetail = () => {
       <Layout>
         <div className="container-custom py-12">
           <h1 className="text-3xl md:text-4xl font-bold mb-4 text-stakerpol-navy">{t('productNotFound')}</h1>
-          <Link to="/products" className="text-stakerpol-orange hover:underline text-lg">
+          <Link to={ROUTES.products} className="text-stakerpol-orange hover:underline text-lg">
             {t('backToProducts')}
           </Link>
         </div>
@@ -117,9 +118,9 @@ const ProductDetail = () => {
   }
 
   const breadcrumbItems = [
-    { name: 'Strona główna', url: 'https://stakerpol.pl' },
-    { name: 'Produkty', url: 'https://stakerpol.pl/products' },
-    { name: product.model, url: `https://stakerpol.pl/products/${product.slug || product.id}` }
+    { name: 'Strona główna', url: absoluteUrl(ROUTES.home) },
+    { name: 'Produkty', url: absoluteUrl(ROUTES.products) },
+    { name: product.model, url: productUrl(product) }
   ];
 
   const getMetaTitle = () => {
@@ -154,13 +155,13 @@ const ProductDetail = () => {
         <meta property="og:description" content={getMetaDescription()} />
         <meta property="og:image" content={getOgImage()} />
         <meta property="og:image:alt" content={getMainImageAlt(product as any)} />
-        <meta property="og:url" content={`https://stakerpol.pl/products/${product.slug || product.id}`} />
+        <meta property="og:url" content={productUrl(product)} />
         <meta property="og:type" content="product" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={getMetaTitle()} />
         <meta name="twitter:description" content={getMetaDescription()} />
         <meta name="twitter:image" content={getOgImage()} />
-        <link rel="canonical" href={`https://stakerpol.pl/products/${product.slug || product.id}`} />
+        <link rel="canonical" href={productUrl(product)} />
         <script type="application/ld+json">
           {JSON.stringify(productSchemaData, null, 2)}
         </script>

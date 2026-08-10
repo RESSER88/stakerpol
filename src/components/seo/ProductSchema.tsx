@@ -1,5 +1,6 @@
 import { Product } from '@/types';
 import { testimonials } from '@/data/testimonials/testimonialsData';
+import { productUrl } from '@/config/routes';
 
 interface ProductSchemaProps {
   product: Product;
@@ -10,7 +11,7 @@ const ProductSchema = ({ product }: ProductSchemaProps) => {
     if (typeof window !== 'undefined') {
       return window.location.href;
     }
-    return `https://stakerpol.pl/products/${product.slug || product.id}`;
+    return productUrl(product);
   };
 
   const getMainImage = () => {

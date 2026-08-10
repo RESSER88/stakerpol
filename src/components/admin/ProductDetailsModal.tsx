@@ -22,6 +22,7 @@ import ProductForm from './ProductForm';
 import { BenefitDraft } from './BenefitsEditor';
 import { useProductFormValidation } from '@/hooks/useProductFormValidation';
 import { supabase } from '@/integrations/supabase/client';
+import { productPath } from '@/config/routes';
 
 interface ProductDetailsModalProps {
   isOpen: boolean;
@@ -154,7 +155,7 @@ const ProductDetailsModal = ({
               </DialogTitle>
               {isEditMode && selectedProduct && (
                 <a
-                  href={`/products/${selectedProduct.slug || selectedProduct.id}`}
+                  href={productPath(selectedProduct)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 mt-2 text-[11px] font-bold tracking-[0.15em] uppercase text-editorial-muted hover:text-orange-cta transition-colors"

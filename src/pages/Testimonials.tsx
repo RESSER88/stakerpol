@@ -12,6 +12,7 @@ import { useSupabaseFAQ } from '@/hooks/useSupabaseFAQ';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import FAQSchema from '@/components/seo/FAQSchema';
 import { getYearsInBusiness } from '@/utils/yearsInBusiness';
+import { ROUTES, absoluteUrl } from '@/config/routes';
 
 const YEARS = getYearsInBusiness();
 
@@ -160,7 +161,7 @@ const Testimonials = () => {
       <Helmet>
         <title>Opinie klientów – Stakerpol</title>
         <meta name="description" content="Opinie klientów o Stakerpol: wózki paletowe BT Toyota, sprzedaż, serwis i wynajem. Sprawdź rekomendacje i dodaj własną opinię." />
-        <link rel="canonical" href="https://stakerpol.pl/testimonials" />
+        <link rel="canonical" href={absoluteUrl(ROUTES.testimonials)} />
         <meta property="og:title" content="Opinie klientów – Stakerpol" />
         <meta property="og:description" content="Sprawdź opinie klientów o Stakerpol i dodaj własną recenzję." />
         <meta property="og:type" content="website" />
@@ -226,7 +227,7 @@ const Testimonials = () => {
                 {experienceContent.buttonText}
               </a>
               <Button asChild variant="outline" className="border-stakerpol-navy text-stakerpol-navy hover:bg-stakerpol-navy/5 font-bold">
-                <Link to="/products">
+                <Link to={ROUTES.products}>
                   <Package className="mr-2 w-4 h-4" />
                   {experienceContent.secondaryText} →
                 </Link>

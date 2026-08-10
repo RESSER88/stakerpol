@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useContactForm } from '@/hooks/useContactForm';
 import { trackBeginInquiry } from '@/utils/analytics';
+import { ROUTES } from '@/config/routes';
 
 interface InquiryModalProps {
   isOpen: boolean;
@@ -124,7 +125,7 @@ const InquiryModal = ({ isOpen, onClose, source, productId, productModel, serial
                   <span className="text-[13px] text-foreground/85 leading-snug">
                     Akceptuję{' '}
                     <a
-                      href="/privacy"
+                      href={ROUTES.privacy}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-stakerpol-orange underline"
