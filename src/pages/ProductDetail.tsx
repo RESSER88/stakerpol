@@ -118,7 +118,7 @@ const ProductDetail = () => {
   }
 
   const breadcrumbItems = [
-    { name: 'Strona główna', url: 'https://stakerpol.pl' },
+    { name: 'Strona główna', url: absoluteUrl(ROUTES.home) },
     { name: 'Produkty', url: absoluteUrl(ROUTES.products) },
     { name: product.model, url: productUrl(product) }
   ];

@@ -1,6 +1,7 @@
 import React from 'react';
 import Layout from '@/components/layout/Layout';
 import { Helmet } from 'react-helmet-async';
+import { ROUTES, absoluteUrl } from '@/config/routes';
 
 const Privacy: React.FC = () => {
   return (
@@ -11,6 +12,7 @@ const Privacy: React.FC = () => {
           name="description"
           content="Polityka prywatności serwisu Stakerpol.pl – informacje o przetwarzaniu danych osobowych zgodnie z RODO."
         />
+        <link rel="canonical" href={absoluteUrl(ROUTES.privacy)} />
       </Helmet>
 
       <div className="max-w-4xl mx-auto px-4 py-12">
