@@ -21,7 +21,7 @@ const SimpleRelatedCard = memo(({ product }: Props) => {
 
   return (
     <Link
-      to={productPath({ id, slug })}
+      to={productPath(product)}
       className="group block bg-white border border-border-line rounded-lg overflow-hidden cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-8px_rgba(0,0,0,0.15)]"
     >
       <div className="relative bg-surface-soft">

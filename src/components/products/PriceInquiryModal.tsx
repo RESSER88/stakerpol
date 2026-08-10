@@ -15,6 +15,7 @@ import { Product } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/utils/translations';
 import { useLeadSubmit } from '@/hooks/useLeadSubmit';
+import { ROUTES } from '@/config/routes';
 
 interface PriceInquiryModalProps {
   isOpen: boolean;
@@ -157,7 +158,7 @@ const PriceInquiryModal = ({ isOpen, onClose, product }: PriceInquiryModalProps)
               <label htmlFor="privacy" className="text-sm leading-relaxed cursor-pointer">
                 Akceptuję{' '}
                 <a
-                  href="/privacy"
+                  href={ROUTES.privacy}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-stakerpol-orange underline"

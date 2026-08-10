@@ -31,7 +31,7 @@ import ProductLeadCallback from '@/components/products/ProductLeadCallback';
 import ProductStickyBar from '@/components/products/ProductStickyBar';
 import ProductProcessSteps from '@/components/products/ProductProcessSteps';
 import InlineContextualCTA from '@/components/products/InlineContextualCTA';
-import { ROUTES, productUrl } from '@/config/routes';
+import { ROUTES, productUrl, absoluteUrl } from '@/config/routes';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -119,7 +119,7 @@ const ProductDetail = () => {
 
   const breadcrumbItems = [
     { name: 'Strona główna', url: 'https://stakerpol.pl' },
-    { name: 'Produkty', url: 'https://stakerpol.pl/products' },
+    { name: 'Produkty', url: absoluteUrl(ROUTES.products) },
     { name: product.model, url: productUrl(product) }
   ];
 
