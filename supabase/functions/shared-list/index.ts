@@ -1,8 +1,13 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
-const TOKEN_LENGTH = 32;
-const TOKEN_PATTERN = /^[A-Za-z0-9_-]+$/;
+/** Dotychczasowy format: 32 znaki base64url. */
+const LEGACY_TOKEN_PATTERN = /^[A-Za-z0-9_-]{32}$/;
+/** Nowy format: podstawa-slug + 6-znakowy przyrostek, np. janpol-k7m2xr. */
+const SLUG_TOKEN_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*-[a-z0-9]{6}$/;
+
+const isValidToken = (t: string): boolean =>
+  t.length <= 40 && (LEGACY_TOKEN_PATTERN.test(t) || SLUG_TOKEN_PATTERN.test(t));
 
 // Rate limiting: in-memory only, per function instance.
 const RATE_LIMIT = 30;
@@ -53,11 +58,7 @@ Deno.serve(async (req) => {
       return NOT_FOUND();
     }
 
-    if (
-      typeof token !== 'string' ||
-      token.length !== TOKEN_LENGTH ||
-      !TOKEN_PATTERN.test(token)
-    ) {
+    if (typeof token !== 'string' || !isValidToken(token)) {
       console.log('shared-list: denied (invalid token format)');
       return NOT_FOUND();
     }
