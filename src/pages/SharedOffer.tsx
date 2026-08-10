@@ -509,6 +509,7 @@ const SharedOffer = () => {
                                       showPrice={row.showPrice}
                                       netPrice={row.netPrice}
                                       currency={row.priceCurrency}
+                                      onInquiry={() => openInquiry(row.productId)}
                                     />
                                   </td>
                                   <td className="px-3 py-2 text-center">
