@@ -363,13 +363,26 @@ const SharedOffer = () => {
 
                   {/* Mobile: karty */}
                   <div className="md:hidden space-y-6">
-                    {model.groups.map((group) => (
+                    {sortedGroups.map((group) => {
+                      const common = group.common;
+                      const commonKeys = COMMON_PARAM_KEYS.filter((k) => common[k]);
+                      return (
                       <section key={group.key} aria-labelledby={`grpm-${group.key}`}>
                         <h2
                           id={`grpm-${group.key}`}
-                          className="sticky top-0 z-10 bg-stakerpol-navy text-white text-sm font-bold px-3 py-2 rounded-md"
+                          className="sticky z-20 bg-stakerpol-navy text-white px-3 py-2 rounded-md"
+                          style={{ top: STICKY_GROUP_TOP }}
                         >
-                          {group.label} · {group.rows.length}
+                          <span className="block text-sm font-bold">
+                            {group.label} · {group.rows.length}
+                          </span>
+                          {commonKeys.length > 0 && (
+                            <span className="block mt-1 text-[11px] font-medium text-white/85">
+                              {commonKeys
+                                .map((k) => `${COMMON_PARAM_LABELS[k]}: ${common[k]}`)
+                                .join(' · ')}
+                            </span>
+                          )}
                         </h2>
                         <div className="mt-3 space-y-3">
                           {group.rows.map((row) => (
@@ -382,8 +395,17 @@ const SharedOffer = () => {
                                   <h3 className="font-bold text-stakerpol-navy">
                                     {row.index}. {row.model}
                                   </h3>
-                                  <p className="text-xs text-gray-700">
-                                    Nr seryjny: {row.serialNumber || '—'}
+                                  <p className="text-xs text-gray-700 flex items-center gap-2 flex-wrap">
+                                    <span>Nr seryjny: {row.serialNumber || '—'}</span>
+                                    <a
+                                      href={row.productUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-stakerpol-navy underline focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+                                    >
+                                      Zdjęcia
+                                      <ExternalLink className="h-3 w-3" />
+                                    </a>
                                   </p>
                                 </div>
                                 <StatusTag value={row.availability} />
@@ -398,48 +420,47 @@ const SharedOffer = () => {
                                   <dt className="text-gray-700">Motogodziny</dt>
                                   <dd className="font-medium">{row.workingHours || '—'}</dd>
                                 </div>
-                                <div>
-                                  <dt className="text-gray-700">Udźwig</dt>
-                                  <dd className="font-medium">{row.mastLiftingCapacity || '—'}</dd>
-                                </div>
-                                <div>
-                                  <dt className="text-gray-700">Podnoszenie</dt>
-                                  <dd className="font-medium">{row.liftHeight || '—'}</dd>
-                                </div>
-                                <div>
-                                  <dt className="text-gray-700">Maszt</dt>
-                                  <dd className="font-medium">{row.mast}</dd>
-                                </div>
-                                <div>
-                                  <dt className="text-gray-700">Bateria</dt>
-                                  <dd className="font-medium">{row.battery}</dd>
-                                </div>
+                                {!common.mastLiftingCapacity && (
+                                  <div>
+                                    <dt className="text-gray-700">Udźwig</dt>
+                                    <dd className="font-medium">{row.mastLiftingCapacity || '—'}</dd>
+                                  </div>
+                                )}
+                                {!common.liftHeight && (
+                                  <div>
+                                    <dt className="text-gray-700">Podnoszenie</dt>
+                                    <dd className="font-medium">{row.liftHeight || '—'}</dd>
+                                  </div>
+                                )}
+                                {!common.mast && (
+                                  <div>
+                                    <dt className="text-gray-700">Maszt</dt>
+                                    <dd className="font-medium">{row.mast}</dd>
+                                  </div>
+                                )}
+                                {!common.battery && (
+                                  <div>
+                                    <dt className="text-gray-700">Bateria</dt>
+                                    <dd className="font-medium">{row.battery}</dd>
+                                  </div>
+                                )}
                               </dl>
 
-                              <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between gap-3">
-                                <div className="text-sm">
-                                  <PriceCell
-                                    showPrice={row.showPrice}
-                                    netPrice={row.netPrice}
-                                    currency={row.priceCurrency}
-                                  />
-                                </div>
-                                <a
-                                  href={row.productUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="shrink-0 inline-flex items-center gap-1 text-xs text-stakerpol-navy underline focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
-                                >
-                                  Karta
-                                  <ExternalLink className="h-3 w-3" />
-                                </a>
+                              <div className="mt-3 pt-3 border-t border-gray-200 text-sm">
+                                <PriceCell
+                                  showPrice={row.showPrice}
+                                  netPrice={row.netPrice}
+                                  currency={row.priceCurrency}
+                                />
                               </div>
                             </article>
                           ))}
                         </div>
                       </section>
-                    ))}
+                      );
+                    })}
                   </div>
+
                 </>
               )}
             </>
