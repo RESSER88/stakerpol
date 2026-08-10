@@ -263,6 +263,20 @@ const SharedOffer = () => {
 
   const model = useMemo(() => buildExportRows(visible), [visible]);
 
+  /** Mapa produktów po id — potrzebna formularzowi zapytania. */
+  const productById = useMemo(() => {
+    const map = new Map<string, Product>();
+    visible.forEach((p) => map.set(p.id, p));
+    return map;
+  }, [visible]);
+
+  const openInquiry = (productId: string) => {
+    const p = productById.get(productId);
+    if (p) setInquiryProduct(p);
+  };
+
+
+
   /** Sortowanie i parametry wspólne wyłącznie na potrzeby renderu. */
   const sortedGroups = useMemo(
     () =>
