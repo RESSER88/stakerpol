@@ -52,3 +52,22 @@ export const sortExportRows = (rows: ExportRow[], key: SortKey): ExportRow[] => 
     return a.index - b.index;
   });
 };
+
+/** Pola sortowania dla widoku mobilnego (przyciski z kierunkiem). */
+export type SortField = 'year' | 'hours' | 'price';
+
+export const SORT_FIELDS: { field: SortField; label: string }[] = [
+  { field: 'year', label: 'Rok' },
+  { field: 'hours', label: 'Motogodziny' },
+  { field: 'price', label: 'Cena' },
+];
+
+/** Zamienia pole i kierunek na klucz sortowania. */
+export const toSortKey = (field: SortField, dir: 'asc' | 'desc'): SortKey =>
+  `${field}_${dir}` as SortKey;
+
+/** Rozkłada klucz sortowania na pole i kierunek. */
+export const fromSortKey = (key: SortKey): { field: SortField; dir: 'asc' | 'desc' } => {
+  const [field, dir] = key.split('_') as [SortField, 'asc' | 'desc'];
+  return { field, dir };
+};

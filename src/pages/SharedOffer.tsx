@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ExternalLink, MapPin, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ExternalLink, MapPin, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePublicSupabaseProducts } from '@/hooks/usePublicSupabaseProducts';
 import {
@@ -23,6 +23,8 @@ import SharedOfferFilters, {
   isViewerFilterActive,
   viewerFiltersToCriteria,
 } from '@/components/shared-offer/SharedOfferFilters';
+import PriceInquiryModal from '@/components/products/PriceInquiryModal';
+import type { Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { logger } from '@/utils/logger';
 import { useScrollState } from '@/hooks/useScrollDirection';
@@ -31,7 +33,15 @@ import {
   COMMON_PARAM_KEYS,
   COMMON_PARAM_LABELS,
 } from '@/utils/sharedOffer/groupCommonParams';
-import { SortKey, DEFAULT_SORT, SORT_OPTIONS, sortExportRows } from '@/utils/sharedOffer/sortRows';
+import {
+  SortKey,
+  DEFAULT_SORT,
+  SORT_OPTIONS,
+  SORT_FIELDS,
+  sortExportRows,
+  toSortKey,
+  fromSortKey,
+} from '@/utils/sharedOffer/sortRows';
 
 /** Wysokość przyklejonego paska filtrów — offset nagłówka grupy (mobile). */
 const STICKY_GROUP_TOP = 60;
@@ -61,6 +71,49 @@ const SortControl = ({
     </select>
   </label>
 );
+
+/** Mobile: trzy przyciski sortowania z odwracaniem kierunku. */
+const SortButtons = ({
+  value,
+  onChange,
+}: {
+  value: SortKey;
+  onChange: (v: SortKey) => void;
+}) => {
+  const active = fromSortKey(value);
+  return (
+    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar" role="group" aria-label="Sortowanie listy">
+      {SORT_FIELDS.map(({ field, label }) => {
+        const isActive = active.field === field;
+        return (
+          <button
+            key={field}
+            type="button"
+            aria-pressed={isActive}
+            onClick={() =>
+              onChange(toSortKey(field, isActive && active.dir === 'asc' ? 'desc' : 'asc'))
+            }
+            className={cn(
+              'inline-flex shrink-0 items-center gap-1 h-11 px-3 rounded-md border text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange',
+              isActive
+                ? 'border-stakerpol-navy bg-stakerpol-navy text-white'
+                : 'border-gray-300 bg-white text-stakerpol-navy'
+            )}
+          >
+            {label}
+            {isActive &&
+              (active.dir === 'asc' ? (
+                <ArrowUp className="h-3.5 w-3.5" />
+              ) : (
+                <ArrowDown className="h-3.5 w-3.5" />
+              ))}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
 
 
 
@@ -107,18 +160,53 @@ const PriceCell = ({
   showPrice,
   netPrice,
   currency,
+  onInquiry,
 }: {
   showPrice: boolean;
   netPrice: number;
   currency: string;
+  onInquiry?: () => void;
 }) =>
   showPrice ? (
     <span className="font-semibold text-stakerpol-navy whitespace-nowrap">
       {formatPrice(netPrice)} {currency}
     </span>
   ) : (
-    <span className="text-gray-700">Cena na zapytanie — skontaktuj się z nami</span>
+    <button
+      type="button"
+      onClick={onInquiry}
+      className="text-gray-700 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+    >
+      Cena na zapytanie — skontaktuj się z nami
+    </button>
   );
+
+/** Mobile: skrócony komunikat ceny, odsyłacz do formularza zapytania. */
+const PriceCellMobile = ({
+  showPrice,
+  netPrice,
+  currency,
+  onInquiry,
+}: {
+  showPrice: boolean;
+  netPrice: number;
+  currency: string;
+  onInquiry: () => void;
+}) =>
+  showPrice ? (
+    <span className="font-semibold text-stakerpol-navy whitespace-nowrap">
+      {formatPrice(netPrice)} {currency}
+    </span>
+  ) : (
+    <button
+      type="button"
+      onClick={onInquiry}
+      className="whitespace-nowrap text-stakerpol-navy underline font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+    >
+      Cena na zapytanie
+    </button>
+  );
+
 
 const SharedOffer = () => {
   const { token } = useParams<{ token: string }>();
@@ -127,6 +215,8 @@ const SharedOffer = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [fetchedAt] = useState(() => new Date());
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT);
+  const [inquiryProduct, setInquiryProduct] = useState<Product | null>(null);
+
   const { direction: scrollDirection, y: scrollY } = useScrollState(8);
   /** W pobliżu początku listy pasek jest zawsze widoczny. */
   const hideFilterBar = scrollDirection === 'down' && scrollY > STICKY_GROUP_TOP * 2 && !sheetOpen;
@@ -172,6 +262,20 @@ const SharedOffer = () => {
   }, [scope, viewerFilters]);
 
   const model = useMemo(() => buildExportRows(visible), [visible]);
+
+  /** Mapa produktów po id — potrzebna formularzowi zapytania. */
+  const productById = useMemo(() => {
+    const map = new Map<string, Product>();
+    visible.forEach((p) => map.set(p.id, p));
+    return map;
+  }, [visible]);
+
+  const openInquiry = (productId: string) => {
+    const p = productById.get(productId);
+    if (p) setInquiryProduct(p);
+  };
+
+
 
   /** Sortowanie i parametry wspólne wyłącznie na potrzeby renderu. */
   const sortedGroups = useMemo(
@@ -273,13 +377,13 @@ const SharedOffer = () => {
               {/* Filtry — pasek mobilny poza wrapperem, aby przyklejenie działało w całym obszarze listy */}
               <div
                 className={cn(
-                  'md:hidden sticky top-0 z-30 -mx-4 mb-4 px-4 py-2 bg-gray-50 border-b border-gray-200 transition-transform duration-200 motion-reduce:transition-none flex items-center gap-2',
+                  'md:hidden sticky top-0 z-30 -mx-4 mb-4 px-4 py-2 bg-gray-50 border-b border-gray-200 transition-transform duration-200 motion-reduce:transition-none flex items-center gap-2 overflow-x-auto no-scrollbar',
                   hideFilterBar ? '-translate-y-[150%]' : 'translate-y-0'
                 )}
               >
 
                   <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                    <SheetTrigger className="inline-flex items-center gap-2 border border-gray-300 rounded-md px-4 h-11 text-sm font-semibold text-stakerpol-navy bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange">
+                    <SheetTrigger className="inline-flex shrink-0 items-center gap-2 border border-gray-300 rounded-md px-4 h-11 text-sm font-semibold text-stakerpol-navy bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange">
                       <SlidersHorizontal className="h-4 w-4" />
                       Filtry
                       {isViewerFilterActive(viewerFilters) && (
@@ -299,7 +403,8 @@ const SharedOffer = () => {
                       </div>
                     </SheetContent>
                   </Sheet>
-                  <SortControl value={sortKey} onChange={setSortKey} className="flex-1 min-w-0" />
+                  <SortButtons value={sortKey} onChange={setSortKey} />
+
                 </div>
               <details className="hidden md:block mb-6 bg-white border border-gray-200 rounded-md">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-stakerpol-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange">
@@ -404,6 +509,7 @@ const SharedOffer = () => {
                                       showPrice={row.showPrice}
                                       netPrice={row.netPrice}
                                       currency={row.priceCurrency}
+                                      onInquiry={() => openInquiry(row.productId)}
                                     />
                                   </td>
                                   <td className="px-3 py-2 text-center">
@@ -426,16 +532,20 @@ const SharedOffer = () => {
                     ))}
                   </div>
 
-                  {/* Mobile: karty */}
+                  {/* Mobile: niskie wiersze scalone z nagłówkiem grupy */}
                   <div className="md:hidden space-y-6">
                     {sortedGroups.map((group) => {
                       const common = group.common;
                       const commonKeys = COMMON_PARAM_KEYS.filter((k) => common[k]);
                       return (
-                      <section key={group.key} aria-labelledby={`grpm-${group.key}`}>
+                      <section
+                        key={group.key}
+                        aria-labelledby={`grpm-${group.key}`}
+                        className="rounded-md overflow-hidden border border-gray-200 bg-white"
+                      >
                         <h2
                           id={`grpm-${group.key}`}
-                          className="sticky z-20 bg-stakerpol-navy text-white px-3 py-2 rounded-md"
+                          className="sticky z-20 bg-stakerpol-navy text-white px-3 py-2 rounded-t-md"
                           style={{ top: hideFilterBar ? 0 : STICKY_GROUP_TOP }}
                         >
                           <span className="block text-sm font-bold">
@@ -449,88 +559,69 @@ const SharedOffer = () => {
                             </span>
                           )}
                         </h2>
-                        <div className="mt-3 space-y-3">
-                          {group.rows.map((row) => (
-                            <article
-                              key={row.productId}
-                              className="bg-white border border-gray-200 rounded-md p-4"
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <h3 className="font-bold text-stakerpol-navy">
-                                    {row.index}. {row.model}
-                                  </h3>
-                                  <p className="text-xs text-gray-700 flex items-center gap-2 flex-wrap">
-                                    <span>Nr seryjny: {row.serialNumber || '—'}</span>
+                        <div className="divide-y divide-gray-200">
+                          {group.rows.map((row) => {
+                            const inlineParams = [
+                              row.productionYear ? String(row.productionYear) : null,
+                              row.workingHours ? `${row.workingHours} mth` : null,
+                              ...COMMON_PARAM_KEYS.filter((k) => !common[k]).map((k) => {
+                                const v = String(row[k] ?? '').trim();
+                                return v && v !== '—' ? v : null;
+                              }),
+                            ].filter(Boolean) as string[];
+
+                            return (
+                              <article key={row.productId} className="px-3 py-2">
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="text-sm text-stakerpol-navy">
+                                    <span className="font-bold">{row.index}.</span>{' '}
+                                    <span>{inlineParams.join(' · ')}</span>
+                                  </p>
+                                  <StatusTag value={row.availability} />
+                                </div>
+                                <div className="mt-0.5 pl-5 flex items-center justify-between gap-2 text-xs text-gray-700">
+                                  <span className="flex items-center gap-2 min-w-0">
+                                    <span className="truncate">{row.serialNumber || '—'}</span>
                                     <a
                                       href={row.productUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1 text-stakerpol-navy underline focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+                                      className="inline-flex shrink-0 items-center gap-1 text-stakerpol-navy underline focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
                                     >
                                       Zdjęcia
                                       <ExternalLink className="h-3 w-3" />
                                     </a>
-                                  </p>
+                                  </span>
+                                  <PriceCellMobile
+                                    showPrice={row.showPrice}
+                                    netPrice={row.netPrice}
+                                    currency={row.priceCurrency}
+                                    onInquiry={() => openInquiry(row.productId)}
+                                  />
                                 </div>
-                                <StatusTag value={row.availability} />
-                              </div>
-
-                              <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-3 text-xs">
-                                <div>
-                                  <dt className="text-gray-700">Rok</dt>
-                                  <dd className="font-medium">{row.productionYear || '—'}</dd>
-                                </div>
-                                <div>
-                                  <dt className="text-gray-700">Motogodziny</dt>
-                                  <dd className="font-medium">{row.workingHours || '—'}</dd>
-                                </div>
-                                {!common.mastLiftingCapacity && (
-                                  <div>
-                                    <dt className="text-gray-700">Udźwig</dt>
-                                    <dd className="font-medium">{row.mastLiftingCapacity || '—'}</dd>
-                                  </div>
-                                )}
-                                {!common.liftHeight && (
-                                  <div>
-                                    <dt className="text-gray-700">Podnoszenie</dt>
-                                    <dd className="font-medium">{row.liftHeight || '—'}</dd>
-                                  </div>
-                                )}
-                                {!common.mast && (
-                                  <div>
-                                    <dt className="text-gray-700">Maszt</dt>
-                                    <dd className="font-medium">{row.mast}</dd>
-                                  </div>
-                                )}
-                                {!common.battery && (
-                                  <div>
-                                    <dt className="text-gray-700">Bateria</dt>
-                                    <dd className="font-medium">{row.battery}</dd>
-                                  </div>
-                                )}
-                              </dl>
-
-                              <div className="mt-3 pt-3 border-t border-gray-200 text-sm">
-                                <PriceCell
-                                  showPrice={row.showPrice}
-                                  netPrice={row.netPrice}
-                                  currency={row.priceCurrency}
-                                />
-                              </div>
-                            </article>
-                          ))}
+                              </article>
+                            );
+                          })}
                         </div>
                       </section>
                       );
                     })}
                   </div>
 
+
                 </>
               )}
             </>
           )}
         </main>
+
+        {inquiryProduct && (
+          <PriceInquiryModal
+            isOpen={!!inquiryProduct}
+            onClose={() => setInquiryProduct(null)}
+            product={inquiryProduct}
+          />
+        )}
 
         <FloatingContactBubble />
       </div>
