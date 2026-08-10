@@ -8,6 +8,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/utils/translations';
 import LanguageSwitcher from '../ui/LanguageSwitcher';
 import MobileContactButton from '../contact/MobileContactButton';
+import { ROUTES } from '@/config/routes';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -32,16 +33,16 @@ const Header = () => {
             <Link to="/" className="font-medium hover:text-stakerpol-orange transition-colors">
               {t('home')}
             </Link>
-            <Link to="/products" className="font-medium hover:text-stakerpol-orange transition-colors">
+            <Link to={ROUTES.products} className="font-medium hover:text-stakerpol-orange transition-colors">
               {t('electricTrolleys')}
             </Link>
-            <Link to="/testimonials" className="font-medium hover:text-stakerpol-orange transition-colors">
+            <Link to={ROUTES.testimonials} className="font-medium hover:text-stakerpol-orange transition-colors">
               {t('testimonials')}
             </Link>
-            <Link to="/faq" className="font-medium hover:text-stakerpol-orange transition-colors">
+            <Link to={ROUTES.faq} className="font-medium hover:text-stakerpol-orange transition-colors">
               FAQ
             </Link>
-            <Link to="/contact" className="font-medium hover:text-stakerpol-orange transition-colors">
+            <Link to={ROUTES.contact} className="font-medium hover:text-stakerpol-orange transition-colors">
               {t('contact')}
             </Link>
             <Button className="cta-button" asChild>
@@ -77,28 +78,28 @@ const Header = () => {
                 {t('home')}
               </Link>
               <Link 
-                to="/products" 
+                to={ROUTES.products} 
                 className="font-medium py-2 hover:text-stakerpol-orange transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {t('electricTrolleys')}
               </Link>
               <Link 
-                to="/testimonials" 
+                to={ROUTES.testimonials} 
                 className="font-medium py-2 hover:text-stakerpol-orange transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {t('testimonials')}
               </Link>
               <Link 
-                to="/faq" 
+                to={ROUTES.faq} 
                 className="font-medium py-2 hover:text-stakerpol-orange transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 FAQ
               </Link>
               <Link 
-                to="/contact" 
+                to={ROUTES.contact} 
                 className="font-medium py-2 hover:text-stakerpol-orange transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >

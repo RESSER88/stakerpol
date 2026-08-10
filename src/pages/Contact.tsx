@@ -8,6 +8,7 @@ import ContactDetailsCard from '@/components/contact/ContactDetailsCard';
 import ContactLeadForm from '@/components/contact/ContactLeadForm';
 import ContactConversionCards from '@/components/contact/ContactConversionCards';
 import ContactMobileStickyBar from '@/components/contact/ContactMobileStickyBar';
+import { ROUTES, absoluteUrl } from '@/config/routes';
 
 const Contact = () => {
   return (
@@ -15,7 +16,7 @@ const Contact = () => {
       <Helmet>
         <title>Kontakt – Stakerpol | Paleciaki elektryczne BT Toyota</title>
         <meta name="description" content="Skontaktuj się ze Stakerpol: paleciaki elektryczne BT Toyota, serwis i części. Godziny: Pon-Pt 8:00–17:00. Adres: ul. Szewska 6, 32-043 Skała." />
-        <link rel="canonical" href="https://stakerpol.pl/contact" />
+        <link rel="canonical" href={absoluteUrl(ROUTES.contact)} />
         <meta property="og:title" content="Kontakt – Stakerpol" />
         <meta property="og:description" content="Paleciaki elektryczne BT Toyota – kontakt, doradztwo, serwis. Odpowiadamy tego samego dnia." />
         <meta property="og:type" content="website" />

@@ -1,5 +1,6 @@
 import { Product } from '@/types';
 import { ProductSEOSettings } from '@/hooks/useProductSEO';
+import { productUrl } from '@/config/routes';
 
 export interface ProductSchemaData {
   "@context": string;
@@ -191,7 +192,7 @@ const getCurrentUrl = (product: Product) => {
   if (typeof window !== 'undefined') {
     return window.location.href;
   }
-  return `https://stakerpol.pl/products/${product.slug || product.id}`;
+  return productUrl(product);
 };
 
 const getPriceValidUntil = (customDate?: string) => {

@@ -16,6 +16,7 @@ import HomeFeaturedProducts from '@/components/home/HomeFeaturedProducts';
 import HomeAboutSection from '@/components/home/HomeAboutSection';
 import HomeFAQ from '@/components/home/HomeFAQ';
 import HomeReadyToBuy from '@/components/home/HomeReadyToBuy';
+import { ROUTES, absoluteUrl } from '@/config/routes';
 
 const Index = () => {
   const { language } = useLanguage();
@@ -38,13 +39,13 @@ const Index = () => {
         <meta property="og:title" content={getMetaTitle()} />
         <meta property="og:description" content="Profesjonalna sprzedaż używanych paleciaków elektrycznych Toyota i BT. Elektryczne i spalinowe paleciaki magazynowe z serwisem." />
         <meta property="og:image" content="/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.png" />
-        <meta property="og:url" content="https://stakerpol.pl/" />
+        <meta property="og:url" content={absoluteUrl(ROUTES.home)} />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Stakerpol - Paleciaki elektryczne Toyota BT" />
         <meta name="twitter:description" content="Profesjonalna sprzedaż używanych paleciaków elektrycznych Toyota i BT. Elektryczne i spalinowe paleciaki magazynowe." />
         <meta name="twitter:image" content="/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.png" />
-        <link rel="canonical" href="https://stakerpol.pl/" />
+        <link rel="canonical" href={absoluteUrl(ROUTES.home)} />
         <meta name="keywords" content="paleciaki elektryczne, wózki paletowe, toyota, bt, elektryczne, spalinowe, paleciaki, magazynowe, używane, serwis, stakerpol" />
         <link rel="preload" as="image" href="/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.webp" fetchPriority="high" type="image/webp" />
       </Helmet>
@@ -101,7 +102,7 @@ const Index = () => {
                 style={{ animationDelay: '200ms', animationFillMode: 'both' }}
               >
                 <Link
-                  to="/products"
+                  to={ROUTES.products}
                   className="inline-flex items-center justify-center bg-orange-cta hover:opacity-90 text-white font-bold text-sm py-3.5 px-6 rounded-md transition-opacity"
                 >
                   {t('browseProducts')} →

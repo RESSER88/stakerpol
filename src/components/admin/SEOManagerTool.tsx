@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Search, ExternalLink, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { generateProductSchema } from '@/utils/seo/generateProductSchema';
 import { validateProductSchema, checkGoogleCompliance } from '@/utils/seo/schemaValidator';
+import { productUrl } from '@/config/routes';
 
 const SEOManagerTool = () => {
   const { products, isLoading } = usePublicSupabaseProducts();
@@ -47,7 +48,7 @@ const SEOManagerTool = () => {
 
   const testInGoogleRichResults = () => {
     if (!selectedProduct) return;
-    const url = `https://stakerpol.pl/products/${selectedProduct.slug || selectedProduct.id}`;
+    const url = productUrl(selectedProduct);
     const testUrl = `https://search.google.com/test/rich-results?url=${encodeURIComponent(url)}`;
     window.open(testUrl, '_blank');
   };

@@ -3,6 +3,7 @@ import { Package, Plus, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
+import { ROUTES } from '@/config/routes';
 
 interface ProductsEmptyStateProps {
   isAdmin?: boolean;
@@ -38,7 +39,7 @@ const ProductsEmptyState = ({ isAdmin = false }: ProductsEmptyStateProps) => {
           {!isAdmin && (
             <div className="space-y-4">
               <Button asChild className="cta-button w-full">
-                <Link to="/contact">
+                <Link to={ROUTES.contact}>
                   Skontaktuj się z nami
                 </Link>
               </Button>

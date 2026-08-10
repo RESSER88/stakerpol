@@ -7,6 +7,7 @@ import { Edit, Copy, Trash2, Search, ChevronDown, ChevronUp, ExternalLink } from
 import { Link } from 'react-router-dom';
 import PDFQuoteGenerator from './PDFQuoteGenerator';
 import {
+import { productPath } from '@/config/routes';
   Table,
   TableBody,
   TableCell,
@@ -98,7 +99,7 @@ const CompactProductTable = ({ products, onEdit, onCopy, onDelete }: CompactProd
                       <div className="space-y-1">
                         {/* Link do produktu - poprawiony z /product/ na /products/ */}
                         <Link 
-                          to={`/products/${product.slug || product.id}`}
+                          to={productPath(product)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center group"

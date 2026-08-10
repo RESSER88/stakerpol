@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Mail, X, Send, Phone } from 'lucide-react';
 import { useContactForm } from '@/hooks/useContactForm';
 import { trackCTAClick } from '@/utils/analytics';
+import { ROUTES } from '@/config/routes';
 
 const MobileContactButton = () => {
   const location = useLocation();
@@ -11,7 +12,7 @@ const MobileContactButton = () => {
   const { formData, errors, status, honeypot, setHoneypot, consent, updateConsent, updateField, submit, reset } = useContactForm();
 
   // Hide on /contact — page has its own sticky bottom bar
-  const isContactPage = location.pathname === '/contact' || location.pathname === '/kontakt';
+  const isContactPage = location.pathname === ROUTES.contact;
 
   const openSheet = () => {
     setIsSheetOpen(true);
@@ -140,7 +141,7 @@ const MobileContactButton = () => {
                       />
                       <span className="text-[13px] text-gray-700 leading-snug">
                         Akceptuję{' '}
-                        <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[hsl(25,100%,50%)] underline">
+                        <a href={ROUTES.privacy} target="_blank" rel="noopener noreferrer" className="text-[hsl(25,100%,50%)] underline">
                           politykę prywatności
                         </a>
                         {' *'}

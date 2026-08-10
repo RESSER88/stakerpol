@@ -16,6 +16,7 @@ import { FilterCriteria, matchesCriteria, matchesDefaultAvailability } from '@/c
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { getSiteDescription } from '@/config/featureFlags';
+import { ROUTES, absoluteUrl } from '@/config/routes';
 const Products = () => {
   const { language } = useLanguage();
   const t = useTranslation(language);
@@ -84,11 +85,11 @@ const Products = () => {
       <Helmet>
         <title>Paleciaki elektryczne BT Toyota – oferta | Stakerpol</title>
         <meta name="description" content={getPageDescription()} />
-        <link rel="canonical" href="https://stakerpol.pl/products" />
+        <link rel="canonical" href={absoluteUrl(ROUTES.products)} />
         <meta property="og:title" content="Paleciaki elektryczne BT Toyota – oferta | Stakerpol" />
         <meta property="og:description" content={getPageDescription()} />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://stakerpol.pl/products" />
+        <meta property="og:url" content={absoluteUrl(ROUTES.products)} />
         <meta name="twitter:card" content="summary" />
       </Helmet>
       <section className="bg-gradient-to-b from-stakerpol-lightgray to-white py-8 relative">

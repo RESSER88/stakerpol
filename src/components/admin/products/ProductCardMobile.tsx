@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Pencil, Copy, Trash2, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ProductStatusChip from './ProductStatusChip';
+import { productPath } from '@/config/routes';
 
 interface Props {
   product: Product;
@@ -24,7 +25,7 @@ const ProductCardMobile = ({ product, onEdit, onCopy, onDelete }: Props) => {
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <Link
-            to={`/products/${product.slug || product.id}`}
+            to={productPath(product)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 group"

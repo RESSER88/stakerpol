@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Send, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { trackFormSubmit, trackGenerateLead } from '@/utils/analytics';
+import { ROUTES } from '@/config/routes';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
@@ -151,7 +152,7 @@ const ContactLeadForm = () => {
             />
             <span className="text-[13px] text-gray-700 leading-snug">
               Akceptuję{' '}
-              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-stakerpol-orange underline">politykę prywatności</a>
+              <a href={ROUTES.privacy} target="_blank" rel="noopener noreferrer" className="text-stakerpol-orange underline">politykę prywatności</a>
               {' *'}
             </span>
           </label>

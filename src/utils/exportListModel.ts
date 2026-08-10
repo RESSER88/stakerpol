@@ -1,5 +1,6 @@
 import { Product } from '@/types';
 import { normalizeModel, seriesRank, FALLBACK_GROUP } from '@/utils/productNormalization';
+import { productUrl as buildProductUrl } from '@/config/routes';
 
 /* ------------------------------------------------------------------ */
 /*  Wspólny model danych dla eksportów XLSX / PDF / JPG                */
@@ -207,7 +208,7 @@ export function buildExportRows(products: Product[]): ExportModel {
         priceCurrency: showPrice ? anyP.priceCurrency || 'PLN' : '',
         showPrice,
         isSold,
-        productUrl: `https://stakerpol.pl/products/${anyP.slug || p.id}`,
+        productUrl: buildProductUrl({ id: p.id, slug: anyP.slug }),
         mailtoHref: `mailto:${COMPANY.email}?subject=${encodeURIComponent(subject)}`,
       };
     });

@@ -10,6 +10,7 @@ import { usePublicSupabaseProducts } from '@/hooks/usePublicSupabaseProducts';
 import FAQCategoryTabs, { CategoryFilter } from '@/components/faq/FAQCategoryTabs';
 import FAQItemEnhanced from '@/components/faq/FAQItemEnhanced';
 import HomeHeroForm from '@/components/home/HomeHeroForm';
+import { ROUTES, absoluteUrl } from '@/config/routes';
 
 const CATEGORY_HEADER: Record<CategoryFilter, string> = {
   all: 'Wszystkie pytania',
@@ -87,7 +88,7 @@ const FAQ: React.FC = () => {
       <Helmet>
         <title>{meta.title}</title>
         <meta name="description" content={meta.description} />
-        <link rel="canonical" href={`https://stakerpol.pl/${language}/faq`} />
+        <link rel="canonical" href={absoluteUrl(ROUTES.faq)} />
       </Helmet>
       <main>
         <section className="pt-6 md:pt-8 pb-12 md:pb-16 bg-white" aria-labelledby="faq-page-heading">

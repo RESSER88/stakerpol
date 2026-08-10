@@ -9,6 +9,7 @@ import OptimizedImage from '@/components/ui/OptimizedImage';
 import InquiryModal from '@/components/contact/InquiryModal';
 import { trackPhoneClick } from '@/utils/analytics';
 import { getAvailabilityBadge } from '@/components/products/availabilityBadge';
+import { productPath } from '@/config/routes';
 
 
 interface ProductCardProps {
@@ -29,7 +30,7 @@ const ProductCard = memo(({ product, priority = false }: ProductCardProps) => {
   const [inquiryOpen, setInquiryOpen] = useState(false);
 
   const displayImage = product.images?.[0] || product.image;
-  const productLink = `/products/${product.slug || product.id}`;
+  const productLink = productPath(product);
   const availability = getAvailabilityBadge(product.availabilityStatus);
 
 
