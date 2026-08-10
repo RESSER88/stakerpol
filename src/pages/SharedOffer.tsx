@@ -531,16 +531,20 @@ const SharedOffer = () => {
                     ))}
                   </div>
 
-                  {/* Mobile: karty */}
+                  {/* Mobile: niskie wiersze scalone z nagłówkiem grupy */}
                   <div className="md:hidden space-y-6">
                     {sortedGroups.map((group) => {
                       const common = group.common;
                       const commonKeys = COMMON_PARAM_KEYS.filter((k) => common[k]);
                       return (
-                      <section key={group.key} aria-labelledby={`grpm-${group.key}`}>
+                      <section
+                        key={group.key}
+                        aria-labelledby={`grpm-${group.key}`}
+                        className="rounded-md overflow-hidden border border-gray-200 bg-white"
+                      >
                         <h2
                           id={`grpm-${group.key}`}
-                          className="sticky z-20 bg-stakerpol-navy text-white px-3 py-2 rounded-md"
+                          className="sticky z-20 bg-stakerpol-navy text-white px-3 py-2 rounded-t-md"
                           style={{ top: hideFilterBar ? 0 : STICKY_GROUP_TOP }}
                         >
                           <span className="block text-sm font-bold">
@@ -554,82 +558,55 @@ const SharedOffer = () => {
                             </span>
                           )}
                         </h2>
-                        <div className="mt-3 space-y-3">
-                          {group.rows.map((row) => (
-                            <article
-                              key={row.productId}
-                              className="bg-white border border-gray-200 rounded-md p-4"
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <h3 className="font-bold text-stakerpol-navy">
-                                    {row.index}. {row.model}
-                                  </h3>
-                                  <p className="text-xs text-gray-700 flex items-center gap-2 flex-wrap">
-                                    <span>Nr seryjny: {row.serialNumber || '—'}</span>
+                        <div className="divide-y divide-gray-200">
+                          {group.rows.map((row) => {
+                            const inlineParams = [
+                              row.productionYear ? String(row.productionYear) : null,
+                              row.workingHours ? `${row.workingHours} mth` : null,
+                              ...COMMON_PARAM_KEYS.filter((k) => !common[k]).map((k) => {
+                                const v = String(row[k] ?? '').trim();
+                                return v && v !== '—' ? v : null;
+                              }),
+                            ].filter(Boolean) as string[];
+
+                            return (
+                              <article key={row.productId} className="px-3 py-2">
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="text-sm text-stakerpol-navy">
+                                    <span className="font-bold">{row.index}.</span>{' '}
+                                    <span>{inlineParams.join(' · ')}</span>
+                                  </p>
+                                  <StatusTag value={row.availability} />
+                                </div>
+                                <div className="mt-0.5 pl-5 flex items-center justify-between gap-2 text-xs text-gray-700">
+                                  <span className="flex items-center gap-2 min-w-0">
+                                    <span className="truncate">{row.serialNumber || '—'}</span>
                                     <a
                                       href={row.productUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1 text-stakerpol-navy underline focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+                                      className="inline-flex shrink-0 items-center gap-1 text-stakerpol-navy underline focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
                                     >
                                       Zdjęcia
                                       <ExternalLink className="h-3 w-3" />
                                     </a>
-                                  </p>
+                                  </span>
+                                  <PriceCellMobile
+                                    showPrice={row.showPrice}
+                                    netPrice={row.netPrice}
+                                    currency={row.priceCurrency}
+                                    onInquiry={() => openInquiry(row.productId)}
+                                  />
                                 </div>
-                                <StatusTag value={row.availability} />
-                              </div>
-
-                              <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-3 text-xs">
-                                <div>
-                                  <dt className="text-gray-700">Rok</dt>
-                                  <dd className="font-medium">{row.productionYear || '—'}</dd>
-                                </div>
-                                <div>
-                                  <dt className="text-gray-700">Motogodziny</dt>
-                                  <dd className="font-medium">{row.workingHours || '—'}</dd>
-                                </div>
-                                {!common.mastLiftingCapacity && (
-                                  <div>
-                                    <dt className="text-gray-700">Udźwig</dt>
-                                    <dd className="font-medium">{row.mastLiftingCapacity || '—'}</dd>
-                                  </div>
-                                )}
-                                {!common.liftHeight && (
-                                  <div>
-                                    <dt className="text-gray-700">Podnoszenie</dt>
-                                    <dd className="font-medium">{row.liftHeight || '—'}</dd>
-                                  </div>
-                                )}
-                                {!common.mast && (
-                                  <div>
-                                    <dt className="text-gray-700">Maszt</dt>
-                                    <dd className="font-medium">{row.mast}</dd>
-                                  </div>
-                                )}
-                                {!common.battery && (
-                                  <div>
-                                    <dt className="text-gray-700">Bateria</dt>
-                                    <dd className="font-medium">{row.battery}</dd>
-                                  </div>
-                                )}
-                              </dl>
-
-                              <div className="mt-3 pt-3 border-t border-gray-200 text-sm">
-                                <PriceCell
-                                  showPrice={row.showPrice}
-                                  netPrice={row.netPrice}
-                                  currency={row.priceCurrency}
-                                />
-                              </div>
-                            </article>
-                          ))}
+                              </article>
+                            );
+                          })}
                         </div>
                       </section>
                       );
                     })}
                   </div>
+
 
                 </>
               )}
