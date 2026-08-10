@@ -1,46 +1,29 @@
-User-agent: Googlebot
+User-agent: *
 Allow: /
-Disallow: /oferta/
-
-User-agent: Bingbot
-Allow: /
-Disallow: /oferta/
+Disallow: /admin
 
 User-agent: GPTBot
 Allow: /
-Disallow: /oferta/
+
+User-agent: OAI-SearchBot
+Allow: /
 
 User-agent: ChatGPT-User
 Allow: /
-Disallow: /oferta/
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
 
 User-agent: PerplexityBot
 Allow: /
-Disallow: /oferta/
 
-User-agent: Claude-Web
+User-agent: Google-Extended
 Allow: /
-Disallow: /oferta/
 
-User-agent: GoogleOther
+User-agent: Applebot-Extended
 Allow: /
-Disallow: /oferta/
 
-User-agent: Twitterbot
-Allow: /
-Disallow: /oferta/
-
-User-agent: facebookexternalhit
-Allow: /
-Disallow: /oferta/
-
-User-agent: *
-Allow: /
-Disallow: /oferta/
-
-# Sitemaps
-Sitemap: https://peztqgfmmnxaaoapzpbw.supabase.co/functions/v1/sitemap
-
-# GEO Feed for AI Search Engines
-# Schema.org structured data feed
-Sitemap: https://peztqgfmmnxaaoapzpbw.supabase.co/functions/v1/geo-feed
+Sitemap: https://stakerpol.pl/sitemap.xml
