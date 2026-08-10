@@ -160,18 +160,53 @@ const PriceCell = ({
   showPrice,
   netPrice,
   currency,
+  onInquiry,
 }: {
   showPrice: boolean;
   netPrice: number;
   currency: string;
+  onInquiry?: () => void;
 }) =>
   showPrice ? (
     <span className="font-semibold text-stakerpol-navy whitespace-nowrap">
       {formatPrice(netPrice)} {currency}
     </span>
   ) : (
-    <span className="text-gray-700">Cena na zapytanie — skontaktuj się z nami</span>
+    <button
+      type="button"
+      onClick={onInquiry}
+      className="text-gray-700 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+    >
+      Cena na zapytanie — skontaktuj się z nami
+    </button>
   );
+
+/** Mobile: skrócony komunikat ceny, odsyłacz do formularza zapytania. */
+const PriceCellMobile = ({
+  showPrice,
+  netPrice,
+  currency,
+  onInquiry,
+}: {
+  showPrice: boolean;
+  netPrice: number;
+  currency: string;
+  onInquiry: () => void;
+}) =>
+  showPrice ? (
+    <span className="font-semibold text-stakerpol-navy whitespace-nowrap">
+      {formatPrice(netPrice)} {currency}
+    </span>
+  ) : (
+    <button
+      type="button"
+      onClick={onInquiry}
+      className="whitespace-nowrap text-stakerpol-navy underline font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+    >
+      Cena na zapytanie
+    </button>
+  );
+
 
 const SharedOffer = () => {
   const { token } = useParams<{ token: string }>();
