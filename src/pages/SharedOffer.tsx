@@ -615,6 +615,14 @@ const SharedOffer = () => {
           )}
         </main>
 
+        {inquiryProduct && (
+          <PriceInquiryModal
+            isOpen={!!inquiryProduct}
+            onClose={() => setInquiryProduct(null)}
+            product={inquiryProduct}
+          />
+        )}
+
         <FloatingContactBubble />
       </div>
     </>
