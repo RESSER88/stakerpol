@@ -25,6 +25,44 @@ import SharedOfferFilters, {
 } from '@/components/shared-offer/SharedOfferFilters';
 import { cn } from '@/lib/utils';
 import { logger } from '@/utils/logger';
+import { useScrollDirection } from '@/hooks/useScrollDirection';
+import {
+  getGroupCommonParams,
+  COMMON_PARAM_KEYS,
+  COMMON_PARAM_LABELS,
+} from '@/utils/sharedOffer/groupCommonParams';
+import { SortKey, DEFAULT_SORT, SORT_OPTIONS, sortExportRows } from '@/utils/sharedOffer/sortRows';
+
+/** Wysokość przyklejonego paska filtrów — offset nagłówka grupy (mobile). */
+const STICKY_GROUP_TOP = 60;
+
+const SortControl = ({
+  value,
+  onChange,
+  className,
+}: {
+  value: SortKey;
+  onChange: (v: SortKey) => void;
+  className?: string;
+}) => (
+  <label className={cn('inline-flex items-center gap-2 text-xs text-gray-700', className)}>
+    <span className="sr-only md:not-sr-only">Sortowanie</span>
+    <select
+      aria-label="Sortowanie listy"
+      value={value}
+      onChange={(e) => onChange(e.target.value as SortKey)}
+      className="h-11 w-full md:w-auto rounded-md border border-gray-300 bg-white px-3 text-sm text-stakerpol-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+    >
+      {SORT_OPTIONS.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  </label>
+);
+
+
 
 type LinkState =
   | { status: 'loading' }
@@ -88,6 +126,10 @@ const SharedOffer = () => {
   const [viewerFilters, setViewerFilters] = useState<ViewerFilterState>(EMPTY_VIEWER_FILTERS);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [fetchedAt] = useState(() => new Date());
+  const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT);
+  const scrollDirection = useScrollDirection();
+  const hideFilterBar = scrollDirection === 'down' && !sheetOpen;
+
 
   const { products, isLoading: productsLoading } = usePublicSupabaseProducts();
 
@@ -129,6 +171,18 @@ const SharedOffer = () => {
   }, [scope, viewerFilters]);
 
   const model = useMemo(() => buildExportRows(visible), [visible]);
+
+  /** Sortowanie i parametry wspólne wyłącznie na potrzeby renderu. */
+  const sortedGroups = useMemo(
+    () =>
+      model.groups.map((g) => ({
+        ...g,
+        rows: sortExportRows(g.rows, sortKey),
+        common: getGroupCommonParams(g),
+      })),
+    [model, sortKey]
+  );
+
 
   const isLoading = link.status === 'loading' || productsLoading;
 
@@ -217,7 +271,13 @@ const SharedOffer = () => {
             <>
               {/* Filtry */}
               <div className="mb-6">
-                <div className="md:hidden">
+                <div
+                  className={cn(
+                    'md:hidden sticky z-30 -mx-4 px-4 py-2 bg-gray-50 border-b border-gray-200 transition-transform duration-200 flex items-center gap-2',
+                    hideFilterBar ? '-translate-y-[150%]' : 'translate-y-0'
+                  )}
+                  style={{ top: 0 }}
+                >
                   <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                     <SheetTrigger className="inline-flex items-center gap-2 border border-gray-300 rounded-md px-4 h-11 text-sm font-semibold text-stakerpol-navy bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange">
                       <SlidersHorizontal className="h-4 w-4" />
@@ -239,12 +299,16 @@ const SharedOffer = () => {
                       </div>
                     </SheetContent>
                   </Sheet>
+                  <SortControl value={sortKey} onChange={setSortKey} className="flex-1 min-w-0" />
                 </div>
                 <details className="hidden md:block bg-white border border-gray-200 rounded-md">
                   <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-stakerpol-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange">
                     Filtry listy
                   </summary>
                   <div className="px-4 pb-5 pt-2 border-t border-gray-200">
+                    <div className="mb-5 max-w-xs">
+                      <SortControl value={sortKey} onChange={setSortKey} />
+                    </div>
                     <SharedOfferFilters
                       scope={scope}
                       value={viewerFilters}
@@ -253,6 +317,7 @@ const SharedOffer = () => {
                   </div>
                 </details>
               </div>
+
 
               {/* Puste stany */}
               {scope.length === 0 ? (
@@ -287,7 +352,7 @@ const SharedOffer = () => {
 
                   {/* Desktop: tabela */}
                   <div className="hidden md:block space-y-8">
-                    {model.groups.map((group) => (
+                    {sortedGroups.map((group) => (
                       <section key={group.key} aria-labelledby={`grp-${group.key}`}>
                         <h2
                           id={`grp-${group.key}`}
@@ -363,13 +428,26 @@ const SharedOffer = () => {
 
                   {/* Mobile: karty */}
                   <div className="md:hidden space-y-6">
-                    {model.groups.map((group) => (
+                    {sortedGroups.map((group) => {
+                      const common = group.common;
+                      const commonKeys = COMMON_PARAM_KEYS.filter((k) => common[k]);
+                      return (
                       <section key={group.key} aria-labelledby={`grpm-${group.key}`}>
                         <h2
                           id={`grpm-${group.key}`}
-                          className="sticky top-0 z-10 bg-stakerpol-navy text-white text-sm font-bold px-3 py-2 rounded-md"
+                          className="sticky z-20 bg-stakerpol-navy text-white px-3 py-2 rounded-md"
+                          style={{ top: STICKY_GROUP_TOP }}
                         >
-                          {group.label} · {group.rows.length}
+                          <span className="block text-sm font-bold">
+                            {group.label} · {group.rows.length}
+                          </span>
+                          {commonKeys.length > 0 && (
+                            <span className="block mt-1 text-[11px] font-medium text-white/85">
+                              {commonKeys
+                                .map((k) => `${COMMON_PARAM_LABELS[k]}: ${common[k]}`)
+                                .join(' · ')}
+                            </span>
+                          )}
                         </h2>
                         <div className="mt-3 space-y-3">
                           {group.rows.map((row) => (
@@ -382,8 +460,17 @@ const SharedOffer = () => {
                                   <h3 className="font-bold text-stakerpol-navy">
                                     {row.index}. {row.model}
                                   </h3>
-                                  <p className="text-xs text-gray-700">
-                                    Nr seryjny: {row.serialNumber || '—'}
+                                  <p className="text-xs text-gray-700 flex items-center gap-2 flex-wrap">
+                                    <span>Nr seryjny: {row.serialNumber || '—'}</span>
+                                    <a
+                                      href={row.productUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-stakerpol-navy underline focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+                                    >
+                                      Zdjęcia
+                                      <ExternalLink className="h-3 w-3" />
+                                    </a>
                                   </p>
                                 </div>
                                 <StatusTag value={row.availability} />
@@ -398,48 +485,47 @@ const SharedOffer = () => {
                                   <dt className="text-gray-700">Motogodziny</dt>
                                   <dd className="font-medium">{row.workingHours || '—'}</dd>
                                 </div>
-                                <div>
-                                  <dt className="text-gray-700">Udźwig</dt>
-                                  <dd className="font-medium">{row.mastLiftingCapacity || '—'}</dd>
-                                </div>
-                                <div>
-                                  <dt className="text-gray-700">Podnoszenie</dt>
-                                  <dd className="font-medium">{row.liftHeight || '—'}</dd>
-                                </div>
-                                <div>
-                                  <dt className="text-gray-700">Maszt</dt>
-                                  <dd className="font-medium">{row.mast}</dd>
-                                </div>
-                                <div>
-                                  <dt className="text-gray-700">Bateria</dt>
-                                  <dd className="font-medium">{row.battery}</dd>
-                                </div>
+                                {!common.mastLiftingCapacity && (
+                                  <div>
+                                    <dt className="text-gray-700">Udźwig</dt>
+                                    <dd className="font-medium">{row.mastLiftingCapacity || '—'}</dd>
+                                  </div>
+                                )}
+                                {!common.liftHeight && (
+                                  <div>
+                                    <dt className="text-gray-700">Podnoszenie</dt>
+                                    <dd className="font-medium">{row.liftHeight || '—'}</dd>
+                                  </div>
+                                )}
+                                {!common.mast && (
+                                  <div>
+                                    <dt className="text-gray-700">Maszt</dt>
+                                    <dd className="font-medium">{row.mast}</dd>
+                                  </div>
+                                )}
+                                {!common.battery && (
+                                  <div>
+                                    <dt className="text-gray-700">Bateria</dt>
+                                    <dd className="font-medium">{row.battery}</dd>
+                                  </div>
+                                )}
                               </dl>
 
-                              <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between gap-3">
-                                <div className="text-sm">
-                                  <PriceCell
-                                    showPrice={row.showPrice}
-                                    netPrice={row.netPrice}
-                                    currency={row.priceCurrency}
-                                  />
-                                </div>
-                                <a
-                                  href={row.productUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="shrink-0 inline-flex items-center gap-1 text-xs text-stakerpol-navy underline focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
-                                >
-                                  Karta
-                                  <ExternalLink className="h-3 w-3" />
-                                </a>
+                              <div className="mt-3 pt-3 border-t border-gray-200 text-sm">
+                                <PriceCell
+                                  showPrice={row.showPrice}
+                                  netPrice={row.netPrice}
+                                  currency={row.priceCurrency}
+                                />
                               </div>
                             </article>
                           ))}
                         </div>
                       </section>
-                    ))}
+                      );
+                    })}
                   </div>
+
                 </>
               )}
             </>
