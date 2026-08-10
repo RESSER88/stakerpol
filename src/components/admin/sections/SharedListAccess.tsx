@@ -30,16 +30,37 @@ interface SharedLinkRow {
 
 const WEEK_OPTIONS = [1, 2, 3, 4] as const;
 
-/** 32 znaki base64url z CSPRNG — długość zgodna z walidacją Edge Function. */
-const generateToken = (): string => {
-  const bytes = new Uint8Array(24);
-  crypto.getRandomValues(bytes);
-  let binary = '';
-  bytes.forEach((b) => {
-    binary += String.fromCharCode(b);
-  });
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+/** Alfabet bez znaków mylących: brak l, I, O oraz 0 i 1. */
+const SUFFIX_ALPHABET = 'abcdefghijkmnpqrstuvwxyz23456789';
+const SUFFIX_LENGTH = 6;
+const MAX_TOKEN_ATTEMPTS = 5;
+
+const DIACRITICS: Record<string, string> = {
+  ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n', ó: 'o', ś: 's', ź: 'z', ż: 'z',
 };
+
+/** Sprowadza opis do bezpiecznej podstawy tokenu (max 20 znaków). */
+const slugifyLabel = (raw: string): string => {
+  const base = raw
+    .toLowerCase()
+    .replace(/[ąćęłńóśźż]/g, (ch) => DIACRITICS[ch] ?? ch)
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 20)
+    .replace(/-$/, '');
+  return base || 'oferta';
+};
+
+/** Losowy przyrostek z CSPRNG. */
+const randomSuffix = (): string => {
+  const bytes = new Uint8Array(SUFFIX_LENGTH);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => SUFFIX_ALPHABET[b % SUFFIX_ALPHABET.length]).join('');
+};
+
+const buildToken = (label: string): string => `${slugifyLabel(label)}-${randomSuffix()}`;
 
 const buildUrl = (token: string) => `${window.location.origin}/oferta/${token}`;
 
