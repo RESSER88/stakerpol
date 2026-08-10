@@ -126,6 +126,10 @@ const SharedOffer = () => {
   const [viewerFilters, setViewerFilters] = useState<ViewerFilterState>(EMPTY_VIEWER_FILTERS);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [fetchedAt] = useState(() => new Date());
+  const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT);
+  const scrollDirection = useScrollDirection();
+  const hideFilterBar = scrollDirection === 'down' && !sheetOpen;
+
 
   const { products, isLoading: productsLoading } = usePublicSupabaseProducts();
 
