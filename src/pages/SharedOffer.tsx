@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ExternalLink, MapPin, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ExternalLink, MapPin, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePublicSupabaseProducts } from '@/hooks/usePublicSupabaseProducts';
 import {
@@ -23,6 +23,8 @@ import SharedOfferFilters, {
   isViewerFilterActive,
   viewerFiltersToCriteria,
 } from '@/components/shared-offer/SharedOfferFilters';
+import PriceInquiryModal from '@/components/products/PriceInquiryModal';
+import type { Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { logger } from '@/utils/logger';
 import { useScrollState } from '@/hooks/useScrollDirection';
@@ -31,7 +33,15 @@ import {
   COMMON_PARAM_KEYS,
   COMMON_PARAM_LABELS,
 } from '@/utils/sharedOffer/groupCommonParams';
-import { SortKey, DEFAULT_SORT, SORT_OPTIONS, sortExportRows } from '@/utils/sharedOffer/sortRows';
+import {
+  SortKey,
+  DEFAULT_SORT,
+  SORT_OPTIONS,
+  SORT_FIELDS,
+  sortExportRows,
+  toSortKey,
+  fromSortKey,
+} from '@/utils/sharedOffer/sortRows';
 
 /** Wysokość przyklejonego paska filtrów — offset nagłówka grupy (mobile). */
 const STICKY_GROUP_TOP = 60;
@@ -61,6 +71,49 @@ const SortControl = ({
     </select>
   </label>
 );
+
+/** Mobile: trzy przyciski sortowania z odwracaniem kierunku. */
+const SortButtons = ({
+  value,
+  onChange,
+}: {
+  value: SortKey;
+  onChange: (v: SortKey) => void;
+}) => {
+  const active = fromSortKey(value);
+  return (
+    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar" role="group" aria-label="Sortowanie listy">
+      {SORT_FIELDS.map(({ field, label }) => {
+        const isActive = active.field === field;
+        return (
+          <button
+            key={field}
+            type="button"
+            aria-pressed={isActive}
+            onClick={() =>
+              onChange(toSortKey(field, isActive && active.dir === 'asc' ? 'desc' : 'asc'))
+            }
+            className={cn(
+              'inline-flex shrink-0 items-center gap-1 h-11 px-3 rounded-md border text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange',
+              isActive
+                ? 'border-stakerpol-navy bg-stakerpol-navy text-white'
+                : 'border-gray-300 bg-white text-stakerpol-navy'
+            )}
+          >
+            {label}
+            {isActive &&
+              (active.dir === 'asc' ? (
+                <ArrowUp className="h-3.5 w-3.5" />
+              ) : (
+                <ArrowDown className="h-3.5 w-3.5" />
+              ))}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
 
 
 
