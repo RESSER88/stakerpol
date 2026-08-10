@@ -301,22 +301,22 @@ const SharedOffer = () => {
                   </Sheet>
                   <SortControl value={sortKey} onChange={setSortKey} className="flex-1 min-w-0" />
                 </div>
-                <details className="hidden md:block bg-white border border-gray-200 rounded-md">
-                  <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-stakerpol-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange">
-                    Filtry listy
-                  </summary>
-                  <div className="px-4 pb-5 pt-2 border-t border-gray-200">
-                    <div className="mb-5 max-w-xs">
-                      <SortControl value={sortKey} onChange={setSortKey} />
-                    </div>
-                    <SharedOfferFilters
-                      scope={scope}
-                      value={viewerFilters}
-                      onChange={setViewerFilters}
-                    />
+              <details className="hidden md:block mb-6 bg-white border border-gray-200 rounded-md">
+                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-stakerpol-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange">
+                  Filtry listy
+                </summary>
+                <div className="px-4 pb-5 pt-2 border-t border-gray-200">
+                  <div className="mb-5 max-w-xs">
+                    <SortControl value={sortKey} onChange={setSortKey} />
                   </div>
-                </details>
-              </div>
+                  <SharedOfferFilters
+                    scope={scope}
+                    value={viewerFilters}
+                    onChange={setViewerFilters}
+                  />
+                </div>
+              </details>
+
 
 
               {/* Puste stany */}
