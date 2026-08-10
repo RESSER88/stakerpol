@@ -1,0 +1,28 @@
+# Stakerpol
+
+> Stakerpol sprzedaje używane paleciaki elektryczne i wózki paletowe BT Toyota po przeglądzie technicznym, z gwarancją. Obsługujemy firmy produkcyjne, magazyny i logistykę na terenie całej Polski.
+
+Profil działalności: B2B. Specjalizujemy się w sprzedaży używanych paleciaków elektrycznych oraz wózków paletowych Toyota BT — każdy egzemplarz przechodzi przegląd techniczny i jest objęty gwarancją. Działamy od 2008 roku, dostarczamy sprzęt do klientów w całej Polsce, doradzamy w doborze modelu i zapewniamy obsługę posprzedażową.
+
+## Oferta
+
+- [Paleciaki elektryczne — lista produktów](https://stakerpol.pl/produkty): aktualnie dostępne używane paleciaki elektryczne i wózki paletowe BT Toyota z parametrami technicznymi i zdjęciami.
+- [Strona główna](https://stakerpol.pl/): przegląd oferty, wyróżnione modele dostępne od ręki i najważniejsze informacje o firmie.
+
+## Informacje
+
+- [FAQ](https://stakerpol.pl/faq): odpowiedzi na najczęstsze pytania o dobór modelu, gwarancję, dostawę i serwis.
+- [Opinie klientów](https://stakerpol.pl/opinie): relacje firm, które kupiły u nas paleciaki elektryczne.
+- [Kontakt](https://stakerpol.pl/kontakt): dane kontaktowe, godziny pracy, lokalizacja magazynu i formularz zapytania.
+- [Polityka prywatności](https://stakerpol.pl/prywatnosc): zasady przetwarzania danych osobowych.
+
+## Kontakt
+
+Telefon: +48 694 133 592 (pon–pt 8:00–17:00)
+E-mail: info@stakerpol.pl
+Adres firmy: FHU Stakerpol, Michał Seweryn, ul. Szewska 6, 32-043 Skała, Polska (NIP: PL6492111954)
+Magazyn: ul. Międzyleśna 115, 32-095 Celiny, Polska
+
+## Opcjonalne
+
+- [Mapa witryny](https://stakerpol.pl/sitemap.xml): zawiera pełną, aktualną listę wszystkich dostępnych wózków i podstron serwisu.
