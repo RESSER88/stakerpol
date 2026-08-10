@@ -172,6 +172,18 @@ const SharedOffer = () => {
 
   const model = useMemo(() => buildExportRows(visible), [visible]);
 
+  /** Sortowanie i parametry wspólne wyłącznie na potrzeby renderu. */
+  const sortedGroups = useMemo(
+    () =>
+      model.groups.map((g) => ({
+        ...g,
+        rows: sortExportRows(g.rows, sortKey),
+        common: getGroupCommonParams(g),
+      })),
+    [model, sortKey]
+  );
+
+
   const isLoading = link.status === 'loading' || productsLoading;
 
   if (link.status === 'denied') {
