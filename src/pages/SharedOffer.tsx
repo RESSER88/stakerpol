@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { ArrowDown, ArrowUp, ExternalLink, MapPin, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -312,6 +312,9 @@ const SharedOffer = () => {
               <a href={`mailto:${COMPANY.email}`} className="block text-stakerpol-navy underline">
                 {COMPANY.email}
               </a>
+              <Link to={ROUTES.home} className="block text-stakerpol-navy underline">
+                stakerpol.pl
+              </Link>
             </div>
           </div>
         </main>
