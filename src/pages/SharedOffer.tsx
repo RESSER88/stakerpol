@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { ArrowDown, ArrowUp, ExternalLink, MapPin, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,6 +27,7 @@ import PriceInquiryModal from '@/components/products/PriceInquiryModal';
 import type { Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { logger } from '@/utils/logger';
+import { ROUTES } from '@/config/routes';
 import { useScrollState } from '@/hooks/useScrollDirection';
 import {
   getGroupCommonParams,
@@ -312,6 +313,9 @@ const SharedOffer = () => {
               <a href={`mailto:${COMPANY.email}`} className="block text-stakerpol-navy underline">
                 {COMPANY.email}
               </a>
+              <Link to={ROUTES.home} className="block text-stakerpol-navy underline">
+                stakerpol.pl
+              </Link>
             </div>
           </div>
         </main>
