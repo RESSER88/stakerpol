@@ -27,6 +27,7 @@ import PriceInquiryModal from '@/components/products/PriceInquiryModal';
 import type { Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { logger } from '@/utils/logger';
+import { ROUTES } from '@/config/routes';
 import { useScrollState } from '@/hooks/useScrollDirection';
 import {
   getGroupCommonParams,
