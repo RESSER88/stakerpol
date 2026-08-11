@@ -24,6 +24,7 @@ import SharedOfferFilters, {
   viewerFiltersToCriteria,
 } from '@/components/shared-offer/SharedOfferFilters';
 import PriceInquiryModal from '@/components/products/PriceInquiryModal';
+import ProductStickyBar from '@/components/products/ProductStickyBar';
 import type { Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { logger } from '@/utils/logger';
@@ -217,6 +218,7 @@ const SharedOffer = () => {
   const [fetchedAt] = useState(() => new Date());
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT);
   const [inquiryProduct, setInquiryProduct] = useState<Product | null>(null);
+  const [barInquiryOpen, setBarInquiryOpen] = useState(false);
 
   const { direction: scrollDirection, y: scrollY } = useScrollState(8);
   /** W pobliżu początku listy pasek jest zawsze widoczny. */
@@ -537,7 +539,7 @@ const SharedOffer = () => {
                   </div>
 
                   {/* Mobile: niskie wiersze scalone z nagłówkiem grupy */}
-                  <div className="md:hidden space-y-6">
+                  <div className="md:hidden space-y-6 pb-[calc(72px+env(safe-area-inset-bottom))]">
                     {sortedGroups.map((group) => {
                       const common = group.common;
                       const commonKeys = COMMON_PARAM_KEYS.filter((k) => common[k]);
@@ -545,7 +547,6 @@ const SharedOffer = () => {
                       <section
                         key={group.key}
                         aria-labelledby={`grpm-${group.key}`}
-                        className="rounded-md overflow-hidden border border-gray-200 bg-white"
                       >
                         <h2
                           id={`grpm-${group.key}`}
@@ -563,7 +564,7 @@ const SharedOffer = () => {
                             </span>
                           )}
                         </h2>
-                        <div className="divide-y divide-gray-200">
+                        <div className="divide-y divide-gray-200 bg-white border border-t-0 border-gray-200 rounded-b-md">
                           {group.rows.map((row) => {
                             const inlineParams = [
                               row.productionYear ? String(row.productionYear) : null,
@@ -626,6 +627,13 @@ const SharedOffer = () => {
             product={inquiryProduct}
           />
         )}
+
+        {barInquiryOpen && (
+          <PriceInquiryModal isOpen onClose={() => setBarInquiryOpen(false)} />
+        )}
+
+        {/* Pasek kontaktowy — ten sam komponent co na podstronie produktu */}
+        <ProductStickyBar variant="fixed" onInquiryClick={() => setBarInquiryOpen(true)} />
 
         <FloatingContactBubble />
       </div>

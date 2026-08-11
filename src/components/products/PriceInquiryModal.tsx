@@ -20,7 +20,8 @@ import { ROUTES } from '@/config/routes';
 interface PriceInquiryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  product: Product;
+  /** Kontekst produktu — opcjonalny, gdy zapytanie dotyczy całej listy. */
+  product?: Product;
 }
 
 const PriceInquiryModal = ({ isOpen, onClose, product }: PriceInquiryModalProps) => {
@@ -37,9 +38,9 @@ const PriceInquiryModal = ({ isOpen, onClose, product }: PriceInquiryModalProps)
   // since the leads table has no dedicated model/year/serial columns.
   const buildMessage = () => {
     const details = [
-      `Model: ${product.model}`,
-      product.specs?.productionYear && `Rocznik: ${product.specs.productionYear}`,
-      product.specs?.serialNumber && `Nr seryjny: ${product.specs.serialNumber}`,
+      product?.model && `Model: ${product.model}`,
+      product?.specs?.productionYear && `Rocznik: ${product.specs.productionYear}`,
+      product?.specs?.serialNumber && `Nr seryjny: ${product.specs.serialNumber}`,
     ]
       .filter(Boolean)
       .join(' | ');
@@ -57,13 +58,13 @@ const PriceInquiryModal = ({ isOpen, onClose, product }: PriceInquiryModalProps)
       return;
     }
 
-    const isUuid = /^[0-9a-f-]{36}$/i.test(product.id);
-    const ok = await submit(phoneNumber, isUuid ? product.id : undefined, {
+    const isUuid = !!product && /^[0-9a-f-]{36}$/i.test(product.id);
+    const ok = await submit(phoneNumber, isUuid ? product!.id : undefined, {
       source: 'faq_price_inquiry',
       message: buildMessage(),
       rodoAccepted: true,
       formLabel: 'price_inquiry',
-      productModel: product.model,
+      productModel: product?.model,
       successTitle: '✅ Dziękujemy!',
       successDescription: 'Zapytanie zostało wysłane. Odpowiemy w ciągu 24 godzin.',
     });
@@ -89,16 +90,18 @@ const PriceInquiryModal = ({ isOpen, onClose, product }: PriceInquiryModalProps)
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="bg-muted p-4 rounded-lg">
-            <h4 className="font-semibold mb-2">{t('productModel')}:</h4>
-            <p className="text-sm">{product.model}</p>
-            {product.specs.productionYear && (
-              <p className="text-sm mt-1">{t('productionYear')}: {product.specs.productionYear}</p>
-            )}
-            {product.specs.serialNumber && (
-              <p className="text-sm mt-1">{t('serialNumber')}: {product.specs.serialNumber}</p>
-            )}
-          </div>
+          {product && (
+            <div className="bg-muted p-4 rounded-lg">
+              <h4 className="font-semibold mb-2">{t('productModel')}:</h4>
+              <p className="text-sm">{product.model}</p>
+              {product.specs?.productionYear && (
+                <p className="text-sm mt-1">{t('productionYear')}: {product.specs.productionYear}</p>
+              )}
+              {product.specs?.serialNumber && (
+                <p className="text-sm mt-1">{t('serialNumber')}: {product.specs.serialNumber}</p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <label htmlFor="phone" className="text-sm font-medium">
