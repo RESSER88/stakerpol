@@ -90,16 +90,18 @@ const PriceInquiryModal = ({ isOpen, onClose, product }: PriceInquiryModalProps)
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="bg-muted p-4 rounded-lg">
-            <h4 className="font-semibold mb-2">{t('productModel')}:</h4>
-            <p className="text-sm">{product.model}</p>
-            {product.specs.productionYear && (
-              <p className="text-sm mt-1">{t('productionYear')}: {product.specs.productionYear}</p>
-            )}
-            {product.specs.serialNumber && (
-              <p className="text-sm mt-1">{t('serialNumber')}: {product.specs.serialNumber}</p>
-            )}
-          </div>
+          {product && (
+            <div className="bg-muted p-4 rounded-lg">
+              <h4 className="font-semibold mb-2">{t('productModel')}:</h4>
+              <p className="text-sm">{product.model}</p>
+              {product.specs?.productionYear && (
+                <p className="text-sm mt-1">{t('productionYear')}: {product.specs.productionYear}</p>
+              )}
+              {product.specs?.serialNumber && (
+                <p className="text-sm mt-1">{t('serialNumber')}: {product.specs.serialNumber}</p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <label htmlFor="phone" className="text-sm font-medium">
