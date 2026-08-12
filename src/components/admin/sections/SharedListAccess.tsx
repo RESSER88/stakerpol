@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Copy, Loader2, Ban } from 'lucide-react';
+import { Copy, Loader2, Ban, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -199,12 +199,30 @@ const SharedListAccess = ({ criteria, matchedCount }: Props) => {
   };
 
   return (
-    <div className="mt-8">
-      <div className="text-xs font-bold tracking-[0.15em] uppercase text-editorial-muted mb-3">
-        Dostęp online
-      </div>
+    <div>
+      <button
+        onClick={handleGenerate}
+        disabled={saving || matchedCount === 0}
+        className="group w-full flex items-center gap-6 py-6 border-b border-editorial-line text-left transition-colors hover:bg-editorial-line/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+      >
+        <span className="text-xs font-bold tracking-[0.2em] text-editorial-accent w-8 shrink-0">
+          04
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="font-editorial text-base text-editorial-ink">Generuj dostęp online</div>
+          <div className="text-xs text-editorial-muted mt-0.5 tracking-wide">
+            Czasowy link do listy online · {matchedCount}{' '}
+            {matchedCount === 1 ? 'pozycja' : 'pozycji'}
+          </div>
+        </div>
+        {saving ? (
+          <Loader2 className="h-4 w-4 animate-spin text-editorial-muted shrink-0" />
+        ) : (
+          <ArrowRight className="h-4 w-4 text-editorial-muted shrink-0 transition-transform group-hover:translate-x-1" />
+        )}
+      </button>
 
-      <div className="space-y-4">
+      <div className="pl-0 sm:pl-14 pt-5 pb-6 space-y-4 border-b border-editorial-line">
         <div>
           <label className="block text-[11px] uppercase tracking-wider text-editorial-muted mb-2">
             Okres ważności
@@ -242,50 +260,33 @@ const SharedListAccess = ({ criteria, matchedCount }: Props) => {
             className="w-full bg-transparent border-b border-editorial-line py-2 text-sm text-editorial-ink placeholder:text-editorial-muted/60 focus:outline-none focus:border-editorial-ink"
           />
         </div>
+
+        {matchedCount === 0 && (
+          <p className="text-xs text-editorial-muted italic">
+            Nie można wygenerować linku — filtr nie zwraca żadnej pozycji.
+          </p>
+        )}
+
+        {lastUrl && (
+          <div className="border border-editorial-line p-3">
+            <div className="text-[11px] uppercase tracking-wider text-editorial-muted mb-2">
+              Wygenerowany adres
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 min-w-0 text-xs text-editorial-ink break-all">{lastUrl}</code>
+              <button
+                type="button"
+                onClick={() => copy(lastUrl)}
+                aria-label="Kopiuj adres linku"
+                className="shrink-0 p-2 border border-editorial-line hover:border-editorial-ink"
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      <button
-        onClick={handleGenerate}
-        disabled={saving || matchedCount === 0}
-        className="group w-full flex items-center gap-4 sm:gap-6 py-6 mt-4 border-t border-b border-editorial-line text-left transition-colors hover:bg-editorial-line/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-      >
-        <span className="text-xs font-bold tracking-[0.2em] text-editorial-accent w-8 shrink-0">
-          04
-        </span>
-        <div className="flex-1 min-w-0">
-          <div className="font-editorial text-base text-editorial-ink">Generuj dostęp</div>
-          <div className="text-xs text-editorial-muted mt-0.5 tracking-wide">
-            Czasowy link do listy online · {matchedCount}{' '}
-            {matchedCount === 1 ? 'pozycja' : 'pozycji'}
-          </div>
-        </div>
-        {saving && <Loader2 className="h-4 w-4 animate-spin text-editorial-muted shrink-0" />}
-      </button>
-
-      {matchedCount === 0 && (
-        <p className="text-xs text-editorial-muted mt-3 italic">
-          Nie można wygenerować linku — filtr nie zwraca żadnej pozycji.
-        </p>
-      )}
-
-      {lastUrl && (
-        <div className="mt-4 border border-editorial-line p-3">
-          <div className="text-[11px] uppercase tracking-wider text-editorial-muted mb-2">
-            Wygenerowany adres
-          </div>
-          <div className="flex items-center gap-2">
-            <code className="flex-1 min-w-0 text-xs text-editorial-ink break-all">{lastUrl}</code>
-            <button
-              type="button"
-              onClick={() => copy(lastUrl)}
-              aria-label="Kopiuj adres linku"
-              className="shrink-0 p-2 border border-editorial-line hover:border-editorial-ink"
-            >
-              <Copy className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
 
       <div className="mt-8">
         <div className="text-xs font-bold tracking-[0.15em] uppercase text-editorial-muted mb-3">
