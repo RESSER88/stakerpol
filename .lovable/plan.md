@@ -1,26 +1,39 @@
-# Mobilny widok udostępnionej listy — nagłówek grupy, sticky, „Zdjęcia”, sortowanie
+# Oznaczanie zapytań zakończonych sprzedażą
 
-Zmiany dotyczą wyłącznie gałęzi mobilnej strony `/oferta/:token`. Gałąź desktopowa (tabela) i eksporty PDF/XLSX/JPG pozostają bez zmian.
+Cel: odwracalna akcja „Kupił” przy zapytaniu obsłużonym oraz sprzedaż widoczna w statystykach — bez zmiany działania zakładek Nowe / Obsłużone / Wszystkie i bez nowej zakładki.
 
-## 1. Wspólne parametry w nagłówku grupy (mobile)
-- W `src/utils/exportListModel.ts` dodać **nowe, opcjonalne** pole w `ExportGroup`: `common` z wartościami tych parametrów, które są identyczne dla wszystkich pozycji grupy (udźwig, podnoszenie, maszt, bateria). Pole addytywne — eksporty go nie czytają, `EXPORT_COLUMNS` i `ExportRow` bez zmian.
-- Nagłówek grupy mobilnej pokazuje `group.label · liczba` oraz wspólne parametry w jednej linii chipów.
-- Karta pozycji na mobile pomija parametry przejęte przez nagłówek; zawsze zostają: rok, motogodziny, nr seryjny, dostępność, cena.
+## Wybrany wariant
 
-## 2. Sticky nagłówek grupy + chowany pasek filtrów (mobile)
-- Nowy hook `src/hooks/useScrollDirection.ts` (kierunek przewijania z progiem, bez zależności).
-- Pasek filtrów (dziś przycisk „Filtry” w kontenerze) staje się `sticky top-0` i przesuwa się poza ekran przy przewijaniu w dół, wraca przy przewijaniu w górę.
-- Nagłówek grupy pozostaje `sticky` pod paskiem filtrów; wysokość offsetu ustalona jedną stałą, aby oba elementy nie nakładały się.
-- Warstwy: pasek filtrów `z-30`, nagłówek grupy `z-20` (poniżej `Sheet` = `z-50`).
+Nowa, domyślnie pusta kolumna znacznikowa z datą oznaczenia sprzedaży (`sold_at`), zamiast nowej wartości statusu. „Sprzedane” pozostaje podzbiorem „obsłużonych”, więc licznik obsłużonych i filtry zakładek działają bez zmian.
 
-## 3. Odsyłacz „Zdjęcia”
-- W karcie mobilnej przenieść istniejący link (`row.productUrl`, nowa karta) z dolnego paska do wiersza z numerem seryjnym i zmienić etykietę na „Zdjęcia”. Bez zmian adresu i bez zmian w desktopie.
+## Zakres
 
-## 4. Sortowanie po stronie odbiorcy
-- Kontrolka `Select` w tym samym pasku co „Filtry” (mobile) oraz w panelu filtrów desktop.
-- Opcje: domyślne (jak dziś), rok malejąco/rosnąco, motogodziny rosnąco/malejąco, cena rosnąco/malejąco (pozycje bez ceny na końcu).
-- Sortowanie stosowane w `SharedOffer.tsx` na `group.rows` przy renderze — grupy i numeracja z `buildExportRows` zostają nietknięte.
+### 1. Baza danych
+- Dodanie kolumny `sold_at` (data i godzina, domyślnie pusta) w tabeli zapytań.
+- Indeks częściowy dla wierszy z ustawioną datą sprzedaży.
+- Bez zmian w ograniczeniu statusu, triggerze `handled_at` i politykach dostępu — obecna polityka aktualizacji dla administratora obejmuje nową kolumnę.
 
-## Zakres techniczny
-- Pliki: `src/pages/SharedOffer.tsx`, `src/components/shared-offer/SharedOfferFilters.tsx`, `src/utils/exportListModel.ts` (dodanie pola), nowy `src/hooks/useScrollDirection.ts`.
-- Bez zmian: Edge Function `shared-list`, zapytania o produkty, schemat bazy, RLS, maile, meta/JSON-LD, GA4 (trasa nadal bez raportowania odsłon), panel administracyjny, eksporty PDF/XLSX/JPG.
+### 2. Lista zapytań (widok Obsłużone)
+- Pobieranie nowej kolumny w zapytaniu listy oraz w typie wiersza.
+- Nowa akcja przy wierszu, widoczna tylko dla zapytań obsłużonych, obok „Cofnij” i „Usuń”:
+  - stan wyjściowy: „Kupił” — ustawia datę sprzedaży na teraz,
+  - stan oznaczony: „Cofnij sprzedaż” — czyści datę (odwracalność),
+  - blokada przycisku w trakcie zapisu, komunikat toast po zapisie, aktualizacja wiersza lokalnie bez przeładowania listy.
+- Oznaczony wiersz dostaje dyskretną etykietę „Sprzedane” obok źródła zapytania oraz wyróżniony wskaźnik statusu, w istniejącej stylistyce widoku.
+
+### 3. Statystyki
+- Dwa liczniki w siatce górnej: „Obsłużone” (bez zmian) oraz nowy „Zakończone sprzedażą”.
+- Wykres: w każdym słupku wyróżniony udział sprzedaży (segment dolny w mocniejszym akcencie, część obsłużona bez zmian).
+- Podpowiedź po najechaniu: do istniejącej warstwy dopisana liczba sprzedaży dla danego okresu, np. „maj 2026 — 12 zapytań, 3 sprzedaże”.
+
+## Szczegóły techniczne
+
+- Migracja: `ALTER TABLE public.leads ADD COLUMN sold_at timestamptz` + `CREATE INDEX ... WHERE sold_at IS NOT NULL`. Bez zmiany `leads_status_check` i funkcji `set_lead_handled_at()`.
+- `src/components/admin/sections/InquiriesSection.tsx`: rozszerzenie interfejsu `Lead` i listy kolumn w `select` (linia 51), nowy handler `toggleSold` obok `markHandled` (wzorowany na nim: `updating`, obsługa błędu, toast), nowy przycisk w bloku akcji (linie 273–304). Bez zmian w `StatusFilter`, `TabValue`, filtrze `.eq('status', filter)`, paginacji i usuwaniu.
+- `src/components/admin/sections/InquiryStats.tsx`: `sold_at` w `select` i w `StatRow`, `soldCount` w `stats`, pole `sold` w `Bucket` i jego zliczanie w obu gałęziach (12 miesięcy oraz 7/30 dni), słupek jako kontener z dwoma segmentami, rozszerzony tekst aktywnej podpowiedzi.
+- Kolory wyłącznie z istniejących tokenów widoku (`editorial-ink`, `editorial-accent`, `editorial-muted`).
+
+## Poza zakresem
+
+- Nowa zakładka filtrująca sprzedane.
+- Zmiany w statusach, usuwaniu zapytań, powiadomieniach o nowym zapytaniu i eksportach.
