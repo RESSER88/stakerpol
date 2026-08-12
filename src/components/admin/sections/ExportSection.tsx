@@ -145,6 +145,7 @@ const ExportSection = ({ products }: Props) => {
           disabled={empty}
           onClick={handleXLSX}
         />
+        <SharedListAccess criteria={criteria} matchedCount={filtered.length} />
       </div>
 
       {empty && (
@@ -153,7 +154,7 @@ const ExportSection = ({ products }: Props) => {
         </p>
       )}
 
-      <SharedListAccess criteria={criteria} matchedCount={filtered.length} />
+
 
     </div>
   );
