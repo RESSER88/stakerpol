@@ -49,7 +49,7 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
     setLoading(true);
     let q = supabase
       .from('leads')
-      .select('id, created_at, handled_at, name, phone, email, message, source, page_url, status, product_id', { count: 'exact' })
+      .select('id, created_at, handled_at, sold_at, name, phone, email, message, source, page_url, status, product_id', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
