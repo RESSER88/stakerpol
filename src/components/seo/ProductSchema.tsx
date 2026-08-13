@@ -7,12 +7,9 @@ interface ProductSchemaProps {
 }
 
 const ProductSchema = ({ product }: ProductSchemaProps) => {
-  const getCurrentUrl = () => {
-    if (typeof window !== 'undefined') {
-      return window.location.href;
-    }
-    return productUrl(product);
-  };
+  // Adres kanoniczny egzemplarza — to samo źródło co canonical i og:url.
+  const getCurrentUrl = () => productUrl(product);
+
 
   const getMainImage = () => {
     if (product.images && product.images.length > 0) {

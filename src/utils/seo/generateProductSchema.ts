@@ -188,12 +188,9 @@ const getAdditionalProperties = (product: Product) => {
   return properties;
 };
 
-const getCurrentUrl = (product: Product) => {
-  if (typeof window !== 'undefined') {
-    return window.location.href;
-  }
-  return productUrl(product);
-};
+// Adres kanoniczny egzemplarza — to samo źródło co canonical i og:url (config/routes).
+const getCurrentUrl = (product: Product) => productUrl(product);
+
 
 const getPriceValidUntil = (customDate?: string) => {
   if (customDate) return customDate;
