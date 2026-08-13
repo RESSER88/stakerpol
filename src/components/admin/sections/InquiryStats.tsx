@@ -249,7 +249,8 @@ const InquiryStats = () => {
           {active && (
             <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-editorial-ink">
               {active.full} — {active.count}{' '}
-              {active.count === 1 ? 'zapytanie' : 'zapytań'}
+              {pluralPl(active.count, 'zapytanie', 'zapytania', 'zapytań')}, {active.sold}{' '}
+              {pluralPl(active.sold, 'sprzedaż', 'sprzedaże', 'sprzedaży')}
             </p>
           )}
         </div>
@@ -259,7 +260,7 @@ const InquiryStats = () => {
             <button
               key={b.key}
               type="button"
-              aria-label={`${b.full}: ${b.count}`}
+              aria-label={`${b.full}: ${b.count} zapytań, ${b.sold} sprzedaży`}
               onMouseEnter={() => setActiveBucket(b.key)}
               onMouseLeave={() => setActiveBucket((k) => (k === b.key ? null : k))}
               onClick={() => setActiveBucket((k) => (k === b.key ? null : b.key))}
@@ -267,11 +268,18 @@ const InquiryStats = () => {
             >
               <span
                 className={cn(
-                  'w-full block transition-colors',
+                  'w-full block flex flex-col justify-end transition-colors',
                   activeBucket === b.key ? 'bg-editorial-ink' : 'bg-editorial-ink/60'
                 )}
                 style={{ height: `${Math.max((b.count / maxBucket) * 100, b.count > 0 ? 4 : 1)}%` }}
-              />
+              >
+                {b.sold > 0 && (
+                  <span
+                    className="w-full block bg-editorial-accent"
+                    style={{ height: `${Math.min((b.sold / Math.max(b.count, 1)) * 100, 100)}%` }}
+                  />
+                )}
+              </span>
             </button>
           ))}
         </div>
