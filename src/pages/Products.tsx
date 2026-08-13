@@ -106,6 +106,8 @@ const Products = () => {
             to="/admin"
             className="absolute top-0 right-4 text-muted-foreground/50 hover:text-stakerpol-orange transition-colors z-10"
             title="Panel administracyjny"
+            aria-label="Panel administracyjny"
+            rel="nofollow"
           >
             <Shield size={18} />
           </Link>
