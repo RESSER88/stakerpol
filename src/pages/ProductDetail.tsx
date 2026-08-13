@@ -107,6 +107,10 @@ const ProductDetail = () => {
   if (!product) {
     return (
       <Layout>
+        <Helmet>
+          <title>Produkt niedostępny | Stakerpol</title>
+          <meta name="robots" content="noindex, follow" />
+        </Helmet>
         <div className="container-custom py-12">
           <h1 className="text-3xl md:text-4xl font-bold mb-4 text-stakerpol-navy">{t('productNotFound')}</h1>
           <Link to={ROUTES.products} className="text-stakerpol-orange hover:underline text-lg">
