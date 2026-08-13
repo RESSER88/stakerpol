@@ -137,13 +137,17 @@ const InquiryStats = () => {
           label: MONTH_SHORT[d.getMonth()],
           full: `${MONTH_SHORT[d.getMonth()]} ${d.getFullYear()}`,
           count: 0,
+          sold: 0,
           showLabel: true,
         });
       }
       rows.forEach((r) => {
         const d = new Date(r.created_at);
         const i = index.get(`${d.getFullYear()}-${d.getMonth()}`);
-        if (i !== undefined) list[i].count++;
+        if (i !== undefined) {
+          list[i].count++;
+          if (r.sold_at) list[i].sold++;
+        }
       });
       return list;
     }
