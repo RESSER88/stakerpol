@@ -35,5 +35,8 @@ export const productPath = (product: ProductLike): string =>
 export const absoluteUrl = (path: string): string =>
   `${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`;
 
+/** Domyślny obraz podglądu społecznościowego (bezwzględny URL, wymagany przez OG/Twitter). */
+export const SOCIAL_IMAGE = absoluteUrl('/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.png');
+
 /** Adres bezwzględny karty produktu. */
 export const productUrl = (product: ProductLike): string => absoluteUrl(productPath(product));
