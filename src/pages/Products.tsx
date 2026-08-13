@@ -16,7 +16,7 @@ import { FilterCriteria, matchesCriteria, matchesDefaultAvailability } from '@/c
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { getSiteDescription } from '@/config/featureFlags';
-import { ROUTES, absoluteUrl } from '@/config/routes';
+import { ROUTES, absoluteUrl, SOCIAL_IMAGE } from '@/config/routes';
 const Products = () => {
   const { language } = useLanguage();
   const t = useTranslation(language);
@@ -90,7 +90,13 @@ const Products = () => {
         <meta property="og:description" content={getPageDescription()} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={absoluteUrl(ROUTES.products)} />
-        <meta name="twitter:card" content="summary" />
+        <meta property="og:image" content={SOCIAL_IMAGE} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Paleciaki elektryczne BT Toyota – oferta | Stakerpol" />
+        <meta name="twitter:description" content={getPageDescription()} />
+        <meta name="twitter:image" content={SOCIAL_IMAGE} />
       </Helmet>
       <section className="bg-gradient-to-b from-stakerpol-lightgray to-white py-8 relative">
         <div className="container-custom relative">

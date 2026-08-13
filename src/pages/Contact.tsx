@@ -8,7 +8,7 @@ import ContactDetailsCard from '@/components/contact/ContactDetailsCard';
 import ContactLeadForm from '@/components/contact/ContactLeadForm';
 import ContactConversionCards from '@/components/contact/ContactConversionCards';
 import ContactMobileStickyBar from '@/components/contact/ContactMobileStickyBar';
-import { ROUTES, absoluteUrl } from '@/config/routes';
+import { ROUTES, absoluteUrl, SOCIAL_IMAGE } from '@/config/routes';
 
 const Contact = () => {
   return (
@@ -20,6 +20,14 @@ const Contact = () => {
         <meta property="og:title" content="Kontakt – Stakerpol" />
         <meta property="og:description" content="Paleciaki elektryczne BT Toyota – kontakt, doradztwo, serwis. Odpowiadamy tego samego dnia." />
         <meta property="og:type" content="website" />
+        <meta property="og:url" content={absoluteUrl(ROUTES.contact)} />
+        <meta property="og:image" content={SOCIAL_IMAGE} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Kontakt – Stakerpol" />
+        <meta name="twitter:description" content="Paleciaki elektryczne BT Toyota – kontakt, doradztwo, serwis." />
+        <meta name="twitter:image" content={SOCIAL_IMAGE} />
       </Helmet>
 
       <ContactTopInfoBar />

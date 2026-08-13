@@ -12,7 +12,7 @@ import { useSupabaseFAQ } from '@/hooks/useSupabaseFAQ';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import FAQSchema from '@/components/seo/FAQSchema';
 import { getYearsInBusiness } from '@/utils/yearsInBusiness';
-import { ROUTES, absoluteUrl } from '@/config/routes';
+import { ROUTES, absoluteUrl, SOCIAL_IMAGE } from '@/config/routes';
 
 const YEARS = getYearsInBusiness();
 
@@ -165,6 +165,14 @@ const Testimonials = () => {
         <meta property="og:title" content="Opinie klientów – Stakerpol" />
         <meta property="og:description" content="Sprawdź opinie klientów o Stakerpol i dodaj własną recenzję." />
         <meta property="og:type" content="website" />
+        <meta property="og:url" content={absoluteUrl(ROUTES.testimonials)} />
+        <meta property="og:image" content={SOCIAL_IMAGE} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Opinie klientów – Stakerpol" />
+        <meta name="twitter:description" content="Sprawdź opinie klientów o Stakerpol i dodaj własną recenzję." />
+        <meta name="twitter:image" content={SOCIAL_IMAGE} />
         <style>{`
           .elfsight-app-79b664bd-146f-4c14-95e6-8e8fc072c9f3 a[href*="elfsight.com"],
           .elfsight-app-79b664bd-146f-4c14-95e6-8e8fc072c9f3 [class*="PoweredBy"],
