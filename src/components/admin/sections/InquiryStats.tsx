@@ -8,6 +8,7 @@ interface StatRow {
   status: string;
   source: string;
   product_id: string | null;
+  sold_at: string | null;
 }
 
 const MONTH_SHORT = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
@@ -20,11 +21,21 @@ const RANGES: { value: Range; label: string; caption: string }[] = [
   { value: '12m', label: '12 miesięcy', caption: 'Ostatnie 12 miesięcy' },
 ];
 
+// Polska odmiana liczebników.
+const pluralPl = (n: number, one: string, few: string, many: string) => {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (n === 1) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+  return many;
+};
+
 interface Bucket {
   key: string;
   label: string;
   full: string;
   count: number;
+  sold: number;
   showLabel: boolean;
 }
 
