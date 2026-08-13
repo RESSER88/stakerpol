@@ -12,7 +12,7 @@ import { useSupabaseFAQ } from '@/hooks/useSupabaseFAQ';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import FAQSchema from '@/components/seo/FAQSchema';
 import { getYearsInBusiness } from '@/utils/yearsInBusiness';
-import { ROUTES, absoluteUrl } from '@/config/routes';
+import { ROUTES, absoluteUrl, SOCIAL_IMAGE } from '@/config/routes';
 
 const YEARS = getYearsInBusiness();
 
