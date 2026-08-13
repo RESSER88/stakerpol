@@ -131,6 +131,7 @@ export type Database = {
           phone: string
           product_id: string | null
           rodo_accepted: boolean
+          sold_at: string | null
           source: string
           status: string
           user_agent: string | null
@@ -146,6 +147,7 @@ export type Database = {
           phone: string
           product_id?: string | null
           rodo_accepted?: boolean
+          sold_at?: string | null
           source?: string
           status?: string
           user_agent?: string | null
@@ -161,6 +163,7 @@ export type Database = {
           phone?: string
           product_id?: string | null
           rodo_accepted?: boolean
+          sold_at?: string | null
           source?: string
           status?: string
           user_agent?: string | null

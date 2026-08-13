@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Phone, Mail, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Check, Package, Trash2 } from 'lucide-react';
+import { Phone, Mail, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Check, Package, Trash2, BadgeCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,7 @@ interface Lead {
   id: string;
   created_at: string;
   handled_at: string | null;
+  sold_at: string | null;
   name: string | null;
   phone: string;
   email: string | null;
@@ -48,7 +49,7 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
     setLoading(true);
     let q = supabase
       .from('leads')
-      .select('id, created_at, handled_at, name, phone, email, message, source, page_url, status, product_id', { count: 'exact' })
+      .select('id, created_at, handled_at, sold_at, name, phone, email, message, source, page_url, status, product_id', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
@@ -106,6 +107,26 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
       setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, status: newStatus } : l)));
     }
   };
+
+  // Znacznik sprzedaży jest niezależny od statusu — „sprzedane” to podzbiór „obsłużonych”.
+  const toggleSold = async (lead: Lead) => {
+    setUpdating((prev) => new Set(prev).add(lead.id));
+    const nextSoldAt = lead.sold_at ? null : new Date().toISOString();
+    const { error } = await supabase.from('leads').update({ sold_at: nextSoldAt }).eq('id', lead.id);
+    setUpdating((prev) => {
+      const n = new Set(prev);
+      n.delete(lead.id);
+      return n;
+    });
+
+    if (error) {
+      toast({ title: 'Błąd', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: nextSoldAt ? '✓ Oznaczono jako sprzedane' : 'Cofnięto oznaczenie sprzedaży' });
+    setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, sold_at: nextSoldAt } : l)));
+  };
+
 
   const deleteLead = async (lead: Lead) => {
     if (!confirm(`Usunąć zapytanie od ${lead.name || lead.phone}? Tej operacji nie można cofnąć.`)) return;
@@ -184,6 +205,7 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
             const isLong = (lead.message?.length ?? 0) > 120;
             const shortMsg = isLong ? `${lead.message!.slice(0, 120)}…` : lead.message;
             const isHandled = lead.status === 'handled';
+            const isSold = !!lead.sold_at;
             const isUpdating = updating.has(lead.id);
 
 
@@ -193,7 +215,11 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                   <span
                     className={cn(
                       'h-2 w-2 rounded-full mt-2 shrink-0',
-                      isHandled ? 'bg-editorial-muted' : 'bg-editorial-ok animate-pulse'
+                      isSold
+                        ? 'bg-editorial-accent'
+                        : isHandled
+                          ? 'bg-editorial-muted'
+                          : 'bg-editorial-ok animate-pulse'
                     )}
                   />
                   <div className="min-w-0 flex-1">
@@ -201,7 +227,7 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                       <span
                         className={cn(
                           'font-editorial text-base',
-                          isHandled ? 'text-editorial-muted' : 'text-editorial-ink'
+                          isHandled && !isSold ? 'text-editorial-muted' : 'text-editorial-ink'
                         )}
                       >
                         {lead.name || 'Bez nazwy'}
@@ -209,7 +235,14 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                       <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-editorial-muted">
                         {leadSourceLabel(lead.source)}
                       </span>
+                      {isSold && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-[0.2em] uppercase text-editorial-accent">
+                          <BadgeCheck className="h-3 w-3" />
+                          Sprzedane
+                        </span>
+                      )}
                     </div>
+
 
                     <div className="text-xs text-editorial-muted flex items-center gap-3 flex-wrap mt-1.5">
                       <a
@@ -291,6 +324,21 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                     <Check className="h-3 w-3" />
                     {isHandled ? 'Cofnij' : 'Obsłużone'}
                   </button>
+                  {isHandled && (
+                    <button
+                      disabled={isUpdating}
+                      onClick={() => toggleSold(lead)}
+                      className={cn(
+                        'px-3 h-8 inline-flex items-center gap-1.5 border text-[11px] font-bold tracking-[0.15em] uppercase transition-colors disabled:opacity-50',
+                        isSold
+                          ? 'border-editorial-accent bg-editorial-accent text-white hover:bg-editorial-accent/90'
+                          : 'border-editorial-accent text-editorial-accent hover:bg-editorial-accent hover:text-white'
+                      )}
+                    >
+                      <BadgeCheck className="h-3 w-3" />
+                      {isSold ? 'Cofnij sprzedaż' : 'Kupił'}
+                    </button>
+                  )}
                   {isHandled && (
                     <button
                       disabled={isUpdating}

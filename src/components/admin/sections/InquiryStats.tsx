@@ -8,6 +8,7 @@ interface StatRow {
   status: string;
   source: string;
   product_id: string | null;
+  sold_at: string | null;
 }
 
 const MONTH_SHORT = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
@@ -20,11 +21,21 @@ const RANGES: { value: Range; label: string; caption: string }[] = [
   { value: '12m', label: '12 miesięcy', caption: 'Ostatnie 12 miesięcy' },
 ];
 
+// Polska odmiana liczebników.
+const pluralPl = (n: number, one: string, few: string, many: string) => {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (n === 1) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+  return many;
+};
+
 interface Bucket {
   key: string;
   label: string;
   full: string;
   count: number;
+  sold: number;
   showLabel: boolean;
 }
 
@@ -41,7 +52,7 @@ const InquiryStats = () => {
       setLoading(true);
       const { data } = await supabase
         .from('leads')
-        .select('created_at, status, source, product_id')
+        .select('created_at, status, source, product_id, sold_at')
         .order('created_at', { ascending: false });
       const list = (data ?? []) as StatRow[];
 
@@ -68,6 +79,7 @@ const InquiryStats = () => {
 
     let newCount = 0;
     let handledCount = 0;
+    let soldCount = 0;
     let overdue = 0;
     let thisMonth = 0;
 
@@ -78,6 +90,7 @@ const InquiryStats = () => {
     rows.forEach((r) => {
       const created = new Date(r.created_at);
       if (r.status === 'handled') handledCount++;
+      if (r.sold_at) soldCount++;
       if (r.status === 'new') {
         newCount++;
         if (created.getTime() < sevenDaysAgo) overdue++;
@@ -97,6 +110,7 @@ const InquiryStats = () => {
       total: rows.length,
       newCount,
       handledCount,
+      soldCount,
       overdue,
       thisMonth,
       sources: Array.from(sources.entries()).sort((a, b) => b[1] - a[1]),
@@ -123,13 +137,17 @@ const InquiryStats = () => {
           label: MONTH_SHORT[d.getMonth()],
           full: `${MONTH_SHORT[d.getMonth()]} ${d.getFullYear()}`,
           count: 0,
+          sold: 0,
           showLabel: true,
         });
       }
       rows.forEach((r) => {
         const d = new Date(r.created_at);
         const i = index.get(`${d.getFullYear()}-${d.getMonth()}`);
-        if (i !== undefined) list[i].count++;
+        if (i !== undefined) {
+          list[i].count++;
+          if (r.sold_at) list[i].sold++;
+        }
       });
       return list;
     }
@@ -148,6 +166,7 @@ const InquiryStats = () => {
         label,
         full: label,
         count: 0,
+        sold: 0,
         showLabel: false,
       });
     }
@@ -158,7 +177,10 @@ const InquiryStats = () => {
     rows.forEach((r) => {
       const d = new Date(r.created_at);
       const i = index.get(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
-      if (i !== undefined) list[i].count++;
+      if (i !== undefined) {
+        list[i].count++;
+        if (r.sold_at) list[i].sold++;
+      }
     });
     return list;
   }, [rows, range]);
@@ -178,13 +200,14 @@ const InquiryStats = () => {
   const counters: { value: number; label: string; highlight?: boolean }[] = [
     { value: stats.newCount, label: 'Nowe' },
     { value: stats.handledCount, label: 'Obsłużone' },
+    { value: stats.soldCount, label: 'Zakończone sprzedażą', highlight: stats.soldCount > 0 },
     { value: stats.overdue, label: 'Zaległe (>7 dni)', highlight: stats.overdue > 0 },
     { value: stats.thisMonth, label: 'W tym miesiącu' },
   ];
 
   return (
     <div>
-      <div className="grid grid-cols-2 md:grid-cols-4 border-t border-editorial-line">
+      <div className="grid grid-cols-2 md:grid-cols-5 border-t border-editorial-line">
         {counters.map((c) => (
           <div key={c.label} className="py-6 border-b border-editorial-line">
             <p
@@ -226,7 +249,8 @@ const InquiryStats = () => {
           {active && (
             <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-editorial-ink">
               {active.full} — {active.count}{' '}
-              {active.count === 1 ? 'zapytanie' : 'zapytań'}
+              {pluralPl(active.count, 'zapytanie', 'zapytania', 'zapytań')}, {active.sold}{' '}
+              {pluralPl(active.sold, 'sprzedaż', 'sprzedaże', 'sprzedaży')}
             </p>
           )}
         </div>
@@ -236,7 +260,7 @@ const InquiryStats = () => {
             <button
               key={b.key}
               type="button"
-              aria-label={`${b.full}: ${b.count}`}
+              aria-label={`${b.full}: ${b.count} zapytań, ${b.sold} sprzedaży`}
               onMouseEnter={() => setActiveBucket(b.key)}
               onMouseLeave={() => setActiveBucket((k) => (k === b.key ? null : k))}
               onClick={() => setActiveBucket((k) => (k === b.key ? null : b.key))}
@@ -244,11 +268,18 @@ const InquiryStats = () => {
             >
               <span
                 className={cn(
-                  'w-full block transition-colors',
+                  'w-full block flex flex-col justify-end transition-colors',
                   activeBucket === b.key ? 'bg-editorial-ink' : 'bg-editorial-ink/60'
                 )}
                 style={{ height: `${Math.max((b.count / maxBucket) * 100, b.count > 0 ? 4 : 1)}%` }}
-              />
+              >
+                {b.sold > 0 && (
+                  <span
+                    className="w-full block bg-editorial-accent"
+                    style={{ height: `${Math.min((b.sold / Math.max(b.count, 1)) * 100, 100)}%` }}
+                  />
+                )}
+              </span>
             </button>
           ))}
         </div>
