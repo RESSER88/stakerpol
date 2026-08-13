@@ -63,7 +63,8 @@ const randomSuffix = (): string => {
 
 const buildToken = (label: string): string => `${slugifyLabel(label)}-${randomSuffix()}`;
 
-const buildUrl = (token: string) => `${window.location.origin}/oferta/${token}`;
+const buildUrl = (token: string) =>
+  `${SITE_URL}${ROUTES.sharedOffer.replace(':token', token)}`;
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
