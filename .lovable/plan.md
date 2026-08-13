@@ -1,41 +1,20 @@
-# Adresy URL i filtr dostępności w sitemapie oraz feedzie produktowym
+# Adres produktu w danych strukturalnych JSON-LD
 
-Cel: obie funkcje brzegowe mają emitować wyłącznie obecne, polskie adresy serwisu i pomijać egzemplarze sprzedane. Bez zmian w warstwie frontendu, bazie danych, politykach RLS i konfiguracji.
+## Problem
 
-## Stan wyjściowy (potwierdzony w repozytorium)
+Pole `url` w schemacie `Product` jest budowane z bieżącego adresu przeglądarki, więc na środowisku testowym (`stakerpol.lovable.app`) dane strukturalne wskazują adres testowy zamiast produkcyjnego. Canonical i `og:url` już korzystają ze stałej domeny produkcyjnej — JSON-LD jest jedynym rozbieżnym miejscem.
 
-- `supabase/functions/sitemap/index.ts` emituje `/`, `/products`, `/contact`, `/testimonials`, `/faq` oraz `/products/{slug||id}` — poza `/faq` to adresy stare (angielskie), obsługiwane wyłącznie przez przekierowania 301 w `src/App.tsx`.
-- `supabase/functions/geo-feed/index.ts` emituje `${baseUrl}/products/{slug||id}` — również adresy stare.
-- Żadna z funkcji nie filtruje produktów; `products.availability_status` (enum: `available` / `reserved` / `sold`) jest ignorowany.
-- Brakuje wpisów dla `/prywatnosc`; brak jest też stron `/opinie` i `/kontakt` w wersji polskiej.
+## Zakres
 
-## Zakres zmian
-
-### 1. `supabase/functions/sitemap/index.ts`
-
-- Lista stron statycznych na obecne ścieżki: `/`, `/produkty`, `/kontakt`, `/opinie`, `/faq`, `/prywatnosc`. Bez `/admin` i `/oferta` (zablokowane w `robots.txt`).
-- Ścieżka produktu: `/produkty/{slug||id}`.
-- Zapytanie o produkty rozszerzone o `availability_status`; do sitemapy trafiają egzemplarze `available` i `reserved`, pomijane są `sold`.
-- `lastmod` produktu pozostaje `updated_at`. Dla stron statycznych `lastmod` zostaje usunięty — dotąd wstawiał czas wygenerowania odpowiedzi, czyli wartość niezwiązaną z faktyczną zmianą treści.
-- Bez zmian: nagłówki, `Cache-Control`, sekcja `image:image`, obsługa błędów, `baseUrl`.
-
-### 2. `supabase/functions/geo-feed/index.ts`
-
-- `url` pozycji: `${baseUrl}/produkty/{slug||id}`.
-- Zapytanie rozszerzone o `availability_status`; pozycje `sold` pomijane, `numberOfItems` i `position` liczone po odfiltrowaniu.
-- `offers.availability` mapowane z `availability_status`: `available` → `InStock`, `reserved` → `PreOrder` (dotąd zawsze `InStock`).
-- Bez zmian: struktura `ItemList`, `publisher`, `additionalProperty`, obsługa zdjęć i nagłówki odpowiedzi.
+1. `src/utils/seo/generateProductSchema.ts` — funkcja `getCurrentUrl` przestaje czytać adres przeglądarki i zawsze zwraca kanoniczny adres produktu (`productUrl(product)`), spójny z canonical i `og:url`.
+2. `src/components/seo/ProductSchema.tsx` — ta sama korekta w analogicznym miejscu, aby oba generatory schematu emitowały identyczny adres.
 
 ## Poza zakresem
 
-- Dostępność `/sitemap.xml` pod adresem z `robots.txt` i `llms.txt`.
-- Obsługa nieistniejącego produktu i `noindex`.
-- Mechanizm wyboru zdjęcia `og:image`.
-- Frontend, `index.html`, `robots.txt`, `llms.txt`, baza danych, RLS, `config.toml`.
+- Pozostałe elementy raportu (fallback `og:image`, `noindex` dla sprzedanych, rozróżnienie środowisk).
+- Struktura schematu, logika ceny, dostępności i pola SEO produktu.
+- Migracje bazy, polityki RLS, konfiguracja.
 
-## Szczegóły techniczne
+## Kryterium akceptacji
 
-- Obie funkcje zostaną wdrożone ponownie po edycji (deploy funkcji brzegowych), bez migracji bazy.
-- Filtr dostępności realizowany po stronie zapytania (`.neq('availability_status', 'sold')`), aby nie zwiększać transferu.
-- Ścieżki zostaną wpisane wprost w kodzie funkcji — `src/config/routes.ts` nie jest importowalne z Deno.
-- Weryfikacja: wywołanie obu funkcji i sprawdzenie, że każdy `<loc>` oraz każde `url` zawiera wyłącznie ścieżki polskie i że liczba pozycji odpowiada produktom nie oznaczonym jako sprzedane.
+Na środowisku testowym i produkcyjnym `Product.url` w JSON-LD jest identyczny z canonical strony produktu i zawiera domenę `stakerpol.pl`; pozostałe pola schematu bez zmian.
