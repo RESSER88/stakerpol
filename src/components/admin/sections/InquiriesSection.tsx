@@ -205,6 +205,7 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
             const isLong = (lead.message?.length ?? 0) > 120;
             const shortMsg = isLong ? `${lead.message!.slice(0, 120)}…` : lead.message;
             const isHandled = lead.status === 'handled';
+            const isSold = !!lead.sold_at;
             const isUpdating = updating.has(lead.id);
 
 
@@ -214,7 +215,11 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                   <span
                     className={cn(
                       'h-2 w-2 rounded-full mt-2 shrink-0',
-                      isHandled ? 'bg-editorial-muted' : 'bg-editorial-ok animate-pulse'
+                      isSold
+                        ? 'bg-editorial-accent'
+                        : isHandled
+                          ? 'bg-editorial-muted'
+                          : 'bg-editorial-ok animate-pulse'
                     )}
                   />
                   <div className="min-w-0 flex-1">
@@ -222,7 +227,7 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                       <span
                         className={cn(
                           'font-editorial text-base',
-                          isHandled ? 'text-editorial-muted' : 'text-editorial-ink'
+                          isHandled && !isSold ? 'text-editorial-muted' : 'text-editorial-ink'
                         )}
                       >
                         {lead.name || 'Bez nazwy'}
@@ -230,7 +235,14 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                       <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-editorial-muted">
                         {leadSourceLabel(lead.source)}
                       </span>
+                      {isSold && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-[0.2em] uppercase text-editorial-accent">
+                          <BadgeCheck className="h-3 w-3" />
+                          Sprzedane
+                        </span>
+                      )}
                     </div>
+
 
                     <div className="text-xs text-editorial-muted flex items-center gap-3 flex-wrap mt-1.5">
                       <a
