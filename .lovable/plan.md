@@ -1,39 +1,41 @@
-# Oznaczanie zapytań zakończonych sprzedażą
+# Adresy URL i filtr dostępności w sitemapie oraz feedzie produktowym
 
-Cel: odwracalna akcja „Kupił” przy zapytaniu obsłużonym oraz sprzedaż widoczna w statystykach — bez zmiany działania zakładek Nowe / Obsłużone / Wszystkie i bez nowej zakładki.
+Cel: obie funkcje brzegowe mają emitować wyłącznie obecne, polskie adresy serwisu i pomijać egzemplarze sprzedane. Bez zmian w warstwie frontendu, bazie danych, politykach RLS i konfiguracji.
 
-## Wybrany wariant
+## Stan wyjściowy (potwierdzony w repozytorium)
 
-Nowa, domyślnie pusta kolumna znacznikowa z datą oznaczenia sprzedaży (`sold_at`), zamiast nowej wartości statusu. „Sprzedane” pozostaje podzbiorem „obsłużonych”, więc licznik obsłużonych i filtry zakładek działają bez zmian.
+- `supabase/functions/sitemap/index.ts` emituje `/`, `/products`, `/contact`, `/testimonials`, `/faq` oraz `/products/{slug||id}` — poza `/faq` to adresy stare (angielskie), obsługiwane wyłącznie przez przekierowania 301 w `src/App.tsx`.
+- `supabase/functions/geo-feed/index.ts` emituje `${baseUrl}/products/{slug||id}` — również adresy stare.
+- Żadna z funkcji nie filtruje produktów; `products.availability_status` (enum: `available` / `reserved` / `sold`) jest ignorowany.
+- Brakuje wpisów dla `/prywatnosc`; brak jest też stron `/opinie` i `/kontakt` w wersji polskiej.
 
-## Zakres
+## Zakres zmian
 
-### 1. Baza danych
-- Dodanie kolumny `sold_at` (data i godzina, domyślnie pusta) w tabeli zapytań.
-- Indeks częściowy dla wierszy z ustawioną datą sprzedaży.
-- Bez zmian w ograniczeniu statusu, triggerze `handled_at` i politykach dostępu — obecna polityka aktualizacji dla administratora obejmuje nową kolumnę.
+### 1. `supabase/functions/sitemap/index.ts`
 
-### 2. Lista zapytań (widok Obsłużone)
-- Pobieranie nowej kolumny w zapytaniu listy oraz w typie wiersza.
-- Nowa akcja przy wierszu, widoczna tylko dla zapytań obsłużonych, obok „Cofnij” i „Usuń”:
-  - stan wyjściowy: „Kupił” — ustawia datę sprzedaży na teraz,
-  - stan oznaczony: „Cofnij sprzedaż” — czyści datę (odwracalność),
-  - blokada przycisku w trakcie zapisu, komunikat toast po zapisie, aktualizacja wiersza lokalnie bez przeładowania listy.
-- Oznaczony wiersz dostaje dyskretną etykietę „Sprzedane” obok źródła zapytania oraz wyróżniony wskaźnik statusu, w istniejącej stylistyce widoku.
+- Lista stron statycznych na obecne ścieżki: `/`, `/produkty`, `/kontakt`, `/opinie`, `/faq`, `/prywatnosc`. Bez `/admin` i `/oferta` (zablokowane w `robots.txt`).
+- Ścieżka produktu: `/produkty/{slug||id}`.
+- Zapytanie o produkty rozszerzone o `availability_status`; do sitemapy trafiają egzemplarze `available` i `reserved`, pomijane są `sold`.
+- `lastmod` produktu pozostaje `updated_at`. Dla stron statycznych `lastmod` zostaje usunięty — dotąd wstawiał czas wygenerowania odpowiedzi, czyli wartość niezwiązaną z faktyczną zmianą treści.
+- Bez zmian: nagłówki, `Cache-Control`, sekcja `image:image`, obsługa błędów, `baseUrl`.
 
-### 3. Statystyki
-- Dwa liczniki w siatce górnej: „Obsłużone” (bez zmian) oraz nowy „Zakończone sprzedażą”.
-- Wykres: w każdym słupku wyróżniony udział sprzedaży (segment dolny w mocniejszym akcencie, część obsłużona bez zmian).
-- Podpowiedź po najechaniu: do istniejącej warstwy dopisana liczba sprzedaży dla danego okresu, np. „maj 2026 — 12 zapytań, 3 sprzedaże”.
+### 2. `supabase/functions/geo-feed/index.ts`
 
-## Szczegóły techniczne
-
-- Migracja: `ALTER TABLE public.leads ADD COLUMN sold_at timestamptz` + `CREATE INDEX ... WHERE sold_at IS NOT NULL`. Bez zmiany `leads_status_check` i funkcji `set_lead_handled_at()`.
-- `src/components/admin/sections/InquiriesSection.tsx`: rozszerzenie interfejsu `Lead` i listy kolumn w `select` (linia 51), nowy handler `toggleSold` obok `markHandled` (wzorowany na nim: `updating`, obsługa błędu, toast), nowy przycisk w bloku akcji (linie 273–304). Bez zmian w `StatusFilter`, `TabValue`, filtrze `.eq('status', filter)`, paginacji i usuwaniu.
-- `src/components/admin/sections/InquiryStats.tsx`: `sold_at` w `select` i w `StatRow`, `soldCount` w `stats`, pole `sold` w `Bucket` i jego zliczanie w obu gałęziach (12 miesięcy oraz 7/30 dni), słupek jako kontener z dwoma segmentami, rozszerzony tekst aktywnej podpowiedzi.
-- Kolory wyłącznie z istniejących tokenów widoku (`editorial-ink`, `editorial-accent`, `editorial-muted`).
+- `url` pozycji: `${baseUrl}/produkty/{slug||id}`.
+- Zapytanie rozszerzone o `availability_status`; pozycje `sold` pomijane, `numberOfItems` i `position` liczone po odfiltrowaniu.
+- `offers.availability` mapowane z `availability_status`: `available` → `InStock`, `reserved` → `PreOrder` (dotąd zawsze `InStock`).
+- Bez zmian: struktura `ItemList`, `publisher`, `additionalProperty`, obsługa zdjęć i nagłówki odpowiedzi.
 
 ## Poza zakresem
 
-- Nowa zakładka filtrująca sprzedane.
-- Zmiany w statusach, usuwaniu zapytań, powiadomieniach o nowym zapytaniu i eksportach.
+- Dostępność `/sitemap.xml` pod adresem z `robots.txt` i `llms.txt`.
+- Obsługa nieistniejącego produktu i `noindex`.
+- Mechanizm wyboru zdjęcia `og:image`.
+- Frontend, `index.html`, `robots.txt`, `llms.txt`, baza danych, RLS, `config.toml`.
+
+## Szczegóły techniczne
+
+- Obie funkcje zostaną wdrożone ponownie po edycji (deploy funkcji brzegowych), bez migracji bazy.
+- Filtr dostępności realizowany po stronie zapytania (`.neq('availability_status', 'sold')`), aby nie zwiększać transferu.
+- Ścieżki zostaną wpisane wprost w kodzie funkcji — `src/config/routes.ts` nie jest importowalne z Deno.
+- Weryfikacja: wywołanie obu funkcji i sprawdzenie, że każdy `<loc>` oraz każde `url` zawiera wyłącznie ścieżki polskie i że liczba pozycji odpowiada produktom nie oznaczonym jako sprzedane.
