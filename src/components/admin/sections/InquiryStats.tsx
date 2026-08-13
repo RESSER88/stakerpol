@@ -52,7 +52,7 @@ const InquiryStats = () => {
       setLoading(true);
       const { data } = await supabase
         .from('leads')
-        .select('created_at, status, source, product_id')
+        .select('created_at, status, source, product_id, sold_at')
         .order('created_at', { ascending: false });
       const list = (data ?? []) as StatRow[];
 
@@ -79,6 +79,7 @@ const InquiryStats = () => {
 
     let newCount = 0;
     let handledCount = 0;
+    let soldCount = 0;
     let overdue = 0;
     let thisMonth = 0;
 
@@ -89,6 +90,7 @@ const InquiryStats = () => {
     rows.forEach((r) => {
       const created = new Date(r.created_at);
       if (r.status === 'handled') handledCount++;
+      if (r.sold_at) soldCount++;
       if (r.status === 'new') {
         newCount++;
         if (created.getTime() < sevenDaysAgo) overdue++;
@@ -108,6 +110,7 @@ const InquiryStats = () => {
       total: rows.length,
       newCount,
       handledCount,
+      soldCount,
       overdue,
       thisMonth,
       sources: Array.from(sources.entries()).sort((a, b) => b[1] - a[1]),
