@@ -200,13 +200,14 @@ const InquiryStats = () => {
   const counters: { value: number; label: string; highlight?: boolean }[] = [
     { value: stats.newCount, label: 'Nowe' },
     { value: stats.handledCount, label: 'Obsłużone' },
+    { value: stats.soldCount, label: 'Zakończone sprzedażą', highlight: stats.soldCount > 0 },
     { value: stats.overdue, label: 'Zaległe (>7 dni)', highlight: stats.overdue > 0 },
     { value: stats.thisMonth, label: 'W tym miesiącu' },
   ];
 
   return (
     <div>
-      <div className="grid grid-cols-2 md:grid-cols-4 border-t border-editorial-line">
+      <div className="grid grid-cols-2 md:grid-cols-5 border-t border-editorial-line">
         {counters.map((c) => (
           <div key={c.label} className="py-6 border-b border-editorial-line">
             <p
