@@ -166,6 +166,7 @@ const InquiryStats = () => {
         label,
         full: label,
         count: 0,
+        sold: 0,
         showLabel: false,
       });
     }
@@ -176,7 +177,10 @@ const InquiryStats = () => {
     rows.forEach((r) => {
       const d = new Date(r.created_at);
       const i = index.get(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
-      if (i !== undefined) list[i].count++;
+      if (i !== undefined) {
+        list[i].count++;
+        if (r.sold_at) list[i].sold++;
+      }
     });
     return list;
   }, [rows, range]);
