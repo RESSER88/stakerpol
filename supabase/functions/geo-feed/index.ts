@@ -37,8 +37,10 @@ serve(async (req) => {
         lift_capacity_mast,
         drive_type,
         image_url,
-        updated_at
+        updated_at,
+        availability_status
       `)
+      .neq('availability_status', 'sold')
       .order('updated_at', { ascending: false });
 
     if (error) {
@@ -93,7 +95,7 @@ serve(async (req) => {
             "@type": "Product",
             "name": product.name,
             "description": product.short_description || product.detailed_description,
-            "url": `${baseUrl}/products/${product.slug || product.id}`,
+            "url": `${baseUrl}/produkty/${product.slug || product.id}`,
             "image": images.length > 0 ? images : (product.image_url ? [{
               "@type": "ImageObject",
               "url": product.image_url,
@@ -136,7 +138,7 @@ serve(async (req) => {
             ],
             "offers": {
               "@type": "Offer",
-              "availability": "https://schema.org/InStock",
+              "availability": product.availability_status === 'reserved' ? "https://schema.org/LimitedAvailability" : "https://schema.org/InStock",
               "priceCurrency": "PLN",
               "seller": {
                 "@type": "Organization",

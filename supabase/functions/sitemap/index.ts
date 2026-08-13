@@ -23,7 +23,8 @@ serve(async (req) => {
     // Fetch all products with their images
     const { data: products, error } = await supabase
       .from('products')
-      .select('id, slug, updated_at, product_images(image_url)')
+      .select('id, slug, updated_at, availability_status, product_images(image_url)')
+      .neq('availability_status', 'sold')
       .order('updated_at', { ascending: false });
 
     if (error) {
@@ -38,17 +39,18 @@ serve(async (req) => {
     const now = new Date().toISOString();
     
     // Static pages
-    const staticPages = [
-      { url: '/', lastmod: now, changefreq: 'weekly', priority: '1.0' },
-      { url: '/products', lastmod: now, changefreq: 'daily', priority: '0.9' },
-      { url: '/contact', lastmod: now, changefreq: 'monthly', priority: '0.8' },
-      { url: '/testimonials', lastmod: now, changefreq: 'monthly', priority: '0.7' },
-      { url: '/faq', lastmod: now, changefreq: 'monthly', priority: '0.7' },
+    const staticPages: Array<{ url: string; lastmod?: string; changefreq: string; priority: string }> = [
+      { url: '/', changefreq: 'weekly', priority: '1.0' },
+      { url: '/produkty', changefreq: 'daily', priority: '0.9' },
+      { url: '/kontakt', changefreq: 'monthly', priority: '0.8' },
+      { url: '/opinie', changefreq: 'monthly', priority: '0.7' },
+      { url: '/faq', changefreq: 'monthly', priority: '0.7' },
+      { url: '/prywatnosc', changefreq: 'monthly', priority: '0.5' },
     ];
 
     // Product pages
     const productPages = (products || []).map((product: any) => ({
-      url: `/products/${product.slug || product.id}`,
+      url: `/produkty/${product.slug || product.id}`,
       lastmod: product.updated_at || now,
       changefreq: 'weekly',
       priority: '0.8',
@@ -61,8 +63,7 @@ serve(async (req) => {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${allPages.map(page => `  <url>
     <loc>${baseUrl}${page.url}</loc>
-    <lastmod>${page.lastmod}</lastmod>
-    <changefreq>${page.changefreq}</changefreq>
+${page.lastmod ? `    <lastmod>${page.lastmod}</lastmod>\n` : ''}    <changefreq>${page.changefreq}</changefreq>
     <priority>${page.priority}</priority>
     ${Array.isArray((page as any).images) ? (page as any).images.map((img: string) => `    <image:image><image:loc>${img.startsWith('http') ? img : baseUrl + img}</image:loc></image:image>`).join('\n') : ''}
   </url>`).join('\n')}
