@@ -1,5 +1,6 @@
 
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
