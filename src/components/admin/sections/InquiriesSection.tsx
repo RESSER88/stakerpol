@@ -108,6 +108,26 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
     }
   };
 
+  // Znacznik sprzedaży jest niezależny od statusu — „sprzedane” to podzbiór „obsłużonych”.
+  const toggleSold = async (lead: Lead) => {
+    setUpdating((prev) => new Set(prev).add(lead.id));
+    const nextSoldAt = lead.sold_at ? null : new Date().toISOString();
+    const { error } = await supabase.from('leads').update({ sold_at: nextSoldAt }).eq('id', lead.id);
+    setUpdating((prev) => {
+      const n = new Set(prev);
+      n.delete(lead.id);
+      return n;
+    });
+
+    if (error) {
+      toast({ title: 'Błąd', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: nextSoldAt ? '✓ Oznaczono jako sprzedane' : 'Cofnięto oznaczenie sprzedaży' });
+    setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, sold_at: nextSoldAt } : l)));
+  };
+
+
   const deleteLead = async (lead: Lead) => {
     if (!confirm(`Usunąć zapytanie od ${lead.name || lead.phone}? Tej operacji nie można cofnąć.`)) return;
     setUpdating((prev) => new Set(prev).add(lead.id));
