@@ -327,6 +327,21 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                   {isHandled && (
                     <button
                       disabled={isUpdating}
+                      onClick={() => toggleSold(lead)}
+                      className={cn(
+                        'px-3 h-8 inline-flex items-center gap-1.5 border text-[11px] font-bold tracking-[0.15em] uppercase transition-colors disabled:opacity-50',
+                        isSold
+                          ? 'border-editorial-accent bg-editorial-accent text-white hover:bg-editorial-accent/90'
+                          : 'border-editorial-accent text-editorial-accent hover:bg-editorial-accent hover:text-white'
+                      )}
+                    >
+                      <BadgeCheck className="h-3 w-3" />
+                      {isSold ? 'Cofnij sprzedaż' : 'Kupił'}
+                    </button>
+                  )}
+                  {isHandled && (
+                    <button
+                      disabled={isUpdating}
                       onClick={() => deleteLead(lead)}
                       className="px-3 h-8 inline-flex items-center gap-1.5 border border-destructive/40 text-destructive text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-destructive hover:text-destructive-foreground transition-colors disabled:opacity-50"
                     >
