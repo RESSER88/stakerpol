@@ -1,83 +1,133 @@
-# Weryfikacja techniczna przed publikacją na stakerpol.pl
+# Analiza wysokiego ryzyka — prerender kart produktu (dist/ + Nginx)
 
-Wszystkie ustalenia poniżej wynikają z odczytu kodu i zapytań do bazy (nie zmieniano niczego).
+Raport opisowy. Nic nie zmieniono w kodzie, bazie ani konfiguracji.
 
-## 1. Cena produktu i dane Product / Offer
+## 1. Wykonalność renderu w Node
 
-Dane w bazie: `show_price` — 11 egzemplarzy (wszystkie z ceną), `inquiry_with_pricelist` — 29 (1 z ceną), `inquiry_only` — 4 (bez ceny). Czyli 33 z 44 ofert nie ma publicznej ceny.
+Da się, ale nie „na wprost” — drzewo `ProductDetail` jest osadzone w `App.tsx`, którego nie można użyć w Node bez zmian. Konkretne przeszkody:
 
-| Element | Co dzieje się teraz | Przyczyna techniczna | Problem | Zalecane rozwiązanie | Pliki | Ryzyko |
-|---|---|---|---|---|---|---|
-| Miejsce ceny w modelu | Kolumny `products.net_price`, `price_currency`, `price_display_mode` + `leasing_monthly_from_pln`; mapowane na `netPrice`, `priceCurrency`, `priceDisplayMode` | `src/types/supabase.ts:49-50` | Nie | Bez zmian (model wystarczający) | — | — |
-| Cena na karcie produktu | Blok ceny renderuje się tylko dla `show_price` + cena > 0; w pozostałych przypadkach `return null` — brak jakiegokolwiek komunikatu | Świadoma decyzja z wcześniejszego etapu (ukrycie całego bloku) | Tak — brak stanu „Cena na zapytanie” | Wariant B bloku: gdy cena nieujawniona, ten sam kontener pokazuje „Cena na zapytanie” + odnośnik do CTA | `src/components/products/ProductPriceBlock.tsx` | Niskie; jedna zmiana prezentacyjna |
-| Cena w katalogu | Karta katalogowa nie pokazuje ceny ani informacji o niej | Komponent nigdy nie czytał pól cenowych | Tak | Dodać jeden wiersz ceny / „Cena na zapytanie” w stopce karty, ta sama funkcja decydująca co na karcie produktu | `src/components/ui/ProductCard.tsx`, nowy `src/utils/productPricing.ts` (współdzielona logika `resolvePriceView`) | Niskie |
-| `offers.price` / `priceCurrency` w JSON-LD | Emitowane **tylko** dla `show_price` i ceny > 0; dla pozostałych całkowicie pominięte | `src/utils/seo/generateProductSchema.ts:330-344` — zamierzone, brak fikcyjnych cen | Nie (poprawne) | Bez zmian; po wdrożeniu wspólnej funkcji schema korzysta z tego samego źródła | `generateProductSchema.ts` | — |
-| Zgodność `availability`, `itemCondition`, `sku`, `brand`, `image`, `description` | `availability` z `availability_status`, `itemCondition` ze `condition`, `sku` = numer seryjny (fallback `id`), `brand` = zawsze „Toyota”, `image` z galerii, `description` ze `short_description` | `generateProductSchema.ts:236-258` | Częściowo: `brand` twardo „Toyota” (funkcja `getBrand` zwraca Toyota w każdej gałęzi), `sku` bywa `id` gdy brak numeru | Uporządkować `getBrand` (jawnie Toyota jako marka katalogu) i wymagać numeru seryjnego jako SKU | `generateProductSchema.ts`, `src/components/seo/ProductSchema.tsx` | Niskie; SKU zależy od kompletności danych w bazie |
+| Przeszkoda | Miejsce | Rodzaj obejścia |
+|---|---|---|
+| `createRoot(document.getElementById("root"))` | `src/main.tsx` | Skrypt nie może importować `main.tsx`; potrzebny osobny punkt wejścia dla renderu (np. `entry-prerender.tsx`) |
+| `storage: localStorage` wykonywane przy imporcie modułu | `src/integrations/supabase/client.ts:11` | Twardy błąd w Node już przy `import`. Skrypt buildu musi używać **własnego** klienta Supabase (nowy `createClient` bez `auth.storage`), nie tego z aplikacji |
+| `BrowserRouter` | `App.tsx` | Zamiana na `StaticRouter`/`createMemoryRouter` w punkcie wejścia prerenderu |
+| `usePageTracking` (GA4, `window`) | `App.tsx` | Nie montować w prerenderze (osobne drzewo bez `AppRoutes`) |
+| `SupabaseAuthProvider` | `App.tsx` | Pomijany — karta produktu go nie potrzebuje |
+| `React.lazy` dla stron | `App.tsx` | W prerenderze importować `ProductDetail` statycznie; alternatywnie `renderToPipeableStream` z `Suspense` |
+| React Query (`usePublicSupabaseProducts`, `useSupabaseFAQ`, `useProductSEO`, `useProductTranslationsDisplay`) | hooki | Dane muszą być w cache **przed** renderem: `queryClient.setQueryData(['public-products'], ...)` dla każdego klucza. Klucze trzeba odczytać z hooków i zduplikować w skrypcie — ryzyko rozjechania się kluczy |
+| `subscribe()` realtime w `useEffect` | `usePublicSupabaseProducts.ts` | Efekty nie działają w `renderToString` — bez obejścia |
+| `document.documentElement.lang`, `window.scrollTo`, `document.getElementById('lead-form')`, `document.body.style` | `LanguageContext`, `Footer`, `InlineContextualCTA`, `PresentationModal` | Wszystkie w `useEffect`/handlerach → nieuruchamiane przy renderze serwerowym. Bez obejścia |
+| shadcn/ui (Radix: accordion, tooltip, dialog, sonner) | cała karta | Radix renderuje się w SSR; `Toaster`/`Sonner`/portale pomijamy w drzewie prerenderu |
+| Galeria zdjęć | `ProductImage.tsx` — własny stan, brak embla/lightbox na starcie | Bez obejścia |
+| Helmet | `ProductDetail` | `HelmetProvider` + `helmetContext.helmet` do wstrzyknięcia `<title>`, meta, canonical i JSON-LD do `<head>` szablonu |
+| TS/JSX + aliasy `@/`, import CSS | cały kod | Skrypt musi być uruchamiany przez narzędzie rozumiejące konfigurację Vite (`vite build --ssr` na osobnym entry lub `vite-node`), nie przez czysty `node` |
 
-Dlaczego dziś brakuje `price`: nie jest to błąd — schema celowo pomija cenę, gdy tryb prezentacji jej nie ujawnia. Widoczny brak dotyczy wyłącznie **warstwy UI** (brak komunikatu „Cena na zapytanie”).
+Wniosek: wykonalne bez przeglądarki, ale wymaga **drugiego punktu wejścia** i drugiego, niezależnego klienta Supabase. Alternatywa — render przez headless Chromium na zbudowanym `dist/` — jest prostsza koncepcyjnie (zero obejść w kodzie aplikacji), kosztem zależności na Chromium w środowisku builda.
 
-## 2. Treść produktu ładowana dopiero przez JavaScript
+## 2. Źródło danych w trakcie buildu
 
-| Element | Co dzieje się teraz | Przyczyna techniczna | Problem | Zalecane rozwiązanie | Pliki | Ryzyko |
-|---|---|---|---|---|---|---|
-| Typ aplikacji | Czysty SPA React + Vite, brak SSR; jedyny statyczny HTML to `index.html` | `vite.config.ts`, `src/main.tsx` | Tak (dla SEO kart produktu) | Patrz niżej | — | — |
-| Pobieranie danych | React Query po montażu komponentu, z Supabase REST (`products`, `product_images`) | `src/hooks/usePublicSupabaseProducts.ts` | Tak — dane dostępne dopiero po JS | Prerender przy buildzie albo SSR | `usePublicSupabaseProducts.ts` | — |
-| title / description / canonical / JSON-LD | Wstrzykiwane przez `react-helmet-async` po hydratacji i po dojściu danych | `src/pages/ProductDetail.tsx:155-172` | Tak dla crawlerów bez JS (podglądy społecznościowe, część botów AI) | j.w. | `ProductDetail.tsx` | — |
-| Możliwości hostingu | Hosting Lovable dla tego szablonu serwuje statyczne pliki + fallback SPA; nie uruchamia SSR | dokumentacja platformy | — | Dwie realne opcje: **(a)** skrypt prerenderujący w buildzie — generuje `dist/produkty/<slug>/index.html` z gotowym H1, opisem, parametrami, dostępnością, ceną lub „Cena na zapytanie”, meta i JSON-LD (dane pobierane z Supabase w trakcie builda, limit stron w stałej); **(b)** migracja na szablon SSR (TanStack Start) — pełny render na żądanie | nowy `scripts/prerenderProducts.mts`, `vite.config.ts`, `package.json` | (a) HTML zamrożony do kolejnej publikacji — po zmianie oferty trzeba opublikować ponownie; limit 50 000 plików; (b) migracja całej aplikacji |
-| Dane wrażliwe na SEO w pierwszym HTML | Dziś: brak | j.w. | Tak | Osiągalne w pełni w wariancie (a) i (b) | j.w. | — |
+- Lista i dane ofert: te same tabele co w aplikacji — `products` + `product_images`, dodatkowo `faqs`, `product_seo_settings`, `product_translations`.
+- Klucz `anon` i obecne polityki publicznego odczytu wystarczają (aplikacja publiczna czyta dokładnie tak samo). Nie jest potrzebny `service_role` — i nie należy go umieszczać w kodzie builda.
+- Warstwy zapytań do ponownego użycia praktycznie nie ma: logika siedzi wewnątrz hooków React Query. Do ponownego wykorzystania nadaje się jedynie mapowanie `mapSupabaseProductToProduct` z `src/types/supabase.ts` — czysta funkcja, bez zależności od przeglądarki. Zapytania SELECT trzeba w skrypcie napisać ponownie (duplikacja ~20 linii) albo wcześniej wyodrębnić je z hooków do współdzielonego modułu — to drugie jest czystsze, ale to zmiana w kodzie aplikacji.
+- Przekazanie do renderu: `new QueryClient()` + `setQueryData` dla każdego klucza, następnie render drzewa z tym klientem.
 
-Wprost: obecna architektura **nie** dostarcza danych produktu w pierwszym HTML i nie da się tego naprawić „pozornie” po stronie klienta. Najbardziej niezawodny dla stabilnej indeksacji kart jest prerender przy buildzie (a) — bez zmiany architektury i URL; docelowo najmocniejszy jest SSR (b), [co daje migracja na TanStack Start](https://lovable.dev/blog/building-apps-using-tanstack-start).
+## 3. Zakres stron
 
-## 3. Nieistniejący produkt i ryzyko soft 404
+Stan bazy dzisiaj (44 oferty):
 
-| Element | Co dzieje się teraz | Przyczyna techniczna | Problem | Zalecane rozwiązanie | Pliki | Ryzyko |
-|---|---|---|---|---|---|---|
-| Status HTTP dla `/produkty/nieistniejacy-test-audytowy-000000` | HTTP 200 z `index.html` | Fallback SPA hostingu: każda nieznana ścieżka nawigacyjna dostaje `index.html` | Tak (soft 404) | Statusu nie zmienimy w tym deploymencie | — | Kod 404 wymaga warstwy serwerowej (SSR lub reguła na Nginx w domenie produkcyjnej) |
-| Widok braku produktu | Gałąź „Produkt niedostępny” z `noindex, follow` już istnieje | `ProductDetail.tsx:107-122` | Nie | Bez zmian | — | `noindex` działa tylko dla botów wykonujących JS |
-| Trasa nieznana | `NotFound.tsx` z `noindex, follow` | `src/pages/NotFound.tsx` | Nie | Bez zmian | — | j.w. |
-| Oferta sprzedana | Strona dostępna, indeksowalna, bez `noindex` | brak warunku na `availabilityStatus === 'sold'` | Do decyzji biznesowej | Albo pozostawić z jasnym oznaczeniem (dobre dla long-tail), albo dodać `noindex, follow` | `ProductDetail.tsx` | Utrata ruchu z archiwalnych ofert przy `noindex` |
-| Prawdziwe 404 | — | — | — | Wariant realny bez SSR: reguła na serwerze produkcyjnym stakerpol.pl (proxy) zwracająca 404 dla ścieżek `/produkty/*` nieobecnych w sitemapie; wariant docelowy: SSR | konfiguracja serwera (poza repo) / migracja SSR | Reguła serwerowa wymaga listy aktualnych slugów |
+| Status | Tryb ceny | Liczba |
+|---|---|---|
+| available | show_price | 11 |
+| available | inquiry_with_pricelist | 27 |
+| available | inquiry_only | 4 |
+| sold | inquiry_with_pricelist | 2 |
 
-## 4. FAQ i spójność treści ze schema
+- Prerenderować: 42 oferty `available` (+ ewentualnie `reserved`, dziś 0).
+- `sold`: nie prerenderować — te adresy nadal obsłuży fallback SPA (strona żyje, ruch long-tail zachowany), albo prerenderować z `noindex` jeśli chcesz zachować dane w HTML. Decyzja biznesowa (punkt 9).
+- „Oferty niepubliczne” nie istnieją jako pojęcie w schemacie — brak flagi `is_published`; tryb ceny nie decyduje o publiczności.
+- Przyrost `dist/`: jeden `index.html` karty to ok. 30–60 kB (treść + JSON-LD, bez zdjęć). 42 pliki → ok. 1,5–2,5 MB, czyli marginalnie wobec ok. 4,3 MB obecnego `public/`. Katalogów: 42.
+- Limit jako stała w skrypcie: `MAX_PRERENDER_PAGES = 200` (z możliwością nadpisania zmienną środowiskową buildu) — ~5× zapas wobec dzisiejszego katalogu, twarde zabezpieczenie przed rozrostem.
 
-| Element | Co dzieje się teraz | Przyczyna techniczna | Problem | Zalecane rozwiązanie | Pliki | Ryzyko |
-|---|---|---|---|---|---|---|
-| Puste odpowiedzi | Zapytanie do bazy: 175 aktywnych FAQ, **0** pustych i 0 krótszych niż 10 znaków | dane kompletne | Nie | Bez zmian | — | — |
-| Zgodność UI ↔ JSON-LD | Ten sam obiekt `productFaqItems` zasila `FAQSection` i `FAQSchema` | `ProductDetail.tsx:73-90, 255, 267` | Nie | Bez zmian | — | — |
-| Widoczność odpowiedzi | Accordion `type="single" collapsible` — odpowiedzi zwinięte, w DOM pojawiają się po rozwinięciu | `src/components/ui/FAQSection.tsx` | Tak dla audytu bez JS/bez interakcji | Renderować treść odpowiedzi w DOM od początku (ukrycie wyłącznie wizualne) — rozwiązuje też odczyt przez boty przy prerenderze | `src/components/ui/FAQSection.tsx` | Niskie; bez zmian wizualnych |
-| Schema tylko dla realnych pytań | Fallback na 4 pytania z plików tłumaczeń, gdy brak FAQ z bazy | `ProductDetail.tsx:84-89` | Nie (treści realne) | Dodać filtr pustych/krótkich odpowiedzi przed przekazaniem do `FAQSchema` | `src/components/seo/FAQSchema.tsx` | Niskie |
+## 4. Hydratacja i zgodność z SPA
 
-## 5. Jednolity standard nazw i identyfikacji
+- `main.tsx` używa `createRoot`, nie `hydrateRoot`. Skutek: React **nie hydratuje** prerenderowanego HTML — czyści `#root` i renderuje od zera. Zaleta: zero błędów mismatch. Wada: widoczna podmiana treści — prerenderowana karta zniknie na moment (spinner „Ładowanie produktu…” z `ProductDetail`), aż React Query pobierze dane. Dla botów i podglądów społecznościowych cel jest osiągnięty; dla użytkownika to krótkie mignięcie.
+- Przejście na `hydrateRoot` dałoby płynność, ale wymaga zgodności znaczników i wstrzyknięcia danych do cache w HTML (`window.__QUERY_STATE__`) — istotnie większe ryzyko mismatch (język, daty, losowe elementy, `Math.random`, stany dostępności). Zalecenie na start: pozostać przy `createRoot`.
+- Nawigacja wewnętrzna SPA działa bez zmian — po przejęciu przez React to nadal ten sam router; przejścia bez pełnego przeładowania.
 
-| Element | Co dzieje się teraz | Przyczyna techniczna | Problem | Zalecane rozwiązanie | Pliki | Ryzyko |
-|---|---|---|---|---|---|---|
-| Nazwy w katalogu | Wolny tekst z admina: „Toyota SWE 200d BT ”, „SWE 200d Toyota ”, „Sztaplarka SWE 200D”, „Masztowy BT Toyota ” | `products.name` jedynym źródłem, H1 i `<h3>` biorą `product.model` | Tak | Nie zmieniać `products.name`. Wprowadzić warstwę prezentacji: `productTitle(product)` = `Toyota BT ` + znormalizowany kod z `normalizeModel()` + `— rok — mm — kg — mth — SKU`; nazwa marketingowa zostaje w opisie | nowy `src/utils/productTitle.ts` (na bazie `src/utils/productNormalization.ts`), `src/pages/ProductDetail.tsx`, `src/components/ui/ProductCard.tsx`, `src/components/products/SimpleRelatedCard.tsx`, `generateProductSchema.ts` | Zmiana widocznych nagłówków i `title`; wymaga akceptacji brzmienia |
-| Identyfikacja | `serial_number` wypełniony i użyty w slug/SKU | schemat bazy | Nie | Pokazywać SKU jawnie w linii identyfikacyjnej karty | j.w. | — |
-| Adresy | Slug generowany raz w bazie (`set_product_slug`), niezależny od zmian prezentacji | trigger DB | Nie | Bez zmian — brak zmian URL | — | — |
+## 5. Współpraca z Nginx
 
-## Decyzje wymagające Twojej odpowiedzi
+- `try_files $uri /index.html` **nie** trafi w `dist/produkty/<slug>/index.html`, bo `$uri` to katalog, a nie plik. Bez `$uri/` (lub jawnego `/index.html`) prerender pozostanie niewidoczny, mimo poprawnie wygenerowanych plików.
+- Plik statyczny wygrywa z fallbackiem tylko wtedy, gdy zostanie dopasowany wcześniej w `try_files`.
+- Minimalna zmiana do przekazania administratorowi:
 
-1. Polityka cen: czy dla ofert bez ceny wyświetlać „Cena na zapytanie” (proponowane), czy nie pokazywać niczego? Czy pokazywać ceny również w katalogu?
-2. Czy publikować cenę brutto obok netto (baza trzyma tylko netto — brutto liczone jako netto × 1,23)?
-3. Oferty sprzedane: pozostają indeksowalne czy `noindex`?
-4. Format tytułu produktu — akceptujesz wzór `Toyota BT SWE 200D — 2020 — 2100 mm — 1200 kg — 4523 mth — SKU 6769116` (pełny na karcie produktu, skrócony na kafelkach)?
-5. Kierunek dla SEO kart: prerender przy buildzie czy migracja na SSR?
+```text
+# Katalogi statyczne mają pierwszeństwo, potem fallback SPA
+location / {
+    try_files $uri $uri/index.html /index.html;
+}
 
-## Zmiany bez ryzyka biznesowego (mogę wdrożyć od razu)
+# Karty produktu: tylko istniejące prerendery; nieistniejący slug = 404
+location ^~ /produkty/ {
+    try_files $uri $uri/index.html =404;
+}
 
-- Odpowiedzi FAQ obecne w DOM od początku (ukrycie wizualne, bez zmian wyglądu).
-- Filtr pustych/krótkich odpowiedzi przed `FAQPage` schema.
-- Porządek w `getBrand` i SKU w schema produktu.
-- Wspólna funkcja `resolvePriceView` jako jedyne źródło decyzji o prezentacji ceny (UI + schema, bez zmiany zachowania).
+# Katalog ofert (lista) — bez prerenderu wymaga fallbacku
+location = /produkty {
+    try_files /produkty/index.html /index.html;
+}
+```
 
-## Kolejność wdrożenia
+Uwagi: reguła `=404` oznacza, że **każda** nieprerenderowana karta (w tym `sold`, jeśli je wykluczysz) zwróci 404 — to rozwiązuje soft 404, ale wymaga świadomej decyzji o ofertach sprzedanych. Domyślna strona błędu Nginx nie ma layoutu serwisu; warto dodać `error_page 404 /404.html` i wygenerować taki plik w tym samym kroku buildu.
 
-1. Prezentacja ceny / „Cena na zapytanie” na karcie i w katalogu (po decyzji 1–2).
-2. Prerender kart produktu przy buildzie lub decyzja o SSR (po decyzji 5).
-3. Ujednolicenie tytułów i linii identyfikacyjnej (po decyzji 4).
-4. FAQ: DOM + filtr schema.
-5. `noindex` dla sprzedanych (po decyzji 3) i ewentualna reguła 404 na serwerze produkcyjnym.
+## 6. Aktualność treści
 
-## Odpowiedź na pytanie zamykające
+HTML zamraża stan oferty do kolejnej publikacji. Kolejność dezaktualizacji, od najszybszej:
 
-W obecnej architekturze (Vite SPA na hostingu Lovable) **nie** można zapewnić danych produktu w początkowym HTML ani prawdziwego HTTP 404 — hosting serwuje statyczny `index.html` z fallbackiem SPA, a cała treść i metadane powstają po uruchomieniu JavaScript. Dane w pierwszym HTML uzyskamy przez prerender kart przy buildzie (bez zmiany architektury, kosztem świeżości do kolejnej publikacji). Prawdziwy HTTP 404 wymaga warstwy serwerowej: albo reguły na serwerze domeny produkcyjnej, albo migracji na szablon SSR (TanStack Start), który rozwiązuje oba problemy jednocześnie.
+1. **Dostępność** — sprzedaż/rezerwacja zmienia się natychmiast; prerender może pokazywać „Dostępny od razu” dla sprzedanego egzemplarza (także w JSON-LD `availability` → ryzyko ostrzeżeń w GSC i utraty zaufania).
+2. **Cena** — zmiana trybu prezentacji lub kwoty; rozbieżność ceny w JSON-LD to najpoważniejsze ryzyko formalne.
+3. **Motogodziny / zdjęcia** — zmieniają się rzadko i nie wpływają na zgodność ofertową.
+
+Ograniczenie ryzyka bez automatycznych buildów:
+- Po pierwszym renderze React nadpisuje treść aktualnymi danymi z Supabase — użytkownik zawsze widzi stan bieżący; zamrożony jest wyłącznie HTML dla botów.
+- Publikacja natychmiast po każdej zmianie dostępności lub ceny — jedna reguła operacyjna zamiast automatyzacji.
+- Ostrożniejszy wariant: w prerenderze pomijać `offers.price` i emitować tylko `availability` z bieżącego statusu; albo pomijać cały blok `offers` i pozostawić go warstwie klienckiej. Kosztuje część korzyści SEO, eliminuje ryzyko rozbieżnej ceny.
+- W stopce wygenerowanego HTML data publikacji jako komentarz — ułatwia audyt „jak stary jest ten plik”.
+
+## 7. Ryzyko regresji
+
+| Obszar | Ryzyko | Uwagi |
+|---|---|---|
+| Obecny build | Niskie–średnie | Krok dodany po `vite build`; błąd skryptu nie powinien psuć `dist/`, ale przy `&&` w skrypcie przerwie publikację. Skrypt uruchamiany osobnym polecenniem, nie wpięty w `build` |
+| Deep linki | Średnie | Zależne **wyłącznie** od poprawnej reguły Nginx; zła kolejność `try_files` = 404 na istniejących ofertach |
+| Panel administracyjny `/admin` | Brak | Nie jest prerenderowany; obsługiwany fallbackiem SPA — pod warunkiem że reguła `^~ /produkty/` nie obejmuje `/admin` (nie obejmuje) |
+| `/oferta/:token` | Brak, jeśli fallback zachowany | Token jest dynamiczny; musi trafiać w `/index.html` |
+| GA4 / Consent Mode | Niskie | Skrypty są w `index.html`; szablon prerenderu musi być tworzony z **wygenerowanego** `dist/index.html`, nie z pliku źródłowego — inaczej zgubi hashe assetów i tagi analityczne |
+| Edge Function `sitemap` | Brak | Niezależna od `dist/`; zakres prerenderu warto trzymać zgodny z filtrem sitemapy (bez `sold`) |
+| Nieistniejący produkt | Poprawa | 200 → 404 na poziomie serwera; gałąź „Produkt niedostępny” z `noindex` pozostaje dla przypadków fallbacku |
+| Podwójne meta | Niskie | Statyczne tagi mają `data-rh="true"`; szablon prerenderu musi je **zamienić**, a nie dopisać obok |
+
+## 8. Plan etapowy
+
+**Etap 1 — jedna oferta testowa.** Skrypt renderuje wyłącznie slug podany w argumencie, do `dist/produkty/<slug>/index.html`. Weryfikacja: `curl` bez JS pokazuje H1, opis, parametry, dostępność i jeden blok JSON-LD `Product`; dokładnie jeden `meta[name="description"]`; w przeglądarce karta działa, konsola bez błędów, nawigacja SPA bez przeładowań.
+
+**Etap 2 — reguła Nginx na środowisku testowym.** Weryfikacja: prerenderowany slug = 200 z pliku, nieistniejący = 404, `/produkty`, `/oferta/:token`, `/admin` = 200 przez fallback.
+
+**Etap 3 — cały katalog z limitem.** Weryfikacja: liczba wygenerowanych plików = liczba ofert kwalifikujących się, przyrost `dist/` w oczekiwanym zakresie, wyrywkowa kontrola 5 kart (cena/„na zapytanie”, dostępność, FAQ w DOM).
+
+**Etap 4 — FAQ, tłumaczenia, `error_page 404`.** Weryfikacja: `FAQPage` zgodny z widoczną treścią; strona 404 w layoucie serwisu.
+
+**Etap 5 — procedura publikacji.** Krótka instrukcja: kiedy publikować po zmianie oferty; kontrola w GSC po tygodniu.
+
+## 9. Decyzje przed wdrożeniem
+
+1. Metoda renderu: drugi punkt wejścia + `react-dom/server` (zmiany w kodzie, brak nowych zależności systemowych) czy headless Chromium na `dist/` (bez obejść w kodzie, wymaga Chromium w środowisku builda)?
+2. Oferty `sold`: pominąć w prerenderze i zwracać 404, prerenderować z `noindex`, czy pozostawić fallback SPA z 200?
+3. Cena w prerenderowanym JSON-LD: pełne `offers` z ceną (ryzyko rozbieżności) czy tylko `availability`?
+4. Hydratacja: pozostać przy `createRoot` (mignięcie treści, zero mismatchu) czy dążyć do `hydrateRoot` z danymi w HTML?
+5. Uruchamianie: osobne polecenie po `vite build` czy wpięcie w `build` (ryzyko blokady publikacji przy błędzie)?
+6. Czy administrator serwera może zmienić `try_files` i dodać `error_page` — bez tego prerender nie przyniesie żadnego efektu?
+7. Zakres języków: tylko PL (obecne adresy) — potwierdzenie, że wersje EN/DE/SK/CS nie mają osobnych URL do prerenderu.
+
+## Ocena opłacalności
+
+Prerender w tej architekturze jest **wykonalny i opłacalny**, ale pod dwoma warunkami: (a) administrator zmieni `try_files` — bez tego nakład jest w całości bezużyteczny; (b) publikacja następuje po każdej zmianie dostępności lub ceny. Największe realne ryzyko to nie technika renderu, lecz zamrożone dane ofertowe w JSON-LD. Jeżeli warunek (a) lub (b) nie jest pewny, korzystniej ograniczyć zakres do samego `<head>` (title, description, canonical, OG) plus H1 i parametry, bez bloku `offers` z ceną — mniejsza korzyść, ale ryzyko rozbieżności praktycznie zerowe.
