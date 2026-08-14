@@ -43,11 +43,17 @@ AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName
 
 const AccordionContent = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content> & {
+    /** Klasy dla korzenia treści (np. wizualne zwinięcie przy forceMount). */
+    rootClassName?: string;
+  }
+>(({ className, rootClassName, children, ...props }, ref) => (
   <AccordionPrimitive.Content
     ref={ref}
-    className="grid text-sm overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
+    className={cn(
+      "grid text-sm overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
+      rootClassName
+    )}
     {...props}
   >
     <div className="overflow-hidden min-h-0">
