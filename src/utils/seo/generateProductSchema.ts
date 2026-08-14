@@ -1,6 +1,7 @@
 import { Product } from '@/types';
 import { ProductSEOSettings } from '@/hooks/useProductSEO';
 import { productUrl } from '@/config/routes';
+import { resolvePriceView } from '@/utils/productPricing';
 
 export interface ProductSchemaData {
   "@context": string;
@@ -326,17 +327,13 @@ export const generateProductSchema = (
       }
     };
 
-    // Price source: main product fields only.
-    // Emitted solely when priceDisplayMode === 'show_price' and netPrice > 0.
-    // For 'inquiry_only' or missing price → price omitted entirely (no price leak).
-    const priceDisplayMode = (product as any).priceDisplayMode as string | undefined | null;
-    const netPriceRaw = (product as any).netPrice as number | string | null | undefined;
-    const productCurrency = (product as any).priceCurrency as string | null | undefined;
-    const netPriceNum = netPriceRaw != null && netPriceRaw !== '' ? Number(netPriceRaw) : NaN;
+    // Price source: wspólna funkcja decyzyjna (resolvePriceView) — to samo źródło co UI i CTA.
+    // Cena trafia do schema wyłącznie dla ofert z ceną publiczną; w innym razie jest pomijana.
+    const priceView = resolvePriceView(product);
 
-    if (priceDisplayMode === 'show_price' && Number.isFinite(netPriceNum) && netPriceNum > 0) {
-      schema.offers.price = netPriceNum.toFixed(2);
-      schema.offers.priceCurrency = productCurrency || 'PLN';
+    if (priceView.hasPublicPrice && priceView.netPrice != null) {
+      schema.offers.price = priceView.netPrice.toFixed(2);
+      schema.offers.priceCurrency = priceView.currency;
       // priceValidUntil remains a technical SEO field
       if (seoSettings?.price_valid_until) {
         schema.offers.priceValidUntil = getPriceValidUntil(seoSettings.price_valid_until);
