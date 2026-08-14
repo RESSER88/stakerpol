@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Product } from '@/types';
 import InquiryModal from '@/components/contact/InquiryModal';
 import { trackPhoneClick, trackWhatsAppClick } from '@/utils/analytics';
+import { resolvePriceView } from '@/utils/productPricing';
 
 interface Props {
   product: Product;
@@ -14,6 +15,8 @@ const PHONE_WA = '48694133592';
 const ProductCTAButtons = ({ product }: Props) => {
   const [open, setOpen] = useState(false);
   const waText = encodeURIComponent(`Dzień dobry, interesuje mnie ${product.model}`);
+  const { hasPublicPrice } = resolvePriceView(product);
+  const inquiryLabel = hasPublicPrice ? 'Wyślij zapytanie' : 'Zapytaj o cenę';
 
   return (
     <div className="space-y-2">
@@ -32,7 +35,7 @@ const ProductCTAButtons = ({ product }: Props) => {
           className="flex items-center justify-center gap-2 rounded-[5px] font-bold text-navy-brand bg-white border border-navy-brand py-3 text-sm hover:bg-navy-brand/5 transition"
         >
           <Mail size={16} />
-          Wyślij zapytanie
+          {inquiryLabel}
         </button>
       </div>
       <a
