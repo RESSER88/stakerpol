@@ -38,7 +38,11 @@ const FAQSection: React.FC<FAQSectionProps> = ({ title = 'Najczęstsze pytania (
                 <AccordionTrigger className="text-left text-sm md:text-base font-medium text-foreground hover:text-primary py-4 px-1 hover:no-underline leading-snug">
                   {qa.question}
                 </AccordionTrigger>
-                <AccordionContent className="pb-4 px-1">
+                <AccordionContent
+                  forceMount
+                  rootClassName="data-[state=closed]:h-0 data-[state=closed]:invisible data-[state=closed]:animate-none"
+                  className="pb-4 px-1"
+                >
                   <p className="text-sm text-muted-foreground leading-relaxed">{qa.answer}</p>
                 </AccordionContent>
               </AccordionItem>
@@ -65,7 +69,11 @@ const FAQSection: React.FC<FAQSectionProps> = ({ title = 'Najczęstsze pytania (
                 <AccordionTrigger className="text-left font-medium text-foreground hover:text-primary py-4 hover:no-underline">
                   {qa.question}
                 </AccordionTrigger>
-                <AccordionContent className="pb-4">
+                <AccordionContent
+                  forceMount
+                  rootClassName="data-[state=closed]:h-0 data-[state=closed]:invisible data-[state=closed]:animate-none"
+                  className="pb-4"
+                >
                   <p className="text-muted-foreground leading-relaxed">{qa.answer}</p>
                 </AccordionContent>
               </AccordionItem>
