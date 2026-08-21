@@ -81,7 +81,7 @@ export function useContactForm() {
       const { error } = await supabase.from('leads').insert({
         name: formData.name,
         email: isEmail ? formData.contact : null,
-        phone: formData.contact,
+        phone: isEmail ? null : formData.contact,
         message: fullMessage,
         source,
         product_id: isUuid ? productId : null,
