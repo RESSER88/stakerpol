@@ -1,28 +1,24 @@
-# Leadbox — komplet danych zapytania w panelu
+# Zapytania: adres e-mail w kolumnie `phone`
 
-## Cel
-Sekcja „Zapytania” w panelu pokazuje pełny obraz zgłoszenia: dane kontaktowe, datę zgłoszenia, status reakcji wraz z datą obsłużenia oraz dane techniczne (przeglądarka/urządzenie). Zakres wyłącznie prezentacyjny.
+## Odpowiedzi na pytania (stan potwierdzony w kodzie i danych)
 
-## Ustalenia
-- Imię i nazwisko pozostają w jednym polu `name` — bez migracji, bez zmian w formularzach publicznych.
-- Do widoku dochodzą: data obsłużenia (`handled_at`, plus data sprzedaży z `sold_at`) oraz `user_agent`.
-- `page_url` i `rodo_accepted` pozostają poza zakresem.
+**(1) Tak — wspólny komponent.** Zgłoszenia `product_page` i `product_list` pochodzą z `InquiryModal`, który korzysta z hooka `useContactForm` z **jednym polem kontaktu** ("Telefon lub e-mail"). Ten sam hook obsługuje też `contact_page`/`homepage`. Pozostałe źródła (`home_hero_form`, `product_page_inline`) używają innych formularzy z osobnymi polami telefonu i e-maila — dlatego tam nie ma zjawiska.
 
-## Zakres zmian
-Jeden plik: `src/components/admin/sections/InquiriesSection.tsx`.
+**(2) Nie, przyczyną jest kod, nie sama restrykcja NOT NULL.** W `useContactForm` zapis wygląda tak: `email` = wartość pola tylko gdy rozpoznano e-mail, natomiast `phone` = **zawsze** surowa wartość pola kontaktu. Czyli e-mail jest kopiowany do `phone` bezwarunkowo. Ograniczenie NOT NULL na `phone` sprawia jedynie, że nie da się dziś zapisać samego NULL bez zmiany schematu.
 
-1. Zapytanie do bazy: dodać `user_agent` do listy kolumn w `select` (pozostałe potrzebne pola — `handled_at`, `sold_at` — są już pobierane).
-2. Typ `Lead`: dodać `user_agent: string | null`.
-3. Karta zapytania — w wierszu metadanych pod nazwą, w istniejącym stylu (`text-xs text-editorial-muted`):
-   - gdy status = obsłużone: „Obsłużone: {data i godzina}” z `handled_at`,
-   - gdy `sold_at` niepuste: przy istniejącej plakietce „Sprzedane” dodać datę sprzedaży.
-4. Dane techniczne: `user_agent` jako skrócony, jednolinijkowy wpis w sekcji rozwijanej — widoczny po kliknięciu „Rozwiń”, żeby nie zaśmiecać listy. Jeśli zapytanie nie ma wiadomości, przycisk rozwijania i tak ma być dostępny, gdy istnieje `user_agent`.
-5. Formatowanie dat: ten sam wzorzec co obecna data zgłoszenia — `toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' })`.
+**Dane (potwierdzone zapytaniem):** `product_page` 8 rekordów / 6 z adresem w `phone`, `product_list` 3 / 3, pozostałe źródła 0. Najstarszy przypadek 13.05.2026.
 
-## Poza zakresem
-- Brak migracji bazy i zmian RLS — wszystkie potrzebne kolumny już istnieją, a administrator ma pełny odczyt.
-- Bez zmian w formularzach publicznych, w Edge Function `notify-lead`, w treści maila Resend, w `InquiryStats.tsx` i w kaflach `DashboardSection.tsx`.
-- Bez zmian logiki statusów, triggera `set_lead_handled_at` i anonimizacji po 24 miesiącach.
+## Proponowana zmiana (do zatwierdzenia)
 
-## Weryfikacja
-Podgląd sekcji „Zapytania” w panelu na szerokości mobilnej (360 px) i desktopowej: data obsłużenia widoczna tylko dla obsłużonych, rozwijanie pokazuje dane techniczne, układ listy i typografia bez regresji.
+1. **Migracja:** `public.leads.phone` → dopuszczenie NULL (`DROP NOT NULL`). Bez zmiany typu i nazwy kolumny.
+2. **Kod (`src/hooks/useContactForm.ts`):** rozdzielenie wartości — gdy pole kontaktu jest e-mailem: `email` = adres, `phone` = NULL; gdy jest numerem: `phone` = numer, `email` = NULL. Usunięcie obecnego bezwarunkowego przypisania `phone: formData.contact`.
+3. **Panel admina:** widok zapytań pokazuje kontakt z `phone` **lub** `email`, żeby wiersze bez telefonu nie wyglądały na puste.
+4. **Dane historyczne:** opcjonalne czyszczenie — dla rekordów gdzie `phone = email` ustawić `phone = NULL`. Do decyzji, bo wpływa na Wasz import (patrz niżej).
+
+## Wpływ na import po Waszej stronie
+
+Po zmianie: adres pojawi się **wyłącznie** w `email`, a `phone` będzie NULL dla zgłoszeń wysłanych e-mailem. Import musi więc dopuszczać `phone = NULL` i traktować `email` jako jedyny kontakt. Treść zgłoszenia w `message` (z linią "Email:" / "Telefon:") pozostaje bez zmian.
+
+## Pytanie decyzyjne
+
+Czy czyścić 9 rekordów historycznych (usunąć duplikat adresu z `phone`), czy zostawić je bez zmian i zmienić tylko format nowych zgłoszeń?
