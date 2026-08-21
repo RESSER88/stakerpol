@@ -13,7 +13,7 @@ interface Lead {
   handled_at: string | null;
   sold_at: string | null;
   name: string | null;
-  phone: string;
+  phone: string | null;
   email: string | null;
   message: string | null;
   source: string;
@@ -129,7 +129,7 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
 
 
   const deleteLead = async (lead: Lead) => {
-    if (!confirm(`Usunąć zapytanie od ${lead.name || lead.phone}? Tej operacji nie można cofnąć.`)) return;
+    if (!confirm(`Usunąć zapytanie od ${lead.name || lead.phone || lead.email}? Tej operacji nie można cofnąć.`)) return;
     setUpdating((prev) => new Set(prev).add(lead.id));
     const { error } = await supabase.from('leads').delete().eq('id', lead.id);
     setUpdating((prev) => {
@@ -245,13 +245,15 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
 
 
                     <div className="text-xs text-editorial-muted flex items-center gap-3 flex-wrap mt-1.5">
-                      <a
-                        href={`tel:${lead.phone}`}
-                        className="inline-flex items-center gap-1 text-editorial-ink hover:text-editorial-accent transition-colors"
-                      >
-                        <Phone className="h-3 w-3" />
-                        {lead.phone}
-                      </a>
+                      {lead.phone && (
+                        <a
+                          href={`tel:${lead.phone}`}
+                          className="inline-flex items-center gap-1 text-editorial-ink hover:text-editorial-accent transition-colors"
+                        >
+                          <Phone className="h-3 w-3" />
+                          {lead.phone}
+                        </a>
+                      )}
                       {lead.email && (
                         <a
                           href={`mailto:${lead.email}`}
@@ -304,13 +306,24 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                 </div>
 
                 <div className="flex gap-1 mt-3 pl-5 flex-wrap">
-                  <a
-                    href={`tel:${lead.phone}`}
-                    className="px-3 h-8 inline-flex items-center gap-1.5 bg-editorial-ink text-white text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-editorial-ink/90 transition-colors"
-                  >
-                    <Phone className="h-3 w-3" />
-                    Zadzwoń
-                  </a>
+                  {lead.phone && (
+                    <a
+                      href={`tel:${lead.phone}`}
+                      className="px-3 h-8 inline-flex items-center gap-1.5 bg-editorial-ink text-white text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-editorial-ink/90 transition-colors"
+                    >
+                      <Phone className="h-3 w-3" />
+                      Zadzwoń
+                    </a>
+                  )}
+                  {lead.email && (
+                    <a
+                      href={`mailto:${lead.email}`}
+                      className="px-3 h-8 inline-flex items-center gap-1.5 bg-editorial-ink text-white text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-editorial-ink/90 transition-colors"
+                    >
+                      <Mail className="h-3 w-3" />
+                      Napisz
+                    </a>
+                  )}
                   <button
                     disabled={isUpdating}
                     onClick={() => markHandled(lead)}
