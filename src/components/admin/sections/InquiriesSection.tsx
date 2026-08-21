@@ -13,7 +13,7 @@ interface Lead {
   handled_at: string | null;
   sold_at: string | null;
   name: string | null;
-  phone: string;
+  phone: string | null;
   email: string | null;
   message: string | null;
   source: string;
