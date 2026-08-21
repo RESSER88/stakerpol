@@ -245,13 +245,15 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
 
 
                     <div className="text-xs text-editorial-muted flex items-center gap-3 flex-wrap mt-1.5">
-                      <a
-                        href={`tel:${lead.phone}`}
-                        className="inline-flex items-center gap-1 text-editorial-ink hover:text-editorial-accent transition-colors"
-                      >
-                        <Phone className="h-3 w-3" />
-                        {lead.phone}
-                      </a>
+                      {lead.phone && (
+                        <a
+                          href={`tel:${lead.phone}`}
+                          className="inline-flex items-center gap-1 text-editorial-ink hover:text-editorial-accent transition-colors"
+                        >
+                          <Phone className="h-3 w-3" />
+                          {lead.phone}
+                        </a>
+                      )}
                       {lead.email && (
                         <a
                           href={`mailto:${lead.email}`}
