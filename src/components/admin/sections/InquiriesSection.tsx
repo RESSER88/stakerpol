@@ -306,13 +306,24 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                 </div>
 
                 <div className="flex gap-1 mt-3 pl-5 flex-wrap">
-                  <a
-                    href={`tel:${lead.phone}`}
-                    className="px-3 h-8 inline-flex items-center gap-1.5 bg-editorial-ink text-white text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-editorial-ink/90 transition-colors"
-                  >
-                    <Phone className="h-3 w-3" />
-                    Zadzwoń
-                  </a>
+                  {lead.phone && (
+                    <a
+                      href={`tel:${lead.phone}`}
+                      className="px-3 h-8 inline-flex items-center gap-1.5 bg-editorial-ink text-white text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-editorial-ink/90 transition-colors"
+                    >
+                      <Phone className="h-3 w-3" />
+                      Zadzwoń
+                    </a>
+                  )}
+                  {lead.email && (
+                    <a
+                      href={`mailto:${lead.email}`}
+                      className="px-3 h-8 inline-flex items-center gap-1.5 bg-editorial-ink text-white text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-editorial-ink/90 transition-colors"
+                    >
+                      <Mail className="h-3 w-3" />
+                      Napisz
+                    </a>
+                  )}
                   <button
                     disabled={isUpdating}
                     onClick={() => markHandled(lead)}
