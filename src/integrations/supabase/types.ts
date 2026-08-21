@@ -128,7 +128,7 @@ export type Database = {
           message: string | null
           name: string | null
           page_url: string | null
-          phone: string
+          phone: string | null
           product_id: string | null
           rodo_accepted: boolean
           sold_at: string | null
@@ -144,7 +144,7 @@ export type Database = {
           message?: string | null
           name?: string | null
           page_url?: string | null
-          phone: string
+          phone?: string | null
           product_id?: string | null
           rodo_accepted?: boolean
           sold_at?: string | null
@@ -160,7 +160,7 @@ export type Database = {
           message?: string | null
           name?: string | null
           page_url?: string | null
-          phone?: string
+          phone?: string | null
           product_id?: string | null
           rodo_accepted?: boolean
           sold_at?: string | null
