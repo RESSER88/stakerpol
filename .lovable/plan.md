@@ -8,12 +8,12 @@
 
 **Dane (potwierdzone zapytaniem):** `product_page` 8 rekordów / 6 z adresem w `phone`, `product_list` 3 / 3, pozostałe źródła 0. Najstarszy przypadek 13.05.2026.
 
-## Proponowana zmiana (do zatwierdzenia)
+## Zaakceptowana zmiana
 
-1. **Migracja:** `public.leads.phone` → dopuszczenie NULL (`DROP NOT NULL`). Bez zmiany typu i nazwy kolumny.
+1. **Migracja:** `public.leads.phone` → dopuszczenie NULL (`DROP NOT NULL`) + constraint `CHECK (phone IS NOT NULL OR email IS NOT NULL)`. Bez zmiany typu i nazwy kolumny.
 2. **Kod (`src/hooks/useContactForm.ts`):** rozdzielenie wartości — gdy pole kontaktu jest e-mailem: `email` = adres, `phone` = NULL; gdy jest numerem: `phone` = numer, `email` = NULL. Usunięcie obecnego bezwarunkowego przypisania `phone: formData.contact`.
-3. **Panel admina:** widok zapytań pokazuje kontakt z `phone` **lub** `email`, żeby wiersze bez telefonu nie wyglądały na puste.
-4. **Dane historyczne:** opcjonalne czyszczenie — dla rekordów gdzie `phone = email` ustawić `phone = NULL`. Do decyzji, bo wpływa na Wasz import (patrz niżej).
+3. **Panel admina:** widok zapytań pokazuje kontakt z `phone` **lub** `email`, żeby wiersze bez telefonu nie wyglądały na puste; przycisk "Zadzwoń" wyświetla się tylko gdy `phone` istnieje.
+4. **Dane historyczne:** pozostawiamy bez zmian — decyzja o czyszczeniu należy do Was po stronie importu.
 
 ## Wpływ na import po Waszej stronie
 
