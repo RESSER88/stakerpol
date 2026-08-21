@@ -1,46 +1,28 @@
-# Specyfikacja wyglądu panelu administracyjnego — typografia i kolory
+# Leadbox — komplet danych zapytania w panelu
 
 ## Cel
-Powstaje jeden dokument (`DESIGN_SPEC_ADMIN.md` w katalogu głównym projektu) z rzeczywistymi wartościami wyciągniętymi z kodu panelu: nazwy fontów, kody kolorów (HSL + HEX), promienie oraz skala odstępów. Bez żadnych zmian w wyglądzie aplikacji i bez modyfikacji komponentów.
+Sekcja „Zapytania” w panelu pokazuje pełny obraz zgłoszenia: dane kontaktowe, datę zgłoszenia, status reakcji wraz z datą obsłużenia oraz dane techniczne (przeglądarka/urządzenie). Zakres wyłącznie prezentacyjny.
 
-## Zakres dokumentu
-Tylko typografia i kolory (plus wartości pomocnicze: promienie, odstępy, wysokości elementów), zgodnie z ustaleniem. Bez opisu układu sidebara i komponentów.
+## Ustalenia
+- Imię i nazwisko pozostają w jednym polu `name` — bez migracji, bez zmian w formularzach publicznych.
+- Do widoku dochodzą: data obsłużenia (`handled_at`, plus data sprzedaży z `sold_at`) oraz `user_agent`.
+- `page_url` i `rodo_accepted` pozostają poza zakresem.
 
-## Co znajdzie się w dokumencie (wartości już zweryfikowane w kodzie)
+## Zakres zmian
+Jeden plik: `src/components/admin/sections/InquiriesSection.tsx`.
 
-### Fonty
-- Interfejs (body, `font-sans`): `system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
-- Nagłówki panelu (`font-editorial`): `Georgia, Cambria, "Times New Roman", serif`
-- Mono (`font-mono`): `ui-monospace, Consolas, Menlo, Monaco, monospace`
-- Brak fontów zewnętrznych (Google Fonts) — wszystko systemowe.
-
-### Skala typograficzna panelu (rzeczywiście używana)
-- Etykiety/sekcje: `10px` bold, `letter-spacing: 0.2em`, UPPERCASE
-- Przyciski: `12px` bold, `letter-spacing: 0.15em`, UPPERCASE
-- Nawigacja: `15px` serif
-- Nagłówek sekcji: `18px` serif, `tracking-tight`
-- Pola formularza: `14px`; na mobile wymuszone `16px` (blokada auto‑zoom iOS)
-- Nawigacja dolna (mobile): `9px` / `10px`
-
-### Kolory (HSL z `src/index.css` + konwersja HEX)
-Warstwa editorial (panel):
-- ink `222 47% 11%`, muted `215 16% 47%`, line `220 13% 91%`, accent `24 95% 53%`, ok `142 71% 45%`, bad `0 73% 51%`, bg `0 0% 100%`
-
-Warstwa admin (starsza, nadal używana na ekranach ładowania):
-- orange `24 95% 53%`, dark `222 47% 11%`, bg `210 40% 98%`, border `214 32% 91%`, text `222 47% 17%`, muted `215 16% 47%`, green `142 71% 45%`, red `0 73% 51%`
-
-Marka Stakerpol: navy `212 84% 16%`, orange `25 100% 50%`, gray `215 16% 47%`, lightgray `210 40% 96%`.
-
-Dokument poda każdą wartość jako HSL i HEX oraz opisze przeznaczenie (tło, obramowanie, tekst, akcent, statusy).
-
-### Promienie i odstępy
-- `--radius: 0.5rem` (tokeny `lg/md/sm`), ale panel editorial świadomie używa `rounded-none`; jedyne zaokrąglenie to `rounded-full` dla kropek statusu (8×8 px)
-- Skala odstępów: standardowa skala Tailwind (1 = 4px); realnie używane 1.5/3/4/6/8/12
-- Wymiary stałe: sidebar `240px`, pasek górny i dolny `48px`, przycisk `40px`, padding sekcji mobile `20px/32px`, desktop `48px`
-- Obramowania: `1px` linia `--editorial-line`; brak cieni (flat)
-
-## Techniczne
-Źródła wartości: `src/index.css` (tokeny HSL), `tailwind.config.ts` (mapowanie kolorów, fonty, promienie), komponenty panelu (`editorial/*`, `layout/*`, `editor/EditorialField.tsx`) jako potwierdzenie realnie stosowanych rozmiarów. HEX policzony z HSL, dodatkowo blok gotowy do skopiowania nie będzie wymagany (wybrano wariant „tylko dokument”).
+1. Zapytanie do bazy: dodać `user_agent` do listy kolumn w `select` (pozostałe potrzebne pola — `handled_at`, `sold_at` — są już pobierane).
+2. Typ `Lead`: dodać `user_agent: string | null`.
+3. Karta zapytania — w wierszu metadanych pod nazwą, w istniejącym stylu (`text-xs text-editorial-muted`):
+   - gdy status = obsłużone: „Obsłużone: {data i godzina}” z `handled_at`,
+   - gdy `sold_at` niepuste: przy istniejącej plakietce „Sprzedane” dodać datę sprzedaży.
+4. Dane techniczne: `user_agent` jako skrócony, jednolinijkowy wpis w sekcji rozwijanej — widoczny po kliknięciu „Rozwiń”, żeby nie zaśmiecać listy. Jeśli zapytanie nie ma wiadomości, przycisk rozwijania i tak ma być dostępny, gdy istnieje `user_agent`.
+5. Formatowanie dat: ten sam wzorzec co obecna data zgłoszenia — `toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' })`.
 
 ## Poza zakresem
-Brak zmian w komponentach, stylach, konfiguracji i bazie. Wygląd aplikacji pozostaje bez zmian.
+- Brak migracji bazy i zmian RLS — wszystkie potrzebne kolumny już istnieją, a administrator ma pełny odczyt.
+- Bez zmian w formularzach publicznych, w Edge Function `notify-lead`, w treści maila Resend, w `InquiryStats.tsx` i w kaflach `DashboardSection.tsx`.
+- Bez zmian logiki statusów, triggera `set_lead_handled_at` i anonimizacji po 24 miesiącach.
+
+## Weryfikacja
+Podgląd sekcji „Zapytania” w panelu na szerokości mobilnej (360 px) i desktopowej: data obsłużenia widoczna tylko dla obsłużonych, rozwijanie pokazuje dane techniczne, układ listy i typografia bez regresji.
