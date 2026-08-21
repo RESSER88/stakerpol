@@ -129,7 +129,7 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
 
 
   const deleteLead = async (lead: Lead) => {
-    if (!confirm(`Usunąć zapytanie od ${lead.name || lead.phone}? Tej operacji nie można cofnąć.`)) return;
+    if (!confirm(`Usunąć zapytanie od ${lead.name || lead.phone || lead.email}? Tej operacji nie można cofnąć.`)) return;
     setUpdating((prev) => new Set(prev).add(lead.id));
     const { error } = await supabase.from('leads').delete().eq('id', lead.id);
     setUpdating((prev) => {
