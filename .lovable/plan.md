@@ -1,109 +1,90 @@
-# Synchronizacja zapytań Supabase → leadbox (Tailscale)
+# Plan — nowy schemat `leadbox` (4 tabele) dla zewnętrznego narzędzia handlowego
 
-Raport wyłącznie analityczny. Nie wprowadzono żadnych zmian w kodzie, bazie, RLS ani Edge Functions.
+Tryb planu. Nic nie zostało wykonane: brak migracji, brak zmian w plikach, brak zmian w bazie.
 
-## Część A — tabela zapytań
+Założenia wyjściowe (potwierdzone odczytem projektu): schemat `public` zawiera m.in. `leads` z RLS (SELECT/UPDATE/DELETE tylko dla roli `admin` przez `has_role`), trigger `trg_leads_notify` → `notify_lead_created()` → Edge Function `notify-lead`, oraz dwa zadania pg_cron. Nowy schemat nie dotyka żadnego z tych elementów.
 
-Jedna tabela: `public.leads`. (Historyczna `public.price_inquiries` istnieje, ale formularze zapisują dziś wyłącznie do `leads`.)
+## 1. Kolejność operacji
 
-| Kolumna | Typ | Uwagi |
+Cała migracja jest jedną transakcją SQL. Kolejność nie jest kosmetyczna — chroni przed okresem, w którym dane byłyby czytelne bez polityk.
+
+1. **`CREATE SCHEMA leadbox;`** — musi być pierwsze, bo wszystko dalej się w nim tworzy. Odwracalne (`DROP SCHEMA`).
+2. **Odebranie domyślnych uprawnień do schematu:** `REVOKE ALL ON SCHEMA leadbox FROM PUBLIC;` — wykonywane natychmiast po utworzeniu, przed jakąkolwiek tabelą, żeby żadna tabela nie powstała w schemacie z szerokim dostępem. Odwracalne.
+3. **`CREATE TABLE leadbox.<T1..T4>`** — cztery tabele w kolejności zależności (najpierw tabele bez kluczy obcych, potem te, które się do nich odwołują), z `id uuid primary key default gen_random_uuid()`, `created_at`/`updated_at timestamptz not null default now()`. Odwracalne (`DROP TABLE`), ale **usunięcie tabeli usuwa dane** — nieodwracalne dla treści wpisanych po wdrożeniu.
+4. **`ALTER TABLE leadbox.<T> ENABLE ROW LEVEL SECURITY;` dla wszystkich czterech** — **przed** jakimkolwiek `GRANT` i przed wystawieniem schematu w API. To jest kluczowy punkt kolejności: tabela z grantem, ale bez włączonego RLS, jest otwarta. Odwracalne.
+5. **`CREATE POLICY` dla każdej tabeli** — polityki oparte na `public.has_role(auth.uid(), 'admin')`, dla roli `authenticated`, osobno dla SELECT/INSERT/UPDATE/DELETE (lub jedna `FOR ALL`). Nadal przed grantami. Odwracalne.
+6. **`GRANT USAGE ON SCHEMA leadbox TO authenticated, service_role;`** — bez `anon`. Bez `USAGE` PostgREST nie zobaczy schematu w ogóle. Odwracalne.
+7. **`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA leadbox TO authenticated;` + `GRANT ALL ... TO service_role;`** — dopiero teraz, gdy RLS i polityki już obowiązują. Odwracalne.
+8. **Trigger `updated_at`** — `BEFORE UPDATE ... EXECUTE FUNCTION public.update_updated_at_column()` na każdej tabeli (funkcja już istnieje, nie tworzymy nowej). Odwracalne.
+9. **`NOTIFY pgrst, 'reload schema';`** — przeładowanie cache PostgREST, na końcu transakcji. Odwracalne (bezstanowe).
+10. **Dashboard: Settings → API → Exposed schemas → dodać `leadbox`** — **ręczny krok użytkownika, wykonywany po zatwierdzonej migracji, nie przez migrację.** Musi być ostatni: dopóki schemat nie jest wystawiony, PostgREST go nie obsługuje, więc żadne okno ekspozycji bez RLS nie może wystąpić. Odwracalne (usunięcie z listy).
+
+Nieodwracalne w praktyce: dane wprowadzone do tabel `leadbox` po wdrożeniu (rollback = utrata) oraz wpis migracji w historii migracji projektu.
+
+## 2. Analiza wpływu
+
+| Element | Wpływ | Uzasadnienie |
 |---|---|---|
-| id | uuid | klucz główny, default `gen_random_uuid()` |
-| created_at | timestamptz NOT NULL | znacznik utworzenia, default `now()` |
-| name | text | może być NULL |
-| phone | text | nullable (po ostatniej migracji) |
-| email | text | nullable |
-| message | text | |
-| source | text NOT NULL | np. `product_page`, `home_hero_form` |
-| product_id | uuid | FK → `products.id` |
-| page_url | text | |
-| user_agent | text | |
-| rodo_accepted | boolean NOT NULL | |
-| status | text NOT NULL | `new` / `handled` |
-| handled_at | timestamptz | ustawiane triggerem |
-| sold_at | timestamptz | oznaczenie sprzedaży |
+| Formularze zapytań | **Nie** | Zapisują do `public.leads` przez klienta z kluczem anon. Nowy schemat nie zmienia tabeli, polityk ani grantów w `public`. |
+| Panel administracyjny | **Nie** | Odczytuje `public.leads` i `public.products`. Domyślny schemat klienta Supabase to `public`; zapytania nie zmieniają ścieżki. |
+| Trigger `trg_leads_notify` | **Nie** | Trigger jest przypisany do `public.leads` i wywołuje `public.http_post`. Nowy schemat nie modyfikuje ani triggera, ani `search_path` funkcji. |
+| Edge Function `notify-lead` | **Nie** | Otrzymuje payload HTTP i wysyła e-mail przez Resend. Nie odwołuje się do schematów bazy. |
+| Wygenerowane typy TypeScript | **Tak, ale nieszkodliwie** | Po wystawieniu `leadbox` w Exposed schemas generator dopisze nowy blok schematu do `src/integrations/supabase/types.ts`. Istniejące typy `public` pozostają bez zmian, więc kod frontendu nie wymaga poprawek. |
+| Budowanie projektu | **Nie** | Do `types.ts` dochodzą wyłącznie nowe deklaracje typów; nic nie jest usuwane ani zawężane, więc `tsc` i `vite build` przechodzą jak dotąd. |
 
-Ograniczenie: `leads_contact_check` — `phone IS NOT NULL OR email IS NOT NULL`.
+## 3. Ryzyko bezpieczeństwa
 
-Jednoznaczny identyfikator rekordu: `id` (uuid, klucz główny, unikalny indeks `leads_pkey`). To jest właściwy klucz deduplikacji po stronie leadboksu.
+Klucz anon jest publiczny i widoczny w kodzie strony — trzeba założyć, że każdy może nim wołać PostgREST.
 
-Indeksy: `leads_pkey` (unique na `id`), `idx_leads_created_at` (btree `created_at DESC`) — tak, indeks na znaczniku czasu istnieje, `idx_leads_source`, `idx_leads_status`, `idx_leads_sold_at` (partial).
+Po dopisaniu `leadbox` do Exposed schemas niezalogowany klient z kluczem anon może **wysłać** żądania w postaci `GET /rest/v1/<tabela>` z nagłówkiem `Accept-Profile: leadbox` (oraz `Content-Profile: leadbox` dla zapisu). Co je blokuje, w dwóch niezależnych warstwach:
 
-## Część B — co dzieje się przy zapisie
+1. **Brak grantów dla roli `anon`** — nie nadajemy `USAGE` na schemat ani żadnych uprawnień tabelowych roli `anon`. Skutek: żądanie kończy się błędem uprawnień (`42501` / `permission denied for schema leadbox`) jeszcze przed oceną RLS. To jest warstwa zasadnicza.
+2. **RLS + polityki wymagające `has_role(auth.uid(), 'admin')`** — nawet gdyby ktoś w przyszłości omyłkowo nadał grant roli `anon`, `auth.uid()` dla anona jest `NULL`, więc `has_role` zwraca `false` i wynik to pusta tablica. To warstwa zapasowa.
 
-1. `trg_leads_notify` — AFTER INSERT ON leads → funkcja `public.notify_lead_created()`. Buduje payload JSON (dane leada + nazwa i nr seryjny produktu), wysyła synchroniczny `public.http_post` na `https://<ref>.supabase.co/functions/v1/notify-lead`. Błędy tłumione (`EXCEPTION WHEN OTHERS → RAISE WARNING`), więc nie blokują zapisu.
-2. `trg_set_lead_handled_at` — BEFORE UPDATE ON leads → `public.set_lead_handled_at()`. Ustawia `handled_at = now()` przy zmianie statusu na `handled`, zeruje przy cofnięciu. Nie działa przy INSERT.
-3. Edge Function `notify-lead` (`supabase/functions/notify-lead/index.ts`) — wysyła e-mail przez Resend na `info@stakerpol.pl`; jeśli ustawiony sekret `LEAD_WEBHOOK_URL`, robi dodatkowo `POST` z pełnym payloadem leada na ten adres. Dziś ten sekret nie jest ustawiony w projekcie.
-4. pg_cron: dwa zadania, żadne nie dotyczy zapisu: `cleanup-old-handled-leads` (codziennie 03:00, anonimizuje leady starsze niż 24 miesiące) i `cleanup-expired-shared-lists` (03:15).
-5. Realtime: tabela `leads` **nie** jest w publikacji `supabase_realtime` (są tam tylko `products`, `product_images`, `product_benefits`).
+Konto techniczne z rolą `admin` działa jako `authenticated` z wpisem w `public.user_roles`, więc przechodzi obie warstwy.
 
-Istotne dla celu: anonimizacja po 24 miesiącach nadpisuje `name`, `email`, `message` — leadbox powinien być traktowany jako archiwum docelowe.
+**Okno bez ochrony:** powstałoby, gdyby tabele były osiągalne przez API, a RLS/polityki jeszcze nie obowiązywały. Zamykamy je dwoma decyzjami: (a) w migracji `ENABLE ROW LEVEL SECURITY` i `CREATE POLICY` wykonują się **przed** `GRANT`, a cała migracja jest jedną transakcją — nie istnieje moment, w którym grant jest widoczny bez polityki; (b) dopisanie schematu do Exposed schemas jest krokiem **po** zatwierdzonej i wykonanej migracji, więc przed tym momentem PostgREST fizycznie nie obsługuje tego schematu. Odwrotna kolejność (najpierw ekspozycja w dashboardzie, potem migracja) tworzyłaby realne okno i jest niedopuszczalna.
 
-## Część C — dostęp odczytowy z zewnątrz
+Dodatkowo: nie umieszczamy w `leadbox` żadnych sekretów ani kluczy; poświadczenie konta technicznego zostaje wyłącznie na serwerze w Tailscale.
 
-Polityki na `leads` (wszystkie dla roli `public`, czyli dotyczą też `anon` i `authenticated`):
-- SELECT — `has_role(auth.uid(), 'admin')`
-- UPDATE — `has_role(auth.uid(), 'admin')`
-- DELETE — `has_role(auth.uid(), 'admin')`
-- INSERT — `with_check: true` (dowolny, w tym anonimowy)
+## 4. Wycofanie
 
-Uprawnienia tabelowe: `anon`, `authenticated`, `service_role` mają SELECT/INSERT/UPDATE (grant), więc decyduje RLS.
+Kolejność odwrotna do wdrożenia:
 
-Odpowiedź wprost: **klient z kluczem anon nie odczyta zapytań** — RLS przepuści SELECT tylko dla zalogowanego użytkownika z rolą `admin` w `user_roles`. Odczyt zewnętrzny jest dziś możliwy w dwóch trybach: (a) REST z kluczem `service_role` (omija RLS — klucz nigdy nie może opuścić prywatnego serwera), (b) REST z tokenem sesji konta admina (JWT wygasa i wymaga odświeżania).
+1. Dashboard: Settings → API → Exposed schemas → usunąć `leadbox`. Robione pierwsze, żeby odciąć dostęp przez API przed zmianami w bazie.
+2. `REVOKE ALL ON ALL TABLES IN SCHEMA leadbox FROM authenticated, service_role;`
+3. `REVOKE USAGE ON SCHEMA leadbox FROM authenticated, service_role;`
+4. `DROP SCHEMA leadbox CASCADE;` — usuwa cztery tabele, ich polityki i triggery.
+5. `NOTIFY pgrst, 'reload schema';`
+6. Odświeżyć typy TypeScript, aby usunąć blok `leadbox` z `types.ts`.
 
-MCP w trybie read-only: to narzędzie interaktywne, uwierzytelniane sesją człowieka, bez gwarancji dostępności, bez wersjonowanego kontraktu i bez kontroli błędów/retry. Nie nadaje się jako trwały, automatyczny kanał synchronizacji. Właściwym kanałem jest REST (PostgREST) z osobnym poświadczeniem trzymanym na serwerze leadboksu — najlepiej dedykowane konto techniczne, nie klucz `service_role`.
+Nieodwracalnie zmienione: dane wprowadzone do tabel `leadbox` (przepadają razem z `DROP SCHEMA CASCADE`) oraz wpis migracji w historii projektu. Schemat `public` i jego dane nie są dotykane na żadnym etapie ani wdrożenia, ani wycofania.
 
-## Część D — mechanizmy wychodzące z bazy
+## 5. Weryfikacja po wdrożeniu
 
-Dostępne oba: `pg_net` 0.14.0 (schemat `extensions`) i `http` 1.6 (schemat `public`).
+Schemat `public` nienaruszony:
+- `select table_name from information_schema.tables where table_schema='public' order by 1;` — lista identyczna jak przed migracją (18 tabel).
+- `select policyname, cmd from pg_policies where schemaname='public' and tablename='leads';` — nadal 4 polityki (3× admin, 1× publiczny INSERT).
+- `select tgname from pg_trigger where tgrelid='public.leads'::regclass and not tgisinternal;` — nadal `trg_leads_notify` i `trg_set_lead_handled_at`.
+- Test czynnościowy: wysłać zapytanie z formularza na stronie i sprawdzić, czy rekord powstał i czy przyszedł e-mail.
 
-Użycie dziś: `http` jest realnie używany — `notify_lead_created()` wywołuje `public.http_post`. `pg_net` jest zainstalowany, ale nie jest nigdzie wywoływany. Uwaga: `http` jest synchroniczny i blokuje transakcję INSERT; `pg_net` jest asynchroniczny (kolejka) i lepiej nadaje się do powiadomień wychodzących.
+Tabele `leadbox` istnieją i są zabezpieczone:
+- `select table_name from information_schema.tables where table_schema='leadbox';` — cztery tabele.
+- `select relname, relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='leadbox';` — `relrowsecurity = true` dla wszystkich czterech.
+- `select tablename, policyname, cmd from pg_policies where schemaname='leadbox';` — polityki na każdej tabeli.
+- `select grantee, privilege_type, table_name from information_schema.role_table_grants where table_schema='leadbox';` — **brak wiersza z `anon`**.
+- `select has_schema_privilege('anon','leadbox','USAGE');` — musi zwrócić `false`.
 
-## Część E — konsekwencje odpytywania co 5 minut
+Klucz anon nic nie odczyta (test z zewnątrz, bez logowania):
+- `curl -s -H "apikey: <anon>" -H "Authorization: Bearer <anon>" -H "Accept-Profile: leadbox" "https://peztqgfmmnxaaoapzpbw.supabase.co/rest/v1/<tabela>?select=*"` — oczekiwany błąd uprawnień lub `[]`, **nigdy** wiersz z danymi. Powtórzyć dla wszystkich czterech tabel.
+- Ten sam `curl` z tokenem konta technicznego — musi zwrócić dane. Bez tego kanał synchronizacji nie działa.
 
-1. Wywołania: 12/h × 24 × ~30 = **~8 640 zapytań/miesiąc**. Odpowiedź pusta to `[]` + nagłówki, ok. 0,5–1 kB na wywołanie → **rząd kilku–kilkunastu MB/miesiąc**. Ponad 99,9% odpowiedzi będzie pustych (7 leadów/mies.).
-2. Limity/koszt: pomijalne. Zapytanie `created_at > $1 order by created_at` korzysta z `idx_leads_created_at`, czyli index scan na tabeli o kilkunastu wierszach — obciążenie bazy nieodczuwalne. Transfer i liczba żądań są głęboko poniżej progów planów Supabase. Realny koszt to nie zasoby, a szum.
-3. Logi: to jest główny minus. ~8,6 tys. wpisów miesięcznie w logach API zdominuje logi projektu i praktycznie uniemożliwi ręczne przeglądanie ruchu (diagnostyka błędów, wykrywanie nadużyć). Da się to złagodzić stałym, rozpoznawalnym nagłówkiem `User-Agent` (np. `leadbox-sync/1`), żeby móc filtrować.
-4. Rekomendacja interwału przy 7 leadach/mies.: **co 15 minut w godzinach 7:00–20:00 czasu polskiego, co 60 minut poza tym** (~700–800 wywołań/mies., spadek o ~90%). Opóźnienie do 15 minut jest bez znaczenia, bo powiadomienie e-mail o leadzie i tak przychodzi natychmiast. Okno zapytania: `created_at > last_seen - 5 minut` (bufor na rozjazd zegarów), deduplikacja po `id`.
-5. Nasłuch zamiast odpytywania: tak — Supabase Realtime (WebSocket) oraz `LISTEN/NOTIFY` przez bezpośrednie połączenie Postgres. Oba działają jako połączenie **wychodzące** z leadboksu, więc nie wymagają publicznego adresu ani wyjątku w Tailscale. Odporność: przy zerwaniu połączenia zdarzenia z okresu rozłączenia są **bezpowrotnie tracone** — Realtime nie ma bufora ani odtwarzania. Dlatego nasłuch nigdy nie może być jedynym kanałem; wymaga uzupełniającego odpytywania „nadrabiającego” po każdym ponownym połączeniu. Dodatkowo `leads` trzeba by dopisać do publikacji `supabase_realtime`, a Realtime respektuje RLS — potrzebny byłby token z rolą admina.
+## 6. Wątpliwości — potrzebuję odpowiedzi przed napisaniem migracji
 
-## Część F — warianty realizacji
-
-### Wariant 1 — odpytywanie REST z leadboksu (pull)
-
-1. Leadbox uruchamia lokalny scheduler, który co 15 minut woła PostgREST: `GET /rest/v1/leads?created_at=gt.<last_seen>&order=created_at.asc`, z poświadczeniem trzymanym lokalnie. Wynik zapisuje do własnej tabeli i przesuwa znacznik `last_seen`. Cała inicjatywa jest po stronie leadboksu.
-2. Kolejność zmian: (a) utworzyć w Supabase konto techniczne z rolą `admin` w `user_roles` (albo świadomie użyć `service_role` tylko lokalnie), (b) napisać skrypt synchronizacji i tabelę stanu w leadboksie, (c) uruchomić harmonogram, (d) jednorazowy backfill istniejących ~15 rekordów.
-3. Migracja/RLS: nie wymaga. Obecne polityki wystarczają dla roli admin i dla `service_role`.
-4. Publiczny adres leadboksu: nie wymaga. Ruch wyłącznie wychodzący.
-5. Główne ryzyko: przechowywanie mocnego poświadczenia (`service_role` lub konto admin) na serwerze leadboksu oraz szum w logach Supabase.
-6. Deduplikacja: `id` jako klucz główny w leadboksie + `INSERT ... ON CONFLICT (id) DO NOTHING`. Znacznik czasu służy tylko do zawężenia okna, nie do tożsamości rekordu.
-7. Przestój kilku godzin: całkowicie nieszkodliwy. Po powrocie pierwsze odpytanie pobiera wszystko od `last_seen`. To jedyny wariant, który nadrabia zaległości bez dodatkowej logiki.
-
-### Wariant 2 — webhook z bazy (push) do Tailscale
-
-1. Do `notify_lead_created()` (lub osobnego triggera na `pg_net`) dochodzi drugie żądanie na endpoint leadboksu; alternatywnie wystarczy ustawić sekret `LEAD_WEBHOOK_URL`, który Edge Function `notify-lead` już obsługuje. Lead trafia do leadboksu w sekundach po zapisie.
-2. Kolejność: (a) wystawić endpoint odbiorczy w leadboksie z weryfikacją współdzielonego sekretu, (b) udostępnić go dla ruchu z internetu (Tailscale Funnel lub reverse proxy), (c) ustawić sekret `LEAD_WEBHOOK_URL`, (d) test na leadzie kontrolnym.
-3. Migracja/RLS: nie wymaga, jeśli korzystamy z istniejącego `LEAD_WEBHOOK_URL`. Wymaga migracji, jeśli chcemy własny trigger na `pg_net`.
-4. Publiczny adres: **tak, wymaga** — to zderza się wprost z założeniem, że serwer nie przyjmuje połączeń z internetu.
-5. Główne ryzyko: brak gwarancji dostarczenia (jedna próba, błąd tłumiony) plus konieczność wystawienia usługi na zewnątrz, czyli nowa powierzchnia ataku.
-6. Deduplikacja: payload zawiera `id` — `ON CONFLICT (id) DO NOTHING`.
-7. Przestój kilku godzin: **leady są tracone bezpowrotnie**, nie ma ponowień ani kolejki. Wymaga awaryjnego odpytywania, czyli i tak Wariantu 1 w tle.
-
-### Wariant 3 — nasłuch Realtime z odpytywaniem nadrabiającym (hybryda)
-
-1. Leadbox utrzymuje wychodzące połączenie WebSocket do Supabase Realtime i reaguje na INSERT w `leads` natychmiast. Równolegle raz na godzinę wykonuje odpytywanie REST jak w Wariancie 1, żeby nadrobić zdarzenia utracone przy rozłączeniach. Nasłuch daje niskie opóźnienie, odpytywanie daje kompletność.
-2. Kolejność: (a) Wariant 1 w całości jako fundament, (b) migracja dopisująca `leads` do publikacji `supabase_realtime`, (c) klient WebSocket z auto-reconnect, (d) po każdym reconnect wymuszone odpytywanie nadrabiające.
-3. Migracja/RLS: **tak** — wymaga migracji (`ALTER PUBLICATION supabase_realtime ADD TABLE public.leads`). Polityki RLS bez zmian, ale token musi mieć rolę admina.
-4. Publiczny adres: nie wymaga.
-5. Główne ryzyko: najwięcej części ruchomych i utrzymania (sesja WebSocket, odświeżanie tokenu, reconnect) przy 7 leadach miesięcznie — złożoność nieproporcjonalna do korzyści.
-6. Deduplikacja: `id` + `ON CONFLICT DO NOTHING`; przy hybrydzie ten sam lead niemal na pewno przyjdzie dwoma kanałami, więc deduplikacja jest tu obowiązkowa, nie opcjonalna.
-7. Przestój kilku godzin: bezpieczny — zdarzenia Realtime przepadają, ale odpytywanie nadrabiające po starcie pobierze wszystko od `last_seen`.
-
-## Rekomendacja
-
-**Wariant 1 — odpytywanie REST z leadboksu.** Jako jedyny spełnia twardy warunek braku połączeń przychodzących do serwera w Tailscale i jednocześnie gwarantuje kompletność danych po dowolnie długim przestoju, bez żadnej migracji ani zmiany RLS. Przy 7 leadach miesięcznie opóźnienie 15 minut jest bez znaczenia (e-mail o leadzie przychodzi natychmiast), a Realtime dodałby złożoność bez realnej korzyści.
-
-## Do rozstrzygnięcia przed wdrożeniem
-
-- Poświadczenie: dedykowane konto techniczne z rolą `admin` (JWT wymaga odświeżania) czy `service_role` zamknięty na prywatnym serwerze? Rekomendacja: konto techniczne.
-- Anonimizacja po 24 miesiącach — czy leadbox ma być archiwum trwałym, odpornym na czyszczenie w Supabase?
+1. **Cztery tabele nie są zdefiniowane.** Nie znam ich nazw, przeznaczenia ani kolumn. Bez tego nie napiszę `CREATE TABLE`. Potrzebuję dla każdej: nazwa, rola w procesie i lista pól (albo zgoda, że zaproponuję strukturę na podstawie celu synchronizacji leadów).
+2. **Relacja do `public.leads`.** Czy tabela lustrzana ma trzymać `id` z `public.leads` jako klucz główny (naturalna deduplikacja) i czy ma mieć klucz obcy do `public.leads`? Klucz obcy wiąże schematy i utrudni niezależne czyszczenie — domyślnie odradzam, ale to decyzja biznesowa.
+3. **Kierunek zapisu.** Czy zewnętrzne narzędzie tylko czyta z `leadbox`, czy również zapisuje (notatki, statusy)? To decyduje, czy grant to `SELECT` czy pełny CRUD.
+4. **Kto zapełnia `leadbox`.** Czy dane wpadają tam automatycznie z `public.leads` (trigger lub zadanie pg_cron — nowy mechanizm, do zaplanowania osobno), czy narzędzie samo je tam wpisuje po odczycie z `public.leads`?
+5. **Konto techniczne.** Czy już istnieje w `auth.users` z wpisem `admin` w `public.user_roles`? Jeśli nie, trzeba je utworzyć — to osobny krok poza migracją.
+6. **Model uprawnień.** Czy dostęp do `leadbox` ma być zawężony do jednego konkretnego konta technicznego (polityka na konkretny `user_id`), czy wystarczy „każdy admin”? Druga opcja jest prostsza, pierwsza szczelniejsza.
+7. **Anonimizacja po 24 miesiącach** (`cleanup_old_handled_leads`) czyści `public.leads`. Czy `leadbox` ma być z tego wyłączony jako archiwum trwałe? Ma to skutki dla RODO i wymaga świadomej decyzji.
