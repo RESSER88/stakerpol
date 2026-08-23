@@ -1,163 +1,90 @@
-# Raport diagnostyczny — druga aplikacja na tej samej bazie Postgres
+# Raport diagnostyczny — utworzenie schematu `leadbox` i nowej roli bazodanowej
 
 Tryb wyłącznie do odczytu. Nie wprowadzono żadnych zmian: brak migracji, brak edycji plików, brak zmian konfiguracji.
 
-## Część A — obecne zużycie połączeń
+Założenia przyjęte za twoje: schemat `leadbox` **nie** będzie wystawiony w Settings → API → Exposed schemas, schemat `public` nie jest modyfikowany, zewnętrzna aplikacja łączy się bezpośrednio własną rolą.
 
-Parametry instancji (Postgres 17.4):
+## Część A — wpływ nowego schematu i nowej roli
 
-| Parametr | Wartość |
-|---|---|
-| `max_connections` | **60** |
-| `superuser_reserved_connections` | 3 (→ realnie **57** slotów dla zwykłych ról) |
-| `statement_timeout` (globalny) | 120 000 ms (2 min) |
-| `idle_in_transaction_session_timeout` (globalny) | 0 = wyłączony |
-| `shared_buffers` | 28 672 × 8 kB = **224 MB** |
-| `work_mem` | ~2,1 MB |
+| Element | Wpływ | Uzasadnienie |
+|---|---|---|
+| Formularze zapytań | **Nie** | Zapis idzie przez PostgREST kluczem anon do `public.leads`. Nowy schemat nie zmienia tej tabeli, jej polityk ani grantów. Nowa rola jest osobnym podmiotem — nie odbiera niczego rolom istniejącym. |
+| Panel administracyjny | **Nie** | Czyta `public.leads`, `public.products`, `public.user_roles`. Domyślny schemat klienta Supabase to `public`; PostgREST nie zobaczy nawet `leadbox`, bo nie będzie wystawiony. |
+| Trigger `trg_leads_notify` | **Nie** | Przypisany do `public.leads`, wywołuje `public.notify_lead_created()` → `public.http_post`. Utworzenie nowego schematu nie zmienia definicji triggera ani `search_path` funkcji (`SET search_path TO 'public'`). Nowy schemat nie wchodzi w żaden `search_path`. |
+| Edge Functions | **Nie** | `notify-lead`, `sitemap`, `geo-feed`, `shared-list`, funkcje tłumaczeń — wszystkie operują na `public` przez PostgREST lub klienta z kluczem service_role. Żadna nie odwołuje się do nowego schematu i żadna nie wylicza listy schematów. |
+| Zadania pg_cron | **Nie** | Dwa aktywne zadania: `cleanup-old-handled-leads` (03:00) i `cleanup-expired-shared-lists` (03:15). Wołają funkcje z jawnym prefiksem `public.` i operują tylko na `public.leads` / `public.shared_lists`. Nowy schemat i nowa rola są dla nich niewidoczne. |
+| Wygenerowane typy TypeScript | **Nie** | Szczegóły w Części B. Generator wypisuje wyłącznie schematy wystawione w API. |
+| Budowanie projektu | **Nie** | `src/integrations/supabase/types.ts` pozostanie bajt w bajt taki sam, więc `tsc` i `vite build` nie mają czego zauważyć. Warto odnotować, że `src/types/supabase.ts` sięga wyłącznie po `Database['public']['Tables']`, więc nawet gdyby typy się rozrosły, kod nie wymagałby zmian. |
+| Realtime | **Nie** | Publikacja `supabase_realtime` zawiera dziś tylko `products`, `product_images`, `product_benefits`. Nowy schemat nie jest do niej dopisywany, więc dekodowanie logiczne i slot replikacyjny nie zyskują dodatkowej pracy. |
 
-Migawka `pg_stat_activity` w chwili badania — 24 backendy, z tego 8 to procesy wewnętrzne Postgresa (background writer, checkpointer, walwriter, archiver, autovacuum launcher, logical replication launcher, pg_cron launcher, worker pg_net), które **nie zajmują** slotów z `max_connections`.
+Jedyna niezerowa, ale niezależna od schematu ścieżka wpływu: nowa rola zużywa slotów z wspólnego `max_connections = 60` (dziś zajęte ~16 z 57 dostępnych). To kwestia połączeń, nie istnienia schematu — analizowana w poprzednim raporcie.
 
-Realnie zajęte sloty klienckie: **16**.
+## Część B — typy TypeScript
 
-| Kto | `usename` / `application_name` | Slotów | Stan |
-|---|---|---|---|
-| PostgREST — obsługuje stronę i panel admina | `authenticator` / `postgrest` | **3** | idle (pula stała) |
-| Realtime (4 typy procesów + walsender) | `supabase_admin` / `realtime_*` | 7 | idle/active |
-| Storage API | `supabase_storage_admin`, `pgbouncer` | 3 | idle |
-| Monitoring platformy | `supabase_admin` / `postgres_exporter` | 1 | idle |
-| Narzędzia deweloperskie / MCP / to zapytanie | `supabase_read_only_user` / `mgmt-api` | 1 | active |
-| Sesja serwisowa | `supabase_admin` (bez nazwy aplikacji) | 1 | idle |
+Wprost: **nie, schemat niewystawiony w Exposed schemas nie pojawi się w wygenerowanym pliku typów.**
 
-Rozbicie na pytane kategorie:
-- **Strona stakerpol.pl i panel administracyjny: 3 slotów łącznie**, wspólna pula PostgREST. Nie rosną z liczbą odwiedzających — to jest cała pointa PostgREST.
-- **Edge Functions (`notify-lead`, `sitemap`, `geo-feed`, `shared-list` itd.): 0 slotów na stałe.** Łączą się przez PostgREST/pooler tylko na czas wywołania; w migawce nic nie było aktywne.
-- **Narzędzia deweloperskie: 1 slot**, doraźnie.
-- **Pooler:** ta instancja korzysta z Supavisora/pgbouncera po stronie platformy; w bazie widać po nim jeden slot (`usename = pgbouncer` przy Storage API). Pooler nie utrzymuje stałej dużej puli w tej konfiguracji — dominującym konsumentem jest PostgREST.
+Powód: typy generowane są z introspekcji przez PostgREST/Management API i obejmują wyłącznie schematy z listy Exposed schemas (dziś: `public`). Obiekty w `leadbox` będą dla tego mechanizmu nieistniejące — nie zobaczy ich ani jako tabel, ani jako typów, ani jako relacji.
 
-**Wolne slotów: ok. 41 z 57.** Limity ról: wszystkie `rolconnlimit = -1` (bez limitu). To jest istotne dla Części D.
+Potwierdzam: **regeneracja typów po tej migracji nie jest potrzebna.** Plik `src/integrations/supabase/types.ts` nie zmieni się w żaden sposób i nie ma powodu go dotykać. Konsekwencja praktyczna, którą trzeba przyjąć świadomie: zewnętrzna aplikacja nie dostanie typów z tego projektu — musi zarządzać własnym opisem schematu.
 
-## Część B — jak łączy się strona
+## Część C — skutki `DROP SCHEMA leadbox CASCADE` + `DROP ROLE`
 
-- Frontend **nie łączy się z Postgresem bezpośrednio.** Używa `@supabase/supabase-js` → HTTPS → PostgREST (`/rest/v1/...`). Plik konfiguracji klienta: `src/integrations/supabase/client.ts` (URL projektu + klucz publishable/anon, `persistSession: true`).
-- Nie ma i nie może mieć puli połączeń w przeglądarce — każdy odwiedzający to żądanie HTTP, nie sesja bazodanowa. Tysiąc jednoczesnych odwiedzających nadal przechodzi przez tę samą 3-slotową pulę PostgREST, kolejkując się na poziomie HTTP.
-- Panel administracyjny działa identycznie (ten sam klient, dodatkowo sesja JWT z rolą `admin`).
-- Ograniczenie liczby jednoczesnych żądań po stronie aplikacji: **brak jawnego.** Limitują: pula PostgREST i rate limiting platformy Supabase, nie kod projektu.
-- Wyjątek: `notify_lead_created()` woła `public.http_post` **synchronicznie wewnątrz transakcji INSERT**, przez rozszerzenie `http`. To nie zajmuje dodatkowego slotu, ale wydłuża transakcję na czas odpowiedzi Edge Function.
+Wprost: **nie, ta operacja nie może dotknąć niczego w schemacie `public`** — pod jednym warunkiem, opisanym na końcu tej sekcji.
 
-## Część C — ryzyko wyczerpania slotów
+`CASCADE` w `DROP SCHEMA` usuwa obiekty **zależne od usuwanego schematu**, a nie obiekty, od których ten schemat zależy. Kierunek zależności jest tu decydujący. Jeżeli tabela w `leadbox` ma klucz obcy do `public.leads`, to `leadbox` zależy od `public`, więc `DROP SCHEMA leadbox CASCADE` usunie ten klucz obcy razem z tabelą i **nie tknie** `public.leads` ani jednego wiersza.
 
-Wprost: jeżeli druga aplikacja zajmie wszystkie wolne slotów, **strona i panel przestaną odczytywać dane, a formularz zapytania przestanie zapisywać.**
+Zostanie usunięte:
+- cztery tabele w `leadbox` wraz z całą zawartością (dane bezpowrotnie),
+- ich indeksy, klucze główne i ograniczenia, w tym klucze obce wychodzące do `public` (usuwane jest ograniczenie po stronie `leadbox`, nie tabela docelowa),
+- polityki RLS założone na te tabele,
+- triggery założone na te tabele — także te wywołujące funkcje z `public` (np. `public.update_updated_at_column()`); ginie trigger, funkcja w `public` zostaje nienaruszona,
+- sekwencje, typy i funkcje utworzone w `leadbox`,
+- sam schemat.
 
-Mechanika i objawy:
-1. PostgREST trzyma już swoje 3 połączenia otwarte, więc **normalny ruch strony jest odporny** — dopóki jego pula żyje, nie potrzebuje nowych slotów. To jest naturalny bufor.
-2. Ryzyko materializuje się w dwóch sytuacjach: gdy PostgREST musi odtworzyć połączenie (restart, deploy, zerwanie sieci) i nie dostanie slotu, albo gdy pula PostgREST próbuje się rozszerzyć pod obciążeniem.
-3. Odwiedzający zobaczy wtedy błąd HTTP **500/503** z PostgREST, w treści `remaining connection slots are reserved` / `too many clients already` (SQLSTATE `53300`). W UI: puste listy produktów, komunikat błędu ładowania.
-4. **Formularz zapytania: tak, przestanie działać** — INSERT do `public.leads` idzie tą samą drogą. Lead nie zapisze się i nie wyśle e-maila. Dla serwisu z 7 leadami miesięcznie oznacza to realną utratę zapytania, bez śladu w bazie.
-5. Drugi, groźniejszy scenariusz niż zwykłe wyczerpanie: **`idle in transaction` bez limitu.** Globalny `idle_in_transaction_session_timeout = 0` znaczy, że jedno zawieszone połączenie drugiej aplikacji, które otworzyło transakcję i nie zamknęło jej, może trzymać slot i blokady w nieskończoność. Przy puli 2–4 połączeń to jest bardziej prawdopodobna awaria niż przekroczenie 57 slotów.
+Potwierdzam, że **nie ucierpi**: żadna tabela, funkcja, trigger, polityka, sekwencja ani wiersz w `public`, `auth`, `storage` czy `extensions`. `DROP ROLE` usuwa wyłącznie tę jedną rolę i jej członkostwa; nie zmienia uprawnień ani ustawień pozostałych ról.
 
-Ocena przy podanym profilu (1 użytkownik, kilkanaście zapytań dziennie, pula 2–4): ryzyko wyczerpania slotów jest **niskie** — 4 z 41 wolnych. Realne ryzyko to nie liczba połączeń, a długie transakcje i brak limitów na nowej roli.
+Dwa warunki, których trzeba dopilnować, bo tylko one mogłyby ten obraz zmienić:
+1. **`DROP ROLE` nie wykona się, dopóki rola jest właścicielem obiektów lub posiada nadane uprawnienia.** Właściwa kolejność to: najpierw `REASSIGN OWNED BY` / `DROP OWNED BY <rola>`, potem `DROP SCHEMA`, na końcu `DROP ROLE`. Jeżeli rola dostanie w międzyczasie jakiekolwiek granty w `public`, `DROP OWNED BY` je odbierze — to jedyny moment styku z `public` w całej procedurze i jest on zamierzony (odbiera uprawnienia usuwanej roli, nie zmienia uprawnień innych).
+2. **Żaden obiekt w `public` nie może odwoływać się do `leadbox`** — żadnego widoku, funkcji ani klucza obcego w tym kierunku. Dopóki tego przestrzegasz (a taki jest plan), `CASCADE` nie ma z `public` czego usunąć. Zależność w odwrotnym kierunku jest bezpieczna.
 
-## Część D — bezpieczniki
+## Część D — zależności odwrotne istniejące dziś w bazie
 
-Wszystkie poniższe dotyczą **wyłącznie nowej roli** i nie zmieniają zachowania `authenticator` (PostgREST), więc nie ruszają strony.
+Sprawdzone bezpośrednio w katalogu systemowym. Tak, takie powiązania już występują — trzy, wszystkie do schematów systemowych Supabase:
 
-### 1. `CONNECTION LIMIT` na roli — najważniejszy, wykonać obowiązkowo
+1. **Klucz obcy międzyschematowy — jeden:** `public.user_roles.user_id` → `auth.users.id` (`user_roles_user_id_fkey`). To jedyny FK w bazie przekraczający granicę schematu.
+2. **Funkcje w `public` odwołujące się do innych schematów — dwie:**
+   - `public.handle_new_user()` — czyta `auth.users` (`SELECT COUNT(*) FROM auth.users`) i jest podpięta triggerem `on_auth_user_created` **na tabeli w schemacie `auth`**. To najsilniejsze istniejące powiązanie międzyschematowe w tym projekcie.
+   - `public.get_current_user_role()` — ma `SET search_path TO ''` i odwołuje się do `auth.uid()`.
+   - Uzupełniająco: pozostałe funkcje (`has_role`, `notify_lead_created`, polityki RLS) używają `auth.uid()` przez wbudowany mechanizm, ale nie sięgają do tabel `auth` bezpośrednio.
+3. **Widoki i widoki zmaterializowane w `public`: brak** — zero obiektów `relkind in ('v','m')`. Nie ma więc ryzyka kaskadowego usunięcia widoku zależnego od czegokolwiek.
+4. **Rozszerzenie `http` znajduje się w schemacie `public`** (nietypowe, udokumentowane w `PRODUCTION_READINESS_REPORT.md` jako świadomie zostawione). `pg_net` jest w `extensions`. Oznacza to, że `public` zawiera obiekty rozszerzenia — nieistotne dla `leadbox`, ale istotne, gdyby kiedykolwiek rozważać operacje na całym schemacie `public`.
 
-```sql
-ALTER ROLE leadbox_app CONNECTION LIMIT 5;
-```
+Wniosek dla oceny ryzyka: baza już żyje z powiązaniami międzyschematowymi i działa stabilnie. Dodanie schematu bez powiązań wstecznych jest operacyjnie łagodniejsze niż to, co już istnieje.
 
-Skutek: rola fizycznie nie może otworzyć więcej niż 5 sesji; szósta dostaje `too many connections for role`. To zamienia awarię całego projektu w awarię tylko drugiej aplikacji — dokładnie to, o co chodzi.
-Skutek uboczny: przy limicie zbyt ciasnym wobec puli aplikacji (np. limit 4 przy puli 4 plus jedna sesja diagnostyczna) własne narzędzia diagnostyczne nie wejdą. Stąd 5, nie 4.
-**Bezpieczne dla strony: tak, w pełni.** Dotyczy tylko nowej roli.
+## Część E — nowa rola z uprawnieniem LOGIN
 
-### 2. `statement_timeout` i `idle_in_transaction_session_timeout` na roli — wykonać obowiązkowo
+Odpowiedź: **nie, dodanie nowej roli nie zmienia niczego w uprawnieniach ani limitach ról `authenticator`, `anon`, `authenticated`, `service_role` i `postgres`.**
 
-```sql
-ALTER ROLE leadbox_app SET statement_timeout = '15s';
-ALTER ROLE leadbox_app SET idle_in_transaction_session_timeout = '30s';
-ALTER ROLE leadbox_app SET lock_timeout = '5s';
-```
+Uzasadnienie po elementach:
+- `CREATE ROLE` tworzy nowy, niezależny podmiot. Uprawnienia w Postgresie są nadawane wprost albo dziedziczone przez członkostwo — nowa rola nie staje się członkiem żadnej istniejącej roli, dopóki nie wykonasz jawnego `GRANT <rola> TO <rola>`. Tego robić nie należy.
+- Stan obecny limitów, dla porównania: wszystkie role logujące się mają `rolconnlimit = -1` (bez limitu). `authenticator` ma własne ustawienia `statement_timeout=8s`, `lock_timeout=8s`, `session_preload_libraries=safeupdate`. `ALTER ROLE <nowa> SET ...` zapisuje ustawienia **wyłącznie dla nowej roli** w `pg_db_role_setting` i nie modyfikuje wpisu `authenticator`.
+- Nałożenie `CONNECTION LIMIT` na nową rolę również nie zmienia limitów pozostałych — działa tylko w jedną stronę, chroniąc wspólną pulę.
 
-Skutek: żadne zapytanie drugiej aplikacji nie zajmie CPU dłużej niż 15 s; porzucona otwarta transakcja jest ubijana po 30 s, co uwalnia slot i zwalnia blokady; `lock_timeout` zapobiega długiemu czekaniu na blokadę. Dla porównania: PostgREST (`authenticator`) ma już `statement_timeout=8s` i `lock_timeout=8s`, więc nowa rola z 15 s jest ustawiona łagodniej niż strona, ale nadal ograniczona — w przeciwieństwie do domyślnego globalnego 120 s.
-Skutek uboczny: długi raport lub jednorazowy import w drugiej aplikacji zostanie przerwany. Rozwiązanie bez ruszania roli: `SET statement_timeout = '5min';` w obrębie tej jednej sesji.
-Ustawienia wchodzą w życie przy **następnym** logowaniu roli, nie dla trwających sesji.
-**Bezpieczne dla strony: tak.** `ALTER ROLE ... SET` nie dotyka innych ról ani ustawień globalnych.
+Trzy rzeczy, które **mogłyby** wpłynąć na stronę i których trzeba unikać kategorycznie:
+1. `SUPERUSER` lub `BYPASSRLS` na nowej roli — omija RLS na `public.leads`, czyli wprost łamie ochronę danych klientów.
+2. `GRANT authenticated TO <nowa rola>` (lub `anon`, `service_role`) — nowa rola dziedziczyłaby uprawnienia strony i widziała `public` przez jej polityki.
+3. `ALTER DEFAULT PRIVILEGES` w schemacie `public` albo granty na `public` dla nowej roli — jedyna droga, którą nowa rola mogłaby zapisywać do tabel strony. Domyślnie każda rola ma jednak `USAGE` na `public` z uprawnień `PUBLIC`, więc dla pełnej izolacji rozważ `REVOKE ALL ON SCHEMA public FROM <nowa rola>` — to polecenie dotyczy tylko tej roli i nie odbiera niczego rolom strony.
 
-### 3. Ograniczenia po stronie poolera — przydatność ograniczona
+## Część F — czego nie mogę potwierdzić z poziomu tego projektu
 
-Druga aplikacja ma łączyć się poolerem **sesyjnym** (port 5432 Supavisora). W trybie sesyjnym połączenie klienta jest przypięte do backendu na cały czas trwania sesji, więc pooler nie multipleksuje i nie daje oszczędności slotów — 4 połączenia klienta to 4 slotów w bazie. Osobne per-tenant limity Supavisora nie są konfigurowalne z poziomu SQL, tylko z dashboardu platformy, i mają granulację projektu, nie roli.
-Wniosek: pooler traktować jako wygodę połączeniową, a **nie** jako bezpiecznik. Zabezpieczeniem jest `CONNECTION LIMIT` na roli, bo działa w bazie i nie da się go obejść zmianą trybu połączenia.
-Jeżeli druga aplikacja nie potrzebuje `LISTEN/NOTIFY`, kursorów ani `SET` sesyjnych, warto rozważyć pooler transakcyjny (port 6543) — wtedy 4 połączenia klienta zużywają mniej slotów. To decyzja po stronie tamtej aplikacji.
+1. **Konfiguracja Supavisora / poolera** — rozmiar puli po stronie platformy, tryb (sesyjny/transakcyjny) i limity per projekt widać wyłącznie w dashboardzie Supabase. Nie mam do nich wglądu przez SQL.
+2. **Rzeczywista treść listy Exposed schemas.** Wnioskuję z faktu, że wygenerowane typy zawierają tylko `public`, ale samej wartości ustawienia nie widzę. Jeżeli ktoś wystawił coś jeszcze, moja odpowiedź w Części B wymaga weryfikacji w dashboardzie.
+3. **Definicje czterech tabel `leadbox`** — nie znam ich nazw ani kolumn, więc ocena w Części C opiera się na regułach `DROP SCHEMA CASCADE`, a nie na konkretnym DDL. Jeśli któraś tabela miałaby zawierać coś więcej niż tabele i triggery (np. własną publikację logiczną albo funkcję wywoływaną z `public`), wnioski trzeba przeliczyć.
+4. **Szczytowe zużycie połączeń.** Migawka `pg_stat_activity` to jedna chwila przy niskim ruchu (16 z 57 slotów). Historii nie mam — jest w dashboardzie: Reports → Database.
+5. **Uprawnienia twojego konta do `CREATE ROLE`.** Rola `postgres` w Supabase nie jest superuserem; tworzenie ról zwykle działa, ale nie mogę tego potwierdzić bez wykonania operacji, czego w tym trybie nie robię.
+6. **Zachowanie generatora typów po stronie platformy Lovable/Supabase.** Opisuję jego udokumentowane zachowanie (tylko wystawione schematy); nie mam dostępu do jego implementacji, więc jeśli po migracji plik typów jednak się zmieni, jest to sygnał do sprawdzenia, a nie awaria.
+7. **Polityka backupów i PITR** dla tego projektu — istotna, gdyby `DROP SCHEMA CASCADE` miał być wykonany po wprowadzeniu danych. Widać ją tylko w dashboardzie.
 
-### 4. Uzupełniająco — izolacja uprawnień (nie wydajnościowa, ale w tym samym poleceniu)
+## Ocena końcowa ryzyka
 
-```sql
-REVOKE ALL ON SCHEMA public FROM leadbox_app;
-GRANT USAGE ON SCHEMA leadbox TO leadbox_app;
-```
-
-Bez tego nowa rola dziedziczy dostęp do `public` i może w nim zapisywać, obchodząc RLS (RLS nie działa na rolę będącą właścicielem tabeli ani na rolę z `BYPASSRLS`). Nowa rola **nie może** mieć `BYPASSRLS` ani `SUPERUSER`.
-
-## Część E — obciążenie zapytaniami
-
-Osobny schemat to izolacja **nazw**, nie zasobów. Wszystko poniżej jest wspólne:
-
-- **CPU:** wspólne. Kilkanaście zapytań dziennie jest nieodczuwalne. Zagrożeniem jest pojedyncze ciężkie zapytanie (raport, `seq scan` po dużej tabeli), które na małej instancji potrafi wysycić rdzeń i wydłużyć czas odpowiedzi strony. Dokładnie temu służy `statement_timeout` z Części D.
-- **Pamięć:** `shared_buffers` = 224 MB wspólne. Duży odczyt w nowym schemacie **wypłukuje z cache** strony tabel `products` i `product_images`, co przy następnym wejściu na stronę oznacza odczyt z dysku. To najbardziej realny, choć przejściowy, wpływ na odczuwalną szybkość strony. Przy kilkunastu zapytaniach dziennie: pomijalny. `work_mem` (2,1 MB) jest per operacja sortowania — równoległe ciężkie sortowania w drugiej aplikacji mnożą zużycie pamięci.
-- **Autovacuum:** launcher jest jeden i wspólny; obsługuje wszystkie schematy. Intensywne UPDATE/DELETE w nowym schemacie generują martwe wiersze i mogą **opóźnić** vacuum tabel w `public`. Przy tym wolumenie nierealne, ale warto obserwować, jeśli druga aplikacja zacznie prowadzić własną kolejkę zadań z częstymi UPDATE.
-- **WAL:** wspólny strumień, `max_wal_size` = 1 GB. Zapisy w nowym schemacie trafiają do tego samego WAL i tej samej replikacji logicznej (`realtime_replication_connection` jest aktywny). Duża jednorazowa operacja zapisu może wywołać wymuszony checkpoint i chwilowy skok opóźnień dla wszystkich, w tym dla strony. Osobna uwaga: jeśli tabele nowego schematu nie znajdą się w publikacji `supabase_realtime` (a nie powinny), nie obciążą dodatkowo dekodowania logicznego.
-
-Podsumowanie: przy podanym profilu ruchu wpływ na wydajność `public` jest **praktycznie zerowy**. Ryzyko nie skaluje się z liczbą zapytań, a z ich ciężkością — dlatego limity czasowe są ważniejsze od limitu połączeń.
-
-## Część F — monitorowanie
-
-Bieżące zużycie slotów:
-
-```sql
-select
-  (select setting::int from pg_settings where name='max_connections')            as max_conn,
-  (select setting::int from pg_settings where name='superuser_reserved_connections') as reserved,
-  count(*) filter (where backend_type='client backend')                          as used_client,
-  (select setting::int from pg_settings where name='max_connections')
-    - (select setting::int from pg_settings where name='superuser_reserved_connections')
-    - count(*) filter (where backend_type='client backend')                      as free
-from pg_stat_activity;
-```
-
-Rozbicie na role i aplikacje (kto zjada slotów):
-
-```sql
-select usename, application_name, state, count(*),
-       max(now() - state_change) as longest_in_state
-from pg_stat_activity
-where backend_type = 'client backend'
-group by 1,2,3
-order by 4 desc;
-```
-
-Wykrywanie porzuconych transakcji — pierwsza rzecz do sprawdzenia przy problemach:
-
-```sql
-select pid, usename, application_name, state,
-       now() - xact_start as xact_age, left(query, 120) as query
-from pg_stat_activity
-where state = 'idle in transaction'
-order by xact_start;
-```
-
-Gdzie zobaczysz ostrzeżenia o wyczerpywaniu połączeń:
-- **Supabase Dashboard → Logs → Postgres Logs** — komunikaty `FATAL: remaining connection slots are reserved for roles with the SUPERUSER attribute` oraz `FATAL: too many connections for role "..."`. Filtrować po `error_severity = 'FATAL'`.
-- **Dashboard → Logs → API (PostgREST)** — po stronie strony objawi się jako 500/503 na `/rest/v1/...`.
-- **Dashboard → Reports → Database** — wykres liczby połączeń w czasie; najlepszy do wykrycia trendu narastania.
-- **W projekcie:** panel administracyjny ma `HealthCheck` (`src/components/monitoring/HealthCheck.tsx`) wołający `public.health_check()`, ale ta funkcja **nie raportuje połączeń** — zwraca liczbę produktów i zapytań. Nie licz na nią jako alarm o slotach.
-- Alarmy proaktywne (powiadomienie o wysokim zużyciu połączeń) w tym projekcie nie są dziś skonfigurowane.
-
-## Wątpliwości i pytania
-
-1. **Tryb poolera.** Piszesz o poolerze sesyjnym — czy druga aplikacja rzeczywiście potrzebuje trybu sesyjnego (`LISTEN/NOTIFY`, kursory, `SET` na sesję)? Jeśli nie, tryb transakcyjny zużyje mniej slotów.
-2. **Nazwa nowej roli i schematu** — nie znam ich; w Części D użyłem `leadbox_app`. Podaj docelowe nazwy przed wykonaniem czegokolwiek.
-3. **Czy nowa rola ma mieć jakikolwiek dostęp do `public.leads`** (np. odczyt do synchronizacji), czy schemat będzie zapełniany innym kanałem? Ma to wpływ na granty i na ocenę bezpieczeństwa.
-4. **Charakter zapytań drugiej aplikacji** — „kilkanaście dziennie" nie mówi nic o ich ciężkości. Czy planowane są raporty, agregacje albo jednorazowe importy? Od tego zależy dobór `statement_timeout`.
-5. **Nie mam wglądu w konfigurację Supavisora** (rozmiar puli po stronie platformy, limity per projekt). Te wartości widać wyłącznie w dashboardzie Supabase — warto je odczytać przed podłączeniem.
-6. Migawka `pg_stat_activity` to jedna chwila, przy niskim ruchu. Nie znam szczytowego zużycia slotów. Dashboard → Reports → Database pokaże historię i to jest wiarygodniejsza podstawa niż ten pojedynczy pomiar.
+Ryzyko dla strony i panelu: **niskie i dobrze ograniczone.** Operacja jest addytywna — nie modyfikuje żadnego istniejącego obiektu. Trzy realne wektory ryzyka to: nadmiarowe uprawnienia nowej roli (`SUPERUSER`/`BYPASSRLS`/członkostwo w rolach strony), zużycie wspólnych slotów połączeń oraz porzucone transakcje przy globalnym `idle_in_transaction_session_timeout = 0`. Wszystkie trzy są kontrolowane ustawieniami zakładanymi wyłącznie na nowej roli, bez dotykania czegokolwiek, z czego korzysta strona.
