@@ -20,7 +20,18 @@ const json = (body: unknown, status: number) =>
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 
-const NOT_FOUND = () => json({ error: 'not_found', message: 'Link jest nieaktywny.' }, 404);
+/** Jednolita odpowiedź dla nieaktywnego linku — nigdy zawartość oferty, nigdy błąd techniczny. */
+const INACTIVE = (reason: 'expired' | 'revoked' | 'archived' | 'unknown') => {
+  const messages: Record<typeof reason, string> = {
+    expired: 'Ta oferta wygasła. Zadzwoń, przygotujemy nową: 694 133 592.',
+    revoked: 'Ten link został unieważniony. Zadzwoń po aktualną ofertę: 694 133 592.',
+    archived: 'Ta oferta została zarchiwizowana. Zadzwoń po aktualną: 694 133 592.',
+    unknown: 'Link jest nieaktywny.',
+  };
+  return json({ error: 'not_found', reason, message: messages[reason] }, 404);
+};
+
+const NOT_FOUND = () => INACTIVE('unknown');
 
 const rateLimited = (ip: string): boolean => {
   const now = Date.now();
