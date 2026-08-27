@@ -1,65 +1,51 @@
-# Panel przejmuje LeadBoxa — odpowiedzi i plan wdrożenia
+# Etap 3 — zatrzymanie na warunku wejścia + plan wykonania
 
-## Stan potwierdzony odczytem z bazy (27.08.2026)
+## Odpowiedź na pytanie o bazę
 
-- `products`: 45; `net_price` w 41. Tryby ceny: `inquiry_with_pricelist` 32, `show_price` 12, `inquiry_only` 1.
-- `leads`: 15, z czego **9 ma adres e-mail w kolumnie `phone`** — pułapka z dokumentu potwierdzona.
-- `shared_lists`: 3, z tego **1 już po `expires_at`** — czyli najbliższy przebieg `cleanup-expired-shared-lists` (03:15) fizycznie ją usunie. Krok 0 jest pilny.
-- `price_inquiries`: **1 wiersz**, nie 0 (dokument mówi 0).
-- `cron.job`: dwa zadania — `cleanup-old-handled-leads` (0 3 * * *), `cleanup-expired-shared-lists` (15 3 * * *).
-- RLS: `shared_lists` — cztery polityki tylko dla `authenticated`; `anon` nie ma żadnej. `leads` — INSERT publiczny, reszta admin. Publiczny widok oferty faktycznie idzie przez Edge Function `shared-list` na `SUPABASE_SERVICE_ROLE_KEY`.
+Tak — panel i strona pracują na jednej, tej samej bazie Supabase (projekt `peztqgfmmnxaaoapzpbw`). Nie ma „starej" i „nowej" wersji danych: `products`, `leads`, `shared_lists` to te same tabele, z których korzysta publiczna strona. Nowe zakładki dokładają obok tabele robocze, nie kopiują danych. Dlatego kryterium „Eksport generuje PDF/JPG/XLSX dla 45 produktów" i tak jest spełnione — to ten sam katalog.
 
-## Odpowiedzi na pytania „Do ustalenia z Lovable"
+## Warunek rozpoczęcia NIE jest spełniony — zatrzymuję się
 
-**1. Wciąganie zgłoszeń: trigger czy przycisk?**
-Zgoda z rekomendacją — przycisk. Import robi Edge Function `leads-intake` wywoływana z panelu (autoryzacja sesją admina, w środku `service_role`). Logika dopasowania jest wtedy jednym miejscem w kodzie, łatwym do poprawienia i uruchomienia ponownie. Idempotencja przez `UNIQUE (lead_id) WHERE lead_id IS NOT NULL` na `contact_activities`. Po dwóch tygodniach ta sama funkcja może zostać wołana triggerem — bez przepisywania logiki.
+Odczyt schematu (`information_schema.columns`, 27.08.2026) pokazuje, że **etapy 0 i 1 nie zostały wdrożone**:
 
-**2. `shared_list_views` — pełny UA i IP?**
-Rekomendacja: **bez IP**, UA tylko jako skrót (`device`: mobile/desktop + rodzina przeglądarki, plus opcjonalnie `ua_hash`). IP to dana osobowa i wymagałaby zapisu w polityce prywatności oraz retencji; sygnały z sekcji „Zakładka Oferty" (Ogląda / Cisza / Wygasa) potrzebują wyłącznie `viewed_at`. Surowy UA zostawiamy jedynie, jeśli chcesz rozróżniać „otwierał z telefonu na budowie" — wtedy z retencją 90 dni.
+- `shared_lists` ma dokładnie 11 kolumn: `id, token, filters, label, created_by, expires_at, revoked_at, view_count, last_viewed_at, created_at, updated_at`. **Brak** `archived_at`, `contact_id`, `note`, `sent_at`, `channel`, `renewed_from`.
+- Tabele `contacts`, `contact_activities`, `shared_list_views` **nie istnieją**.
 
-**3. Publiczny widok oferty i `archived_at`**
-Tak, to Edge Function `shared-list` na `service_role` — potwierdzone. Funkcja dziś odrzuca link przy `revoked_at IS NOT NULL` i po `expires_at`, zwracając 404 z komunikatem „Link jest nieaktywny." Po zmianie dojdzie `archived_at` do zapytania i rozróżnienie komunikatów: wygasła / unieważniona / zarchiwizowana — komunikat, nigdy błąd techniczny. Zmiana jest w jednym pliku.
+Etapu 3 nie da się zrobić „na zapas": każde z pięciu kryteriów akceptacji dotyka kolumn i tabel, których nie ma. Zgodnie z Twoim zapisem „nie realizuj kolejnych etapów w tej samej odpowiedzi" nie wchodzę też samowolnie w zakres etapów 0–1 bez decyzji.
 
-**4. `pg_dump` — schemat, funkcje, triggery, RLS**
-Nie da się tego zdjąć kluczem `service_role` ani REST-em; potrzebne jest połączenie Postgresowe. Hasło do bazy i connection string bierzesz z panelu Supabase (Settings → Database), nie z Lovable — my nie mamy dostępu do hasła. Rekomendacja: `pg_dump --schema-only` cyklicznie (raz w tygodniu, obok cronu z JSON-em) — schemat zmienia się rzadko, ale kopia sprzed migracji jest dokładnie tym, czego brakuje przy odtwarzaniu. Dane osobowe zostają w kopii JSON.
+Do tego doszła rzecz pilna: jedna oferta jest już po `expires_at`, a `cleanup-expired-shared-lists` (pg_cron, 03:15) kasuje takie wiersze fizycznie. Do czasu etapu 0 każda wygasła oferta traci historię odsłon bezpowrotnie.
 
-**5. Retencja**
-`cleanup_old_handled_leads` zostaje wyłącznie na `leads` — potwierdzam: nowe tabele nie wchodzą w jego zakres i nie dopisujemy ich tam. Ale to jest decyzja do wypowiedzenia w polityce prywatności: skrzynka anonimizuje się po 24 miesiącach, kartoteka klientów nie. Proponuję osobne, jawne zadanie dla `contacts` (np. anonimizacja po 36 miesiącach od ostatniej aktywności) — do ustalenia liczby, nie do przemilczenia.
+## Propozycja: wykonać etap 0 + 1 teraz, jedną migracją
 
-**6. Wycena i termin**
-Kroki 0–6 to sześć etapów wdrożeniowych, każdy w osobnym zleceniu, każdy z warunkiem wyjścia z Twojej tabeli. Nie podaję ryczałtu — pracujemy etapami, po każdym etapie sprawdzasz warunek wyjścia z telefonu.
+Zakres migracji (bez zmian w kodzie panelu, bez ryzyka dla strony):
 
-## Uwagi, które zmieniają dokument
+1. `shared_lists`: `archived_at timestamptz`, `contact_id uuid → contacts`, `note text`, `sent_at timestamptz`, `channel text CHECK (email|whatsapp|sms|telefon)`, `renewed_from uuid → shared_lists`. Wszystkie nullowalne, więc istniejące 3 linki i logika slug/`expires_at` zostają nietknięte.
+2. `cleanup_expired_shared_lists()` przepisana z `DELETE` na `UPDATE ... SET archived_at = now()`; fizyczne kasowanie dopiero po 12 miesiącach od archiwizacji.
+3. `public.norm_phone(text)` i `public.norm_email(text)` — jedna funkcja normalizacji (inwariant 1); `norm_phone` zwraca NULL dla wartości zawierającej `@`.
+4. `public.contacts` — kolumny dokładnie z Twojego dokumentu (`osoba`, `firma`/`firma_norm`, `telefon`/`telefon_norm`, `email`/`email_norm`, `zrodlo`, `krok` z `CHECK` bez wartości `kupil`, `termin_followup`, `data_sprzedazy`, `udzwig_kg`, `wysokosc_m`, `sprawdz_duplikat`, `ukryty`, `utworzony_przez`, `zaktualizowany_przez`, znaczniki czasu). Indeksy częściowe po `email_norm`, `telefon_norm` i `termin_followup` z warunkami z inwariantów 2 i 10.
+5. `public.contact_activities` — `contact_id` (FK), `typ` (`telefon|formularz|oferta|sprzedaz|ukrycie|notatka`), `data`, `tresc`, `wynik`, `sku`, `utworzony_przez`, `lead_id` (bez FK) + `UNIQUE (lead_id) WHERE lead_id IS NOT NULL` (idempotencja importu), `shared_list_id` (FK).
+6. `public.shared_list_views` — `shared_list_id` (FK), `viewed_at`, `device` (skrót UA). Bez IP.
+7. Dla każdej nowej tabeli: `GRANT ... TO authenticated` + `GRANT ALL TO service_role`, **zero grantów dla `anon`**, RLS włączony, polityki `has_role(auth.uid(),'admin')` na wszystkie operacje.
+8. Widok `public.v_followup` z jednym warunkiem `ukryty = false AND data_sprzedazy IS NULL`.
 
-- **Krok 0 wykonać natychmiast.** Jedna oferta jest już po terminie; przy najbliższym 03:15 przepada razem z licznikiem odsłon. `cleanup_expired_shared_lists` zamieniamy z `DELETE` na `UPDATE ... SET archived_at = now()`, kasowanie fizyczne dopiero po 12 miesiącach od archiwizacji.
-- **`handle_new_user` i konto Michała** — potwierdzam: nowe konto dostanie rolę `user` i zobaczy „brak uprawnień". Wpis w `user_roles` trzeba poprawić po założeniu konta. Zrobię to jednym zapytaniem, gdy konto powstanie.
-- **`price_inquiries`** ma jeden wiersz — do przejrzenia przed uznaniem tabeli za martwą.
-- **Normalizacja telefonu**: wartość z `@` nie wchodzi do normalizacji telefonu, wchodzi do `email_norm`. To jeden warunek w jednej funkcji `public.norm_phone` / `public.norm_email` — inwariant 1 realizowany na poziomie bazy, nie w kodzie panelu.
-- **Bezpieczeństwo dostępu**: panel jest publicznie w internecie i po tej zmianie stoi za nim komplet danych osobowych. Supabase Auth wspiera MFA (TOTP) — warto włączyć przy obu kontach; to konfiguracja w Supabase plus ekran w panelu.
+Weryfikacja po migracji: `role_table_grants` dla `anon` zwraca zero wierszy dla nowych tabel; wygasła oferta następnego dnia po 03:15 nadal jest w bazie z wypełnionym `archived_at`.
 
-## Kolejność prac (po stronie Lovable)
+## Etap 3 — plan, do wykonania po migracji
 
-| # | Etap | Warunek wyjścia |
-|---|---|---|
-| 0 | `cleanup_expired_shared_lists` → `archived_at`; kolumna `archived_at` na `shared_lists` | wygasły link nadal w bazie następnego dnia po 03:15 |
-| 1 | Migracja: `contacts`, `contact_activities`, `shared_list_views`, rozszerzenie `shared_lists` (`contact_id`, `note`, `sent_at`, `channel`, `renewed_from`), funkcje normalizujące, indeksy częściowe, RLS tylko dla admina | zero grantów dla `anon`; `role_table_grants` dla `anon`/`authenticated` bez uprawnień poza `authenticated` |
-| 3 | Zakładka Kontakty + karta kontaktu + formularz rozmowy (~1,5 ekranu, pola 44 px, pigułki 36 px, steppery wyszarzone, pasek zapisu z safe-area) | rozmowa zapisana z telefonu |
-| 4 | Lista „do kogo dzwonić dziś" — jeden warunek `ukryty = false AND data_sprzedazy IS NULL` w widoku SQL, nie powielany | „nie wracać" zapisuje NULL i nie tworzy daty |
-| 5 | Zakładka Oferty: wybór kontaktu, notatka, kanał, `sent_at`, odnawianie (`renewed_from`), sygnały Ogląda / Cisza / Wygasa, archiwum; Edge Function czyta `archived_at` | wysłana oferta widoczna w historii kontaktu |
-| 6 | Edge Function `leads-intake` + przycisk „Wciągnij zgłoszenia" | dwukrotne wciągnięcie daje tyle samo kontaktów; lead Tomasza Rapy — numer z treści zostaje w historii, nie w polu telefonu |
+Zakres i pliki (bez odstępstw od Twojej specyfikacji):
 
-Kroki 2, 7, 8, 9 są po Twojej stronie (konto Michała, konto techniczne, cron kopii na Pi, wygaszenie LeadBoxa).
+- `src/components/admin/layout/types.ts`, `AdminSidebar.tsx`, `AdminBottomNav.tsx` — nowa numeracja 01–07, pozycje `offers` i `contacts`; `inquiries` znika z menu, ale zostaje jako wartość sekcji, żeby stary adres kierował na widok ZAPYTANIA wewnątrz Ofert (przekierowanie, nie 404).
+- `src/pages/Admin.tsx` — routing sekcji.
+- Nowy `src/components/admin/sections/OffersSection.tsx` — pasek trzech widoków w konwencji z Zapytań (NOWA / WYSŁANE / ZAPYTANIA).
+- Nowy `OfferNewView.tsx` — przeniesiony formularz z `SharedListAccess.tsx` (logika slug i `expires_at` skopiowana bez zmian) + pola: nazwa (wymagana), telefon (wymagany), notatka, kanał. Zapis przez funkcję bazodanową `create_offer(...)` — jedna transakcja: dopasowanie/utworzenie `contacts`, `shared_lists`, `contact_activities`.
+- Nowy `OfferSentView.tsx` — lista z sortowaniem `last_viewed_at desc nulls last, sent_at desc`, statusy linku, sygnały ogląda/cisza/wygasa, „pokaż archiwalne", „Nowy link" z `renewed_from`.
+- `InquiriesSection.tsx` — bez zmian w treści; dochodzi przycisk „Wciągnij do kontaktów".
+- Nowa Edge Function `leads-intake` — dopasowanie `email_norm` → `telefon_norm`, nigdy nie nadpisuje `krok` ani `termin_followup`, idempotentna przez unikalny indeks na `lead_id`.
+- Nowy `ContactsSection.tsx` + `ContactCard.tsx` — kartoteka, filtr źródła, wyszukiwarka, karta kontaktu współdzielona z widokiem WYSŁANE.
+- `ExportSection.tsx` — usunięcie sekcji „Generuj dostęp online" i „Aktywne linki"; `SharedListAccess.tsx` zostaje wygaszony po przeniesieniu.
 
-## Techniczne szczegóły migracji z kroku 1
+Mobile: pola 44 px, pigułki wyboru 36 px, pasek zapisu z `safe-area-inset-bottom` — jak w formularzu rozmowy z dokumentu.
 
-- Wszystkie trzy nowe tabele: `GRANT SELECT, INSERT, UPDATE, DELETE ... TO authenticated`, `GRANT ALL ... TO service_role`, **bez `anon`**, RLS włączony, polityki `has_role(auth.uid(),'admin')` na wszystkie operacje.
-- Brak `CHECK` z `now()` (niedozwolone jako immutable) — walidacje czasowe triggerem.
-- `krok` jako `text` z `CHECK` na listę wartości bez `kupil`; sprzedaż wyłącznie w `data_sprzedazy` (inwariant 8, 13).
-- `contact_activities.lead_id` bez FK (świadomie — anonimizacja i kasowanie w skrzynce nie mogą kaskadować), z unikalnym indeksem częściowym.
-- `shared_lists.contact_id` i `renewed_from` z FK `ON DELETE SET NULL`.
-- Indeksy częściowe: `(email_norm) WHERE ukryty = false`, `(telefon_norm) WHERE ukryty = false`, `(termin_followup) WHERE ukryty = false AND data_sprzedazy IS NULL`.
-- Widok `public.v_followup_today` domykający inwariant 10 — jedno miejsce z warunkiem wypadania z listy.
+## Decyzja do podjęcia
 
-## Zakres pierwszego zlecenia
-
-Proponuję puścić **kroki 0 i 1** od razu (nic nie psują, a krok 0 ratuje dane dziś wieczorem), a interfejs (3–6) budować po nich, etap po etapie.
+Zatwierdź ten plan, żebym wykonał **etap 0 + 1 (migracja)**. Etap 3 przyjdzie w kolejnym zleceniu, już z warunkiem wejścia spełnionym.
