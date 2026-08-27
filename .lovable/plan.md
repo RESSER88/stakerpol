@@ -1,63 +1,65 @@
-# Stan serwisu pod system automatycznego generowania treści SEO
+# Panel przejmuje LeadBoxa — odpowiedzi i plan wdrożenia
 
-## 1. Jak dziś dodawana jest treść
+## Stan potwierdzony odczytem z bazy (27.08.2026)
 
-- Produkty: rekordy w Supabase (`products`, `product_images`, `product_translations`, `product_seo_settings`) edytowane w panelu `/admin`.
-- FAQ: rekordy w Supabase (`faqs`) + panel admina (FAQManager).
-- Wszystkie pozostałe podstrony (Strona główna, Opinie, Kontakt, Polityka, FAQ jako strona) to komponenty React w `src/pages/*` — dodanie nowej wymaga zmiany w kodzie.
-- Nie ma dziś żadnej ścieżki „dodaj artykuł" — ani w kodzie, ani w bazie.
+- `products`: 45; `net_price` w 41. Tryby ceny: `inquiry_with_pricelist` 32, `show_price` 12, `inquiry_only` 1.
+- `leads`: 15, z czego **9 ma adres e-mail w kolumnie `phone`** — pułapka z dokumentu potwierdzona.
+- `shared_lists`: 3, z tego **1 już po `expires_at`** — czyli najbliższy przebieg `cleanup-expired-shared-lists` (03:15) fizycznie ją usunie. Krok 0 jest pilny.
+- `price_inquiries`: **1 wiersz**, nie 0 (dokument mówi 0).
+- `cron.job`: dwa zadania — `cleanup-old-handled-leads` (0 3 * * *), `cleanup-expired-shared-lists` (15 3 * * *).
+- RLS: `shared_lists` — cztery polityki tylko dla `authenticated`; `anon` nie ma żadnej. `leads` — INSERT publiczny, reszta admin. Publiczny widok oferty faktycznie idzie przez Edge Function `shared-list` na `SUPABASE_SERVICE_ROLE_KEY`.
 
-## 2. Tabela na artykuły / blog
+## Odpowiedzi na pytania „Do ustalenia z Lovable"
 
-Nie istnieje. W bazie nie ma tabeli typu `posts`, `articles`, `blog_*`. Jedyne treściowe tabele to `products`, `faqs` i tłumaczenia. Brak też storage/bucketu na obrazy artykułów (obrazy produktów idą przez `product_images` + `lovable-uploads`).
+**1. Wciąganie zgłoszeń: trigger czy przycisk?**
+Zgoda z rekomendacją — przycisk. Import robi Edge Function `leads-intake` wywoływana z panelu (autoryzacja sesją admina, w środku `service_role`). Logika dopasowania jest wtedy jednym miejscem w kodzie, łatwym do poprawienia i uruchomienia ponownie. Idempotencja przez `UNIQUE (lead_id) WHERE lead_id IS NOT NULL` na `contact_activities`. Po dwóch tygodniach ta sama funkcja może zostać wołana triggerem — bez przepisywania logiki.
 
-## 3. Renderowanie
+**2. `shared_list_views` — pełny UA i IP?**
+Rekomendacja: **bez IP**, UA tylko jako skrót (`device`: mobile/desktop + rodzina przeglądarki, plus opcjonalnie `ua_hash`). IP to dana osobowa i wymagałaby zapisu w polityce prywatności oraz retencji; sygnały z sekcji „Zakładka Oferty" (Ogląda / Cisza / Wygasa) potrzebują wyłącznie `viewed_at`. Surowy UA zostawiamy jedynie, jeśli chcesz rozróżniać „otwierał z telefonu na budowie" — wtedy z retencją 90 dni.
 
-Pełny CSR. Vite SPA, `BrowserRouter`, strony lazy-loadowane, dane z Supabase pobierane w przeglądarce (React Query). Meta tagi wstrzykiwane po hydracji przez `react-helmet-async`, statyczny fallback w `index.html` (z `data-rh="true"`). Nie ma prerenderu ani SSG. Skutek: Googlebot indeksuje po renderze JS (działa, ale z opóźnieniem i ryzykiem), a większość crawlerów AI/social nie wykonuje JS — dla treści blogowej to główne ograniczenie.
+**3. Publiczny widok oferty i `archived_at`**
+Tak, to Edge Function `shared-list` na `service_role` — potwierdzone. Funkcja dziś odrzuca link przy `revoked_at IS NOT NULL` i po `expires_at`, zwracając 404 z komunikatem „Link jest nieaktywny." Po zmianie dojdzie `archived_at` do zapytania i rozróżnienie komunikatów: wygasła / unieważniona / zarchiwizowana — komunikat, nigdy błąd techniczny. Zmiana jest w jednym pliku.
 
-## 4. Routing nowej podstrony
+**4. `pg_dump` — schemat, funkcje, triggery, RLS**
+Nie da się tego zdjąć kluczem `service_role` ani REST-em; potrzebne jest połączenie Postgresowe. Hasło do bazy i connection string bierzesz z panelu Supabase (Settings → Database), nie z Lovable — my nie mamy dostępu do hasła. Rekomendacja: `pg_dump --schema-only` cyklicznie (raz w tygodniu, obok cronu z JSON-em) — schemat zmienia się rzadko, ale kopia sprzed migracji jest dokładnie tym, czego brakuje przy odtwarzaniu. Dane osobowe zostają w kopii JSON.
 
-Dziś każda trasa jest wpisana ręcznie w `src/App.tsx` na podstawie `src/config/routes.ts`. Ale wzorzec dynamiczny już istnieje: `/produkty/:id` (slug z bazy) i `/oferta/:token`. Analogiczna trasa `/blog/:slug` wymaga jednorazowej zmiany w kodzie (dwie trasy: lista + szczegół), a potem każdy nowy artykuł to wyłącznie rekord w bazie — bez deployu. Fallback SPA (`public/_redirects`) już przepuszcza dowolną ścieżkę na `index.html`.
+**5. Retencja**
+`cleanup_old_handled_leads` zostaje wyłącznie na `leads` — potwierdzam: nowe tabele nie wchodzą w jego zakres i nie dopisujemy ich tam. Ale to jest decyzja do wypowiedzenia w polityce prywatności: skrzynka anonimizuje się po 24 miesiącach, kartoteka klientów nie. Proponuję osobne, jawne zadanie dla `contacts` (np. anonimizacja po 36 miesiącach od ostatniej aktywności) — do ustalenia liczby, nie do przemilczenia.
 
-## 5. API do programistycznego dodawania wpisów
+**6. Wycena i termin**
+Kroki 0–6 to sześć etapów wdrożeniowych, każdy w osobnym zleceniu, każdy z warunkiem wyjścia z Twojej tabeli. Nie podaję ryczałtu — pracujemy etapami, po każdym etapie sprawdzasz warunek wyjścia z telefonu.
 
-- PostgREST Supabase: `https://peztqgfmmnxaaoapzpbw.supabase.co/rest/v1/<tabela>` — pełny CRUD kluczem `service_role` lub kontem admina, bez udziału Lovable. To najprostsza droga dla zewnętrznego generatora.
-- Edge Functions: istnieją `sitemap`, `geo-feed`, `shared-list`, `notify-lead`, `auto-translate`, `translation-worker`, `schedule-translations` — żadna nie przyjmuje treści. Można dodać dedykowaną funkcję (np. `content-ingest`) z autoryzacją tokenem, jeśli chcesz warstwę walidacji zamiast surowego PostgREST.
-- `pg_cron` + `pg_net`/`http` są już włączone — cykliczne zadania (harmonogram generowania, publikacja zaplanowana) da się prowadzić w bazie.
+## Uwagi, które zmieniają dokument
 
-## 6. Meta, JSON-LD, sitemap
+- **Krok 0 wykonać natychmiast.** Jedna oferta jest już po terminie; przy najbliższym 03:15 przepada razem z licznikiem odsłon. `cleanup_expired_shared_lists` zamieniamy z `DELETE` na `UPDATE ... SET archived_at = now()`, kasowanie fizyczne dopiero po 12 miesiącach od archiwizacji.
+- **`handle_new_user` i konto Michała** — potwierdzam: nowe konto dostanie rolę `user` i zobaczy „brak uprawnień". Wpis w `user_roles` trzeba poprawić po założeniu konta. Zrobię to jednym zapytaniem, gdy konto powstanie.
+- **`price_inquiries`** ma jeden wiersz — do przejrzenia przed uznaniem tabeli za martwą.
+- **Normalizacja telefonu**: wartość z `@` nie wchodzi do normalizacji telefonu, wchodzi do `email_norm`. To jeden warunek w jednej funkcji `public.norm_phone` / `public.norm_email` — inwariant 1 realizowany na poziomie bazy, nie w kodzie panelu.
+- **Bezpieczeństwo dostępu**: panel jest publicznie w internecie i po tej zmianie stoi za nim komplet danych osobowych. Supabase Auth wspiera MFA (TOTP) — warto włączyć przy obu kontach; to konfiguracja w Supabase plus ekran w panelu.
 
-- Meta title/description: częściowo statycznie w kodzie (`src/config/featureFlags.ts` — `SITE_CONFIG`, `getSiteDescription`), częściowo dynamicznie z danych produktu w `ProductDetail.tsx` przez Helmet.
-- JSON-LD: generowany w kodzie z danych bazy — `ProductSchema.tsx` / `utils/seo/generateProductSchema.ts` (z `product_seo_settings`), `FAQSchema.tsx` (z `faqs`), `BreadcrumbSchema.tsx`, `LocalBusinessSchema.tsx`, plus blok `WebSite` w `index.html`.
-- Sitemap: dynamiczny — Edge Function `sitemap` czyta `products` z bazy i buduje XML (z filtrem `availability_status != 'sold'`). `public/robots.txt` wskazuje `https://stakerpol.pl/sitemap.xml`, więc na produkcji musi być proxy/rewrite na funkcję.
-- `public/llms.txt` jest statyczny i utrzymywany ręcznie.
+## Kolejność prac (po stronie Lovable)
 
-## 7. Repozytorium i wdrożenie
+| # | Etap | Warunek wyjścia |
+|---|---|---|
+| 0 | `cleanup_expired_shared_lists` → `archived_at`; kolumna `archived_at` na `shared_lists` | wygasły link nadal w bazie następnego dnia po 03:15 |
+| 1 | Migracja: `contacts`, `contact_activities`, `shared_list_views`, rozszerzenie `shared_lists` (`contact_id`, `note`, `sent_at`, `channel`, `renewed_from`), funkcje normalizujące, indeksy częściowe, RLS tylko dla admina | zero grantów dla `anon`; `role_table_grants` dla `anon`/`authenticated` bez uprawnień poza `authenticated` |
+| 3 | Zakładka Kontakty + karta kontaktu + formularz rozmowy (~1,5 ekranu, pola 44 px, pigułki 36 px, steppery wyszarzone, pasek zapisu z safe-area) | rozmowa zapisana z telefonu |
+| 4 | Lista „do kogo dzwonić dziś" — jeden warunek `ukryty = false AND data_sprzedazy IS NULL` w widoku SQL, nie powielany | „nie wracać" zapisuje NULL i nie tworzy daty |
+| 5 | Zakładka Oferty: wybór kontaktu, notatka, kanał, `sent_at`, odnawianie (`renewed_from`), sygnały Ogląda / Cisza / Wygasa, archiwum; Edge Function czyta `archived_at` | wysłana oferta widoczna w historii kontaktu |
+| 6 | Edge Function `leads-intake` + przycisk „Wciągnij zgłoszenia" | dwukrotne wciągnięcie daje tyle samo kontaktów; lead Tomasza Rapy — numer z treści zostaje w historii, nie w polu telefonu |
 
-- Git zdalny to wewnętrzne repo Lovable (`git.private.lovable-gcp.code.storage/0c3d6365-...`) + kopia S3. Nie widzę tu podłączonego remote'u GitHub — jeśli integracja GitHub istnieje, jest ustawiona po stronie Lovable, nie w konfiguracji repozytorium.
-- Build: `vite build` → `dist/`. W repo są artefakty pod hosting statyczny: `public/_redirects` (SPA fallback) i `public/_headers` (CSP, HSTS, cache). Wdrożenie self-hosted = zbudowanie `dist/` i podanie go z serwera z fallbackiem na `index.html`.
-- Uwaga: CSP w `_headers` ma `connect-src 'self' https://*.supabase.co` — zewnętrzne API generatora wywoływane z przeglądarki trzeba by tam dopisać (wywołania serwer-serwer nie dotyczy).
+Kroki 2, 7, 8, 9 są po Twojej stronie (konto Michała, konto techniczne, cron kopii na Pi, wygaszenie LeadBoxa).
 
----
+## Techniczne szczegóły migracji z kroku 1
 
-## Proponowane realizacje
+- Wszystkie trzy nowe tabele: `GRANT SELECT, INSERT, UPDATE, DELETE ... TO authenticated`, `GRANT ALL ... TO service_role`, **bez `anon`**, RLS włączony, polityki `has_role(auth.uid(),'admin')` na wszystkie operacje.
+- Brak `CHECK` z `now()` (niedozwolone jako immutable) — walidacje czasowe triggerem.
+- `krok` jako `text` z `CHECK` na listę wartości bez `kupil`; sprzedaż wyłącznie w `data_sprzedazy` (inwariant 8, 13).
+- `contact_activities.lead_id` bez FK (świadomie — anonimizacja i kasowanie w skrzynce nie mogą kaskadować), z unikalnym indeksem częściowym.
+- `shared_lists.contact_id` i `renewed_from` z FK `ON DELETE SET NULL`.
+- Indeksy częściowe: `(email_norm) WHERE ukryty = false`, `(telefon_norm) WHERE ukryty = false`, `(termin_followup) WHERE ukryty = false AND data_sprzedazy IS NULL`.
+- Widok `public.v_followup_today` domykający inwariant 10 — jedno miejsce z warunkiem wypadania z listy.
 
-### Wariant A — treść w bazie + dynamiczny routing (rekomendowany na start)
+## Zakres pierwszego zlecenia
 
-Nowe tabele (`seo_articles`, opcjonalnie `seo_topics`, `seo_competitors`, `seo_keyword_gaps`), trasy `/blog` i `/blog/:slug`, panel w `/admin` do przeglądu i zatwierdzania (`status: draft → review → published`). Generator (zewnętrzny worker lub Edge Function na Lovable AI) zapisuje szkice przez PostgREST/Edge Function; człowiek zatwierdza; sitemap i `llms.txt` rozszerzone o artykuły. Zaleta: publikacja bez deployu, jedna zmiana w kodzie. Wada: treść nadal CSR.
-
-### Wariant B — A + prerender artykułów w buildzie
-
-Do wariantu A dochodzi krok build-time: skrypt pobiera opublikowane artykuły i generuje statyczne `dist/blog/<slug>/index.html` z gotowym HTML, meta i JSON-LD. Indeksowanie natychmiastowe i pełne dla crawlerów bez JS. Wada: publikacja artykułu wymaga przebudowy/deployu (da się zautomatyzować hookiem po zatwierdzeniu).
-
-### Wariant C — A + Edge Function renderująca HTML dla botów
-
-Funkcja typu `article-render` zwraca kompletny HTML artykułu (meta + JSON-LD + treść) z bazy; reverse proxy kieruje tam żądania z `/blog/*`. Efekt zbliżony do SSR bez zmiany stacku i bez rebuildów. Wada: dodatkowa warstwa proxy do utrzymania, czas odpowiedzi zależny od funkcji.
-
-### Warstwa analityczna (wspólna dla wszystkich wariantów)
-
-Analiza konkurencji i luk tematycznych jako oddzielny worker (może po stronie leadboksu w Tailscale): zbiera dane (SERP/Semrush), zapisuje kandydatów tematów do tabeli, `pg_cron` uruchamia cykl generowania szkiców, panel admina to kolejka do zatwierdzenia. Klucze API trzymane w sekretach Edge Functions lub u workera — nigdy w kliencie.
-
-### Rekomendacja
-
-Wariant A jako fundament, z zaplanowanym dołożeniem prerenderu (B) zaraz po tym, jak pierwsze artykuły będą gotowe — bo dla treści tekstowej brak prerenderu jest realnym ograniczeniem widoczności, zwłaszcza w wyszukiwarkach AI.
+Proponuję puścić **kroki 0 i 1** od razu (nic nie psują, a krok 0 ratuje dane dziś wieczorem), a interfejs (3–6) budować po nich, etap po etapie.
