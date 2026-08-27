@@ -14,6 +14,139 @@ export type Database = {
   }
   public: {
     Tables: {
+      contact_activities: {
+        Row: {
+          contact_id: string
+          data: string
+          id: string
+          lead_id: string | null
+          shared_list_id: string | null
+          sku: string | null
+          tresc: string | null
+          typ: string
+          utworzony: string
+          utworzony_przez: string | null
+          wynik: string | null
+        }
+        Insert: {
+          contact_id: string
+          data?: string
+          id?: string
+          lead_id?: string | null
+          shared_list_id?: string | null
+          sku?: string | null
+          tresc?: string | null
+          typ: string
+          utworzony?: string
+          utworzony_przez?: string | null
+          wynik?: string | null
+        }
+        Update: {
+          contact_id?: string
+          data?: string
+          id?: string
+          lead_id?: string | null
+          shared_list_id?: string | null
+          sku?: string | null
+          tresc?: string | null
+          typ?: string
+          utworzony?: string
+          utworzony_przez?: string | null
+          wynik?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_activities_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_activities_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "v_followup_today"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_activities_shared_list_id_fkey"
+            columns: ["shared_list_id"]
+            isOneToOne: false
+            referencedRelation: "shared_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          data_sprzedazy: string | null
+          email: string | null
+          email_norm: string | null
+          firma: string | null
+          firma_norm: string | null
+          id: string
+          krok: string
+          osoba: string | null
+          sprawdz_duplikat: boolean
+          telefon: string | null
+          telefon_norm: string | null
+          termin_followup: string | null
+          udzwig_kg: number | null
+          ukryty: boolean
+          utworzony: string
+          utworzony_przez: string | null
+          wysokosc_m: number | null
+          zaktualizowany: string
+          zaktualizowany_przez: string | null
+          zrodlo: string
+        }
+        Insert: {
+          data_sprzedazy?: string | null
+          email?: string | null
+          email_norm?: string | null
+          firma?: string | null
+          firma_norm?: string | null
+          id?: string
+          krok?: string
+          osoba?: string | null
+          sprawdz_duplikat?: boolean
+          telefon?: string | null
+          telefon_norm?: string | null
+          termin_followup?: string | null
+          udzwig_kg?: number | null
+          ukryty?: boolean
+          utworzony?: string
+          utworzony_przez?: string | null
+          wysokosc_m?: number | null
+          zaktualizowany?: string
+          zaktualizowany_przez?: string | null
+          zrodlo?: string
+        }
+        Update: {
+          data_sprzedazy?: string | null
+          email?: string | null
+          email_norm?: string | null
+          firma?: string | null
+          firma_norm?: string | null
+          id?: string
+          krok?: string
+          osoba?: string | null
+          sprawdz_duplikat?: boolean
+          telefon?: string | null
+          telefon_norm?: string | null
+          termin_followup?: string | null
+          udzwig_kg?: number | null
+          ukryty?: boolean
+          utworzony?: string
+          utworzony_przez?: string | null
+          wysokosc_m?: number | null
+          zaktualizowany?: string
+          zaktualizowany_przez?: string | null
+          zrodlo?: string
+        }
+        Relationships: []
+      }
       deepl_api_keys: {
         Row: {
           api_key_encrypted: string
@@ -618,8 +751,40 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_list_views: {
+        Row: {
+          device: string | null
+          id: string
+          shared_list_id: string
+          viewed_at: string
+        }
+        Insert: {
+          device?: string | null
+          id?: string
+          shared_list_id: string
+          viewed_at?: string
+        }
+        Update: {
+          device?: string | null
+          id?: string
+          shared_list_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_list_views_shared_list_id_fkey"
+            columns: ["shared_list_id"]
+            isOneToOne: false
+            referencedRelation: "shared_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shared_lists: {
         Row: {
+          archived_at: string | null
+          channel: string | null
+          contact_id: string | null
           created_at: string
           created_by: string
           expires_at: string
@@ -627,12 +792,18 @@ export type Database = {
           id: string
           label: string | null
           last_viewed_at: string | null
+          note: string | null
+          renewed_from: string | null
           revoked_at: string | null
+          sent_at: string | null
           token: string
           updated_at: string
           view_count: number
         }
         Insert: {
+          archived_at?: string | null
+          channel?: string | null
+          contact_id?: string | null
           created_at?: string
           created_by: string
           expires_at: string
@@ -640,12 +811,18 @@ export type Database = {
           id?: string
           label?: string | null
           last_viewed_at?: string | null
+          note?: string | null
+          renewed_from?: string | null
           revoked_at?: string | null
+          sent_at?: string | null
           token: string
           updated_at?: string
           view_count?: number
         }
         Update: {
+          archived_at?: string | null
+          channel?: string | null
+          contact_id?: string | null
           created_at?: string
           created_by?: string
           expires_at?: string
@@ -653,12 +830,37 @@ export type Database = {
           id?: string
           label?: string | null
           last_viewed_at?: string | null
+          note?: string | null
+          renewed_from?: string | null
           revoked_at?: string | null
+          sent_at?: string | null
           token?: string
           updated_at?: string
           view_count?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "shared_lists_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_lists_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "v_followup_today"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_lists_renewed_from_fkey"
+            columns: ["renewed_from"]
+            isOneToOne: false
+            referencedRelation: "shared_lists"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       social_media_posts: {
         Row: {
@@ -847,7 +1049,57 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_followup_today: {
+        Row: {
+          dni_do_terminu: number | null
+          email: string | null
+          firma: string | null
+          id: string | null
+          krok: string | null
+          osoba: string | null
+          po_terminie: boolean | null
+          sprawdz_duplikat: boolean | null
+          telefon: string | null
+          telefon_norm: string | null
+          termin_followup: string | null
+          udzwig_kg: number | null
+          wysokosc_m: number | null
+          zrodlo: string | null
+        }
+        Insert: {
+          dni_do_terminu?: never
+          email?: string | null
+          firma?: string | null
+          id?: string | null
+          krok?: string | null
+          osoba?: string | null
+          po_terminie?: never
+          sprawdz_duplikat?: boolean | null
+          telefon?: string | null
+          telefon_norm?: string | null
+          termin_followup?: string | null
+          udzwig_kg?: number | null
+          wysokosc_m?: number | null
+          zrodlo?: string | null
+        }
+        Update: {
+          dni_do_terminu?: never
+          email?: string | null
+          firma?: string | null
+          id?: string | null
+          krok?: string | null
+          osoba?: string | null
+          po_terminie?: never
+          sprawdz_duplikat?: boolean | null
+          telefon?: string | null
+          telefon_norm?: string | null
+          termin_followup?: string | null
+          udzwig_kg?: number | null
+          wysokosc_m?: number | null
+          zrodlo?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       bytea_to_text: { Args: { data: string }; Returns: string }
@@ -1013,6 +1265,9 @@ export type Database = {
         }
         Returns: Json
       }
+      norm_company: { Args: { _value: string }; Returns: string }
+      norm_email: { Args: { _value: string }; Returns: string }
+      norm_phone: { Args: { _value: string }; Returns: string }
       reset_platform_rotation: {
         Args: { platform_name: string }
         Returns: Json
