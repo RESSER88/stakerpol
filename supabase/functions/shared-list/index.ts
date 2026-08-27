@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
 
     const { data, error } = await supabase
       .from('shared_lists')
-      .select('id, filters, expires_at, revoked_at, view_count')
+      .select('id, filters, expires_at, revoked_at, archived_at, view_count')
       .eq('token', token)
       .maybeSingle();
 
@@ -98,13 +98,19 @@ Deno.serve(async (req) => {
 
     if (data.revoked_at !== null) {
       console.log('shared-list: denied (revoked)');
-      return NOT_FOUND();
+      return INACTIVE('revoked');
+    }
+
+    if (data.archived_at !== null) {
+      console.log('shared-list: denied (archived)');
+      return INACTIVE('archived');
     }
 
     if (new Date(data.expires_at).getTime() < Date.now()) {
       console.log('shared-list: denied (expired)');
-      return NOT_FOUND();
+      return INACTIVE('expired');
     }
+
 
     // Counter update must never block the response.
     try {
