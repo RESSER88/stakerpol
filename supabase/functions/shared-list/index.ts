@@ -20,7 +20,18 @@ const json = (body: unknown, status: number) =>
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 
-const NOT_FOUND = () => json({ error: 'not_found', message: 'Link jest nieaktywny.' }, 404);
+/** Jednolita odpowiedź dla nieaktywnego linku — nigdy zawartość oferty, nigdy błąd techniczny. */
+const INACTIVE = (reason: 'expired' | 'revoked' | 'archived' | 'unknown') => {
+  const messages: Record<typeof reason, string> = {
+    expired: 'Ta oferta wygasła. Zadzwoń, przygotujemy nową: 694 133 592.',
+    revoked: 'Ten link został unieważniony. Zadzwoń po aktualną ofertę: 694 133 592.',
+    archived: 'Ta oferta została zarchiwizowana. Zadzwoń po aktualną: 694 133 592.',
+    unknown: 'Link jest nieaktywny.',
+  };
+  return json({ error: 'not_found', reason, message: messages[reason] }, 404);
+};
+
+const NOT_FOUND = () => INACTIVE('unknown');
 
 const rateLimited = (ip: string): boolean => {
   const now = Date.now();
@@ -71,7 +82,7 @@ Deno.serve(async (req) => {
 
     const { data, error } = await supabase
       .from('shared_lists')
-      .select('id, filters, expires_at, revoked_at, view_count')
+      .select('id, filters, expires_at, revoked_at, archived_at, view_count')
       .eq('token', token)
       .maybeSingle();
 
@@ -87,13 +98,19 @@ Deno.serve(async (req) => {
 
     if (data.revoked_at !== null) {
       console.log('shared-list: denied (revoked)');
-      return NOT_FOUND();
+      return INACTIVE('revoked');
+    }
+
+    if (data.archived_at !== null) {
+      console.log('shared-list: denied (archived)');
+      return INACTIVE('archived');
     }
 
     if (new Date(data.expires_at).getTime() < Date.now()) {
       console.log('shared-list: denied (expired)');
-      return NOT_FOUND();
+      return INACTIVE('expired');
     }
+
 
     // Counter update must never block the response.
     try {
