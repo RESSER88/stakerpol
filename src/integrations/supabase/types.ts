@@ -1105,6 +1105,24 @@ export type Database = {
       bytea_to_text: { Args: { data: string }; Returns: string }
       cleanup_expired_shared_lists: { Args: never; Returns: number }
       cleanup_old_handled_leads: { Args: never; Returns: number }
+      create_offer: {
+        Args: {
+          _email?: string
+          _filters: Json
+          _kanal?: string
+          _nazwa: string
+          _notatka?: string
+          _telefon: string
+          _token: string
+          _tygodnie?: number
+        }
+        Returns: {
+          contact_id: string
+          kontakt_nowy: boolean
+          shared_list_id: string
+          token: string
+        }[]
+      }
       generate_product_slug: {
         Args: { product_name: string; serial_number?: string }
         Returns: string
