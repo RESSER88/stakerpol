@@ -11,8 +11,8 @@ import SEOManagerTool from '@/components/admin/SEOManagerTool';
 import AdminLayout from '@/components/admin/layout/AdminLayout';
 import { AdminSection } from '@/components/admin/layout/types';
 import DashboardSection from '@/components/admin/sections/DashboardSection';
-import InquiriesSection from '@/components/admin/sections/InquiriesSection';
 import ExportSection from '@/components/admin/sections/ExportSection';
+import OffersSection from '@/components/admin/sections/OffersSection';
 import PermissionDenied from '@/components/ui/PermissionDenied';
 import { Product } from '@/types';
 
@@ -177,8 +177,8 @@ const Admin = () => {
             onNavigate={setActiveSection}
           />
         );
-      case 'inquiries':
-        return <InquiriesSection />;
+      case 'offers':
+        return <OffersSection products={products} />;
       case 'export':
         return <ExportSection products={products} />;
       case 'seo':

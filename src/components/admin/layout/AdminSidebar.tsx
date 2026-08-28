@@ -1,21 +1,12 @@
 import { LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { AdminSection } from './types';
+import { adminSections, sectionNumber, type AdminSection } from './types';
 
 interface Props {
   active: AdminSection;
   onChange: (section: AdminSection) => void;
   onSignOut: () => void;
 }
-
-const items: { id: AdminSection; num: string; label: string }[] = [
-  { id: 'start', num: '01', label: 'Start' },
-  { id: 'products', num: '02', label: 'Produkty' },
-  { id: 'inquiries', num: '03', label: 'Zapytania' },
-  { id: 'export', num: '04', label: 'Eksport' },
-  { id: 'seo', num: '05', label: 'SEO' },
-  { id: 'faq', num: '06', label: 'FAQ' },
-];
 
 const AdminSidebar = ({ active, onChange, onSignOut }: Props) => {
   return (
@@ -36,7 +27,7 @@ const AdminSidebar = ({ active, onChange, onSignOut }: Props) => {
         </button>
       </div>
       <nav className="flex-1 py-4">
-        {items.map((item) => {
+        {adminSections.map((item, i) => {
           const isActive = active === item.id;
           return (
             <button
@@ -53,7 +44,7 @@ const AdminSidebar = ({ active, onChange, onSignOut }: Props) => {
                   isActive ? 'text-editorial-accent' : 'text-editorial-muted'
                 )}
               >
-                {item.num}
+                {sectionNumber(i)}
               </span>
               <span
                 className={cn(

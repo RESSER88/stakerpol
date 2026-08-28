@@ -1,22 +1,17 @@
 import { cn } from '@/lib/utils';
-import type { AdminSection } from './types';
+import { adminSections, sectionNumber, type AdminSection } from './types';
 
 interface Props {
   active: AdminSection;
   onChange: (section: AdminSection) => void;
 }
 
-const items: { id: AdminSection; num: string; label: string }[] = [
-  { id: 'start', num: '01', label: 'Start' },
-  { id: 'products', num: '02', label: 'Produkty' },
-  { id: 'inquiries', num: '03', label: 'Zapytania' },
-  { id: 'export', num: '04', label: 'Eksport' },
-];
-
 const AdminBottomNav = ({ active, onChange }: Props) => {
+  const items = adminSections.slice(0, 4);
+
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-editorial-ink h-12 grid grid-cols-4 z-50">
-      {items.map((item) => {
+      {items.map((item, i) => {
         const isActive = active === item.id;
         return (
           <button
@@ -30,7 +25,7 @@ const AdminBottomNav = ({ active, onChange }: Props) => {
                 isActive ? 'text-editorial-accent' : 'text-editorial-muted'
               )}
             >
-              {item.num}
+              {sectionNumber(i)}
             </span>
             <span
               className={cn(
