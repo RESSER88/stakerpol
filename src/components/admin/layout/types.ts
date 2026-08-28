@@ -1,9 +1,26 @@
-export type AdminSection = 'start' | 'products' | 'inquiries' | 'export' | 'seo' | 'faq';
+export type AdminSection = 'start' | 'products' | 'offers' | 'export' | 'seo' | 'faq';
+
+export interface AdminSectionItem {
+  id: AdminSection;
+  label: string;
+}
+
+/** Jedna uporządkowana lista sekcji — numery liczone z indeksu, nie wpisane na sztywno. */
+export const adminSections: AdminSectionItem[] = [
+  { id: 'start', label: 'Start' },
+  { id: 'products', label: 'Produkty' },
+  { id: 'offers', label: 'Oferty' },
+  { id: 'export', label: 'Eksport' },
+  { id: 'seo', label: 'SEO' },
+  { id: 'faq', label: 'FAQ' },
+];
+
+export const sectionNumber = (index: number) => String(index + 1).padStart(2, '0');
 
 export const sectionTitles: Record<AdminSection, string> = {
   start: 'Start',
   products: 'Produkty',
-  inquiries: 'Zapytania',
+  offers: 'Oferty',
   export: 'Eksport',
   seo: 'SEO & Schema',
   faq: 'FAQ',
