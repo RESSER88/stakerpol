@@ -112,6 +112,23 @@ Deno.serve(async (req) => {
     }
 
 
+    // View log must never block the response.
+    try {
+      const device = (req.headers.get('user-agent') ?? '').slice(0, 200) || null;
+      const { error: viewError } = await supabase
+        .from('shared_list_views')
+        .insert({
+          shared_list_id: data.id,
+          viewed_at: new Date().toISOString(),
+          device,
+        });
+      if (viewError) {
+        console.log(`shared-list: view insert failed (${data.id}, ${viewError.code ?? 'unknown'})`);
+      }
+    } catch {
+      console.log(`shared-list: view insert failed (${data.id})`);
+    }
+
     // Counter update must never block the response.
     try {
       await supabase
