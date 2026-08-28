@@ -7,7 +7,6 @@ import { useToast } from '@/hooks/use-toast';
 import SectionHeader from '../editorial/SectionHeader';
 import ExportFilterPanel from './ExportFilterPanel';
 import { ExportFilterCriteria, DEFAULT_EXPORT_CRITERIA } from '@/utils/exportFilterCriteria';
-import SharedListAccess from './SharedListAccess';
 
 
 
@@ -145,7 +144,6 @@ const ExportSection = ({ products }: Props) => {
           disabled={empty}
           onClick={handleXLSX}
         />
-        <SharedListAccess criteria={criteria} matchedCount={filtered.length} />
       </div>
 
       {empty && (

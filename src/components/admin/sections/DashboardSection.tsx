@@ -54,7 +54,7 @@ const DashboardSection = ({ productCount, products, onNavigate, onAddProduct, on
 
   const stats: { label: string; value: string | number; onClick?: () => void }[] = [
     { label: 'Produkty', value: productCount, onClick: () => onNavigate('products') },
-    { label: 'Nowe zapytania', value: loading ? '…' : newLeadsCount, onClick: () => onNavigate('inquiries') },
+    { label: 'Nowe zapytania', value: loading ? '…' : newLeadsCount, onClick: () => onNavigate('offers') },
     { label: 'Dostępnych', value: availableCount },
   ];
 
@@ -80,7 +80,7 @@ const DashboardSection = ({ productCount, products, onNavigate, onAddProduct, on
         </h1>
         {newLeadsCount > 0 && (
           <button
-            onClick={() => onNavigate('inquiries')}
+            onClick={() => onNavigate('offers')}
             className="mt-6 inline-flex items-center gap-2 text-sm text-editorial-ink hover:text-editorial-accent transition-colors group"
           >
             <span className="h-1.5 w-1.5 rounded-full bg-editorial-ok animate-pulse" />
