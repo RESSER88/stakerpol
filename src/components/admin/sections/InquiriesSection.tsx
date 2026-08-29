@@ -127,6 +127,37 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
     setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, sold_at: nextSoldAt } : l)));
   };
 
+  // Wciągnięcie zgłoszenia do kartoteki — RPC jest idempotentne po lead_id.
+  const importToContacts = async (lead: Lead) => {
+    setUpdating((prev) => new Set(prev).add(lead.id));
+    const { data, error } = await supabase.rpc('import_lead_to_contact', { _lead_id: lead.id });
+    setUpdating((prev) => {
+      const n = new Set(prev);
+      n.delete(lead.id);
+      return n;
+    });
+
+    if (error) {
+      toast({ title: 'Błąd', description: error.message, variant: 'destructive' });
+      return;
+    }
+    const result = Array.isArray(data) ? data[0] : data;
+    if (!result?.contact_id) {
+      toast({ title: 'Błąd', description: 'Brak odpowiedzi z bazy', variant: 'destructive' });
+      return;
+    }
+    const { data: contact } = await supabase
+      .from('contacts')
+      .select('osoba, firma')
+      .eq('id', result.contact_id)
+      .maybeSingle();
+    const label = contact?.osoba || contact?.firma || 'kontakt';
+    toast({
+      title: result.kontakt_nowy ? '✓ Nowy kontakt założony' : '✓ Dopięto do istniejącego',
+      description: label,
+    });
+  };
+
 
   const deleteLead = async (lead: Lead) => {
     if (!confirm(`Usunąć zapytanie od ${lead.name || lead.phone || lead.email}? Tej operacji nie można cofnąć.`)) return;
