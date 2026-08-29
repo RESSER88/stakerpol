@@ -368,7 +368,16 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                     <Check className="h-3 w-3" />
                     {isHandled ? 'Cofnij' : 'Obsłużone'}
                   </button>
+                  <button
+                    disabled={isUpdating}
+                    onClick={() => importToContacts(lead)}
+                    className="px-3 h-8 inline-flex items-center gap-1.5 border border-editorial-line text-editorial-muted text-[11px] font-bold tracking-[0.15em] uppercase hover:border-editorial-ink hover:text-editorial-ink transition-colors disabled:opacity-50"
+                  >
+                    <UserPlus className="h-3 w-3" />
+                    Wciągnij do kontaktów
+                  </button>
                   {isHandled && (
+
                     <button
                       disabled={isUpdating}
                       onClick={() => toggleSold(lead)}
