@@ -69,6 +69,8 @@ const SentOffersView = ({ reloadKey }: Props) => {
   const [loading, setLoading] = useState(true);
   const [revokeTarget, setRevokeTarget] = useState<OfferRow | null>(null);
   const [revoking, setRevoking] = useState(false);
+  const [openContactId, setOpenContactId] = useState<string | null>(null);
+
 
   const load = useCallback(async () => {
     setLoading(true);
