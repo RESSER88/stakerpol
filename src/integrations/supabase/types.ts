@@ -1112,6 +1112,7 @@ export type Database = {
           _kanal?: string
           _nazwa: string
           _notatka?: string
+          _renewed_from?: string
           _telefon: string
           _token: string
           _tygodnie?: number
@@ -1274,6 +1275,30 @@ export type Database = {
       http_set_curlopt: {
         Args: { curlopt: string; value: string }
         Returns: boolean
+      }
+      import_lead_to_contact: {
+        Args: { _lead_id: string }
+        Returns: {
+          contact_id: string
+          kontakt_nowy: boolean
+        }[]
+      }
+      log_contact_activity: {
+        Args: {
+          _contact_id: string
+          _data_sprzedazy?: string
+          _krok?: string
+          _termin_followup?: string
+          _tresc?: string
+          _typ: string
+          _udzwig_kg?: number
+          _wyczysc_termin?: boolean
+          _wynik?: string
+          _wysokosc_m?: number
+        }
+        Returns: {
+          activity_id: string
+        }[]
       }
       log_social_post: {
         Args: {
