@@ -1,51 +1,56 @@
-# Etap 3 — zatrzymanie na warunku wejścia + plan wykonania
+# Trzy funkcje bazy danych — jedna migracja
 
-## Odpowiedź na pytanie o bazę
+Zero zmian w `src/`, zero zmian w Edge Functions, zero zmian w schemacie `leads`.
 
-Tak — panel i strona pracują na jednej, tej samej bazie Supabase (projekt `peztqgfmmnxaaoapzpbw`). Nie ma „starej" i „nowej" wersji danych: `products`, `leads`, `shared_lists` to te same tabele, z których korzysta publiczna strona. Nowe zakładki dokładają obok tabele robocze, nie kopiują danych. Dlatego kryterium „Eksport generuje PDF/JPG/XLSX dla 45 produktów" i tak jest spełnione — to ten sam katalog.
+Weryfikacja przed zmianą: `NewOfferView.tsx` woła `supabase.rpc('create_offer', { _token, _filters, _nazwa, _telefon, _email, _tygodnie, _notatka, _kanal })` — czyli **argumentami nazwanymi**, więc dopisanie opcjonalnego parametru na końcu nie łamie tego wywołania.
 
-## Warunek rozpoczęcia NIE jest spełniony — zatrzymuję się
+## 1. create_offer — jeden nowy parametr
 
-Odczyt schematu (`information_schema.columns`, 27.08.2026) pokazuje, że **etapy 0 i 1 nie zostały wdrożone**:
+`public.create_offer(..., _kanal text default null, _renewed_from uuid default null)`
 
-- `shared_lists` ma dokładnie 11 kolumn: `id, token, filters, label, created_by, expires_at, revoked_at, view_count, last_viewed_at, created_at, updated_at`. **Brak** `archived_at`, `contact_id`, `note`, `sent_at`, `channel`, `renewed_from`.
-- Tabele `contacts`, `contact_activities`, `shared_list_views` **nie istnieją**.
+- Jedyna zmiana w ciele: `shared_lists.renewed_from = _renewed_from` przy wstawianiu oferty.
+- Walidacja, advisory lock, dopasowanie kontaktu po telefonie/e-mailu, wpis do `contact_activities` — bez zmian.
+- Uprawnienia i `SET search_path = public` odtworzone tak jak dziś.
 
-Etapu 3 nie da się zrobić „na zapas": każde z pięciu kryteriów akceptacji dotyka kolumn i tabel, których nie ma. Zgodnie z Twoim zapisem „nie realizuj kolejnych etapów w tej samej odpowiedzi" nie wchodzę też samowolnie w zakres etapów 0–1 bez decyzji.
+## 2. import_lead_to_contact(_lead_id uuid)
 
-Do tego doszła rzecz pilna: jedna oferta jest już po `expires_at`, a `cleanup-expired-shared-lists` (pg_cron, 03:15) kasuje takie wiersze fizycznie. Do czasu etapu 0 każda wygasła oferta traci historię odsłon bezpowrotnie.
+Zwraca `contact_id uuid, kontakt_nowy boolean`.
 
-## Propozycja: wykonać etap 0 + 1 teraz, jedną migracją
+Kolejność działań:
+1. Pobranie wiersza z `leads`; brak → `RAISE EXCEPTION`.
+2. Idempotencja: jeśli w `contact_activities` istnieje już wiersz z tym `lead_id`, zwróć jego `contact_id` i `kontakt_nowy = false` — bez żadnych zapisów.
+3. Advisory lock na znormalizowanym e-mailu / telefonie / id zgłoszenia.
+4. Dopasowanie kontaktu: najpierw `norm_email(leads.email)`, potem `norm_phone(leads.phone)` (funkcje bez zmian — `norm_phone` zwraca NULL dla wartości z `@`).
+5. Brak trafienia → nowy kontakt: `zrodlo = 'www'`, `osoba = leads.name`, `telefon = leads.phone` (surowe), `email = leads.email`, `krok = 'nowy'`.
+6. Trafienie → uzupełnienie wyłącznie pustych pól (`osoba`, `telefon`, `email` przez `coalesce`), `sprawdz_duplikat = true`; `krok` i `termin_followup` nietknięte.
+7. Wpis historii: `typ = 'formularz'`, `lead_id = _lead_id`, `tresc = leads.message`, `data = leads.created_at`.
 
-Zakres migracji (bez zmian w kodzie panelu, bez ryzyka dla strony):
+Wyjątek naruszenia unikalnego indeksu `contact_activities_lead_id_uniq` obsłużony (`WHEN unique_violation`) — zwraca istniejący `contact_id`, więc dwa równoległe wywołania też są bezpieczne.
 
-1. `shared_lists`: `archived_at timestamptz`, `contact_id uuid → contacts`, `note text`, `sent_at timestamptz`, `channel text CHECK (email|whatsapp|sms|telefon)`, `renewed_from uuid → shared_lists`. Wszystkie nullowalne, więc istniejące 3 linki i logika slug/`expires_at` zostają nietknięte.
-2. `cleanup_expired_shared_lists()` przepisana z `DELETE` na `UPDATE ... SET archived_at = now()`; fizyczne kasowanie dopiero po 12 miesiącach od archiwizacji.
-3. `public.norm_phone(text)` i `public.norm_email(text)` — jedna funkcja normalizacji (inwariant 1); `norm_phone` zwraca NULL dla wartości zawierającej `@`.
-4. `public.contacts` — kolumny dokładnie z Twojego dokumentu (`osoba`, `firma`/`firma_norm`, `telefon`/`telefon_norm`, `email`/`email_norm`, `zrodlo`, `krok` z `CHECK` bez wartości `kupil`, `termin_followup`, `data_sprzedazy`, `udzwig_kg`, `wysokosc_m`, `sprawdz_duplikat`, `ukryty`, `utworzony_przez`, `zaktualizowany_przez`, znaczniki czasu). Indeksy częściowe po `email_norm`, `telefon_norm` i `termin_followup` z warunkami z inwariantów 2 i 10.
-5. `public.contact_activities` — `contact_id` (FK), `typ` (`telefon|formularz|oferta|sprzedaz|ukrycie|notatka`), `data`, `tresc`, `wynik`, `sku`, `utworzony_przez`, `lead_id` (bez FK) + `UNIQUE (lead_id) WHERE lead_id IS NOT NULL` (idempotencja importu), `shared_list_id` (FK).
-6. `public.shared_list_views` — `shared_list_id` (FK), `viewed_at`, `device` (skrót UA). Bez IP.
-7. Dla każdej nowej tabeli: `GRANT ... TO authenticated` + `GRANT ALL TO service_role`, **zero grantów dla `anon`**, RLS włączony, polityki `has_role(auth.uid(),'admin')` na wszystkie operacje.
-8. Widok `public.v_followup` z jednym warunkiem `ukryty = false AND data_sprzedazy IS NULL`.
+## 3. log_contact_activity(...)
 
-Weryfikacja po migracji: `role_table_grants` dla `anon` zwraca zero wierszy dla nowych tabel; wygasła oferta następnego dnia po 03:15 nadal jest w bazie z wypełnionym `archived_at`.
+Sygnatura zgodna ze zleceniem, z jednym dodatkowym parametrem na końcu:
 
-## Etap 3 — plan, do wykonania po migracji
+```text
+_contact_id uuid, _typ text, _tresc text default null, _wynik text default null,
+_krok text default null, _termin_followup date default null,
+_data_sprzedazy date default null, _udzwig_kg integer default null,
+_wysokosc_m numeric default null, _wyczysc_termin boolean default false
+```
 
-Zakres i pliki (bez odstępstw od Twojej specyfikacji):
+Wybrane podejście do rozróżnienia „nie zmieniaj" od „wyczyść": **osobny parametr boolean** `_wyczysc_termin` (czytelniejszy od sentinela z datą-magiczną i opisany w komentarzu funkcji). `_termin_followup = null` + `_wyczysc_termin = false` → pole bez zmian; `_wyczysc_termin = true` → `termin_followup = NULL`.
 
-- `src/components/admin/layout/types.ts`, `AdminSidebar.tsx`, `AdminBottomNav.tsx` — nowa numeracja 01–07, pozycje `offers` i `contacts`; `inquiries` znika z menu, ale zostaje jako wartość sekcji, żeby stary adres kierował na widok ZAPYTANIA wewnątrz Ofert (przekierowanie, nie 404).
-- `src/pages/Admin.tsx` — routing sekcji.
-- Nowy `src/components/admin/sections/OffersSection.tsx` — pasek trzech widoków w konwencji z Zapytań (NOWA / WYSŁANE / ZAPYTANIA).
-- Nowy `OfferNewView.tsx` — przeniesiony formularz z `SharedListAccess.tsx` (logika slug i `expires_at` skopiowana bez zmian) + pola: nazwa (wymagana), telefon (wymagany), notatka, kanał. Zapis przez funkcję bazodanową `create_offer(...)` — jedna transakcja: dopasowanie/utworzenie `contacts`, `shared_lists`, `contact_activities`.
-- Nowy `OfferSentView.tsx` — lista z sortowaniem `last_viewed_at desc nulls last, sent_at desc`, statusy linku, sygnały ogląda/cisza/wygasa, „pokaż archiwalne", „Nowy link" z `renewed_from`.
-- `InquiriesSection.tsx` — bez zmian w treści; dochodzi przycisk „Wciągnij do kontaktów".
-- Nowa Edge Function `leads-intake` — dopasowanie `email_norm` → `telefon_norm`, nigdy nie nadpisuje `krok` ani `termin_followup`, idempotentna przez unikalny indeks na `lead_id`.
-- Nowy `ContactsSection.tsx` + `ContactCard.tsx` — kartoteka, filtr źródła, wyszukiwarka, karta kontaktu współdzielona z widokiem WYSŁANE.
-- `ExportSection.tsx` — usunięcie sekcji „Generuj dostęp online" i „Aktywne linki"; `SharedListAccess.tsx` zostaje wygaszony po przeniesieniu.
+- `UPDATE contacts` w jednej instrukcji: każda kolumna przez `coalesce(_param, kolumna)`, plus reguła czyszczenia terminu; `zaktualizowany` obsłuży istniejący trigger.
+- `_krok = 'kupil'` → `RAISE EXCEPTION` (wartość niedopuszczalna; dozwolone wartości pilnuje też `contacts_krok_check`).
+- `INSERT INTO contact_activities (contact_id, typ, tresc, wynik, data)` w tej samej transakcji; `_typ` walidowany istniejącym CHECK-iem.
+- Brak kontaktu o podanym id → `RAISE EXCEPTION`.
 
-Mobile: pola 44 px, pigułki wyboru 36 px, pasek zapisu z `safe-area-inset-bottom` — jak w formularzu rozmowy z dokumentu.
+## Uprawnienia (wszystkie trzy funkcje)
 
-## Decyzja do podjęcia
+`SECURITY INVOKER`, `SET search_path = public`, `REVOKE ALL ... FROM PUBLIC, anon`, `GRANT EXECUTE ... TO authenticated`.
 
-Zatwierdź ten plan, żebym wykonał **etap 0 + 1 (migracja)**. Etap 3 przyjdzie w kolejnym zleceniu, już z warunkiem wejścia spełnionym.
+## Weryfikacja po migracji
+
+Na testowym zgłoszeniu z `leads` (w transakcji z rollbackiem):
+- `import_lead_to_contact` dwa razy na tym samym `_lead_id` → identyczny `contact_id`, drugi raz `kontakt_nowy = false`, jeden wiersz w historii.
+- `log_contact_activity` → zmieniony `krok` i `termin_followup` kontaktu oraz nowy wiersz w `contact_activities` z jednego wywołania.
