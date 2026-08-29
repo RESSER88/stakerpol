@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Phone, Mail, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Check, Package, Trash2, BadgeCheck } from 'lucide-react';
+import { Phone, Mail, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Check, Package, Trash2, BadgeCheck, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
