@@ -77,7 +77,7 @@ const SentOffersView = ({ reloadKey }: Props) => {
     const { data, error } = await supabase
       .from('shared_lists')
       .select(
-        'id, token, label, created_at, expires_at, revoked_at, archived_at, last_viewed_at, view_count, contacts(osoba, telefon)'
+        'id, token, label, created_at, expires_at, revoked_at, archived_at, last_viewed_at, view_count, contact_id, contacts(osoba, telefon)'
       )
       .order('last_viewed_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
