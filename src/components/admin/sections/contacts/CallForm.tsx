@@ -53,40 +53,48 @@ const WYSOKOSC_STEP = 0.5;
 const Stepper = ({
   value,
   touched,
+  step,
+  min,
   onChange,
   suffix,
 }: {
   value: number;
   touched: boolean;
+  step: number;
+  min: number;
   onChange: (next: number) => void;
   suffix: string;
-}) => (
-  <div className="flex items-center gap-2">
-    <button
-      type="button"
-      onClick={() => onChange(value - 1)}
-      aria-label="Zmniejsz"
-      className="h-11 w-11 border border-editorial-line text-editorial-ink hover:border-editorial-ink"
-    >
-      −
-    </button>
-    <div
-      className={`h-11 min-w-[104px] flex items-center justify-center border border-editorial-line text-sm ${
-        touched ? 'text-editorial-ink' : 'text-editorial-muted/50'
-      }`}
-    >
-      {value} {suffix}
+}) => {
+  const commit = (next: number) => onChange(Math.max(min, Number(next.toFixed(1))));
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => commit(value - step)}
+        aria-label="Zmniejsz"
+        className="h-11 w-11 border border-editorial-line text-editorial-ink hover:border-editorial-ink"
+      >
+        −
+      </button>
+      <div
+        className={`h-11 min-w-[104px] flex items-center justify-center border border-editorial-line text-sm ${
+          touched ? 'text-editorial-ink' : 'text-editorial-muted/50'
+        }`}
+      >
+        {value} {suffix}
+      </div>
+      <button
+        type="button"
+        onClick={() => commit(value + step)}
+        aria-label="Zwiększ"
+        className="h-11 w-11 border border-editorial-line text-editorial-ink hover:border-editorial-ink"
+      >
+        +
+      </button>
     </div>
-    <button
-      type="button"
-      onClick={() => onChange(value + 1)}
-      aria-label="Zwiększ"
-      className="h-11 w-11 border border-editorial-line text-editorial-ink hover:border-editorial-ink"
-    >
-      +
-    </button>
-  </div>
-);
+  );
+};
+
 
 const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => {
   const { toast } = useToast();
