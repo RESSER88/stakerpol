@@ -183,12 +183,11 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
           <Stepper
             value={udzwig}
             touched={udzwigTouched}
+            step={UDZWIG_STEP}
+            min={UDZWIG_STEP}
             suffix="kg"
             onChange={(next) => {
-              const step = udzwigTouched ? next - udzwig : 0;
-              const v = udzwigTouched ? udzwig + (step > 0 ? UDZWIG_STEP : -UDZWIG_STEP) : udzwig;
-              const target = udzwigTouched ? v : next > udzwig ? udzwig + UDZWIG_STEP : udzwig - UDZWIG_STEP;
-              setUdzwig(Math.max(UDZWIG_STEP, target));
+              setUdzwig(next);
               setUdzwigTouched(true);
             }}
           />
@@ -199,14 +198,16 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
           <Stepper
             value={wysokosc}
             touched={wysokoscTouched}
+            step={WYSOKOSC_STEP}
+            min={WYSOKOSC_STEP}
             suffix="m"
             onChange={(next) => {
-              const target = next > wysokosc ? wysokosc + WYSOKOSC_STEP : wysokosc - WYSOKOSC_STEP;
-              setWysokosc(Math.max(WYSOKOSC_STEP, Number(target.toFixed(1))));
+              setWysokosc(next);
               setWysokoscTouched(true);
             }}
           />
         </div>
+
 
         <div>
           <label className={labelClass} htmlFor="call-note">
