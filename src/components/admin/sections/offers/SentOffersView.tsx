@@ -13,6 +13,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import ContactCard from '../contacts/ContactCard';
+
 
 interface Props {
   reloadKey: number;
@@ -28,7 +30,9 @@ interface OfferRow {
   archived_at: string | null;
   last_viewed_at: string | null;
   view_count: number;
+  contact_id: string | null;
   contacts: { osoba: string | null; telefon: string | null } | null;
+
 }
 
 const formatDate = (iso: string) =>
