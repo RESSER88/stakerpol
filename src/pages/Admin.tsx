@@ -13,6 +13,8 @@ import { AdminSection } from '@/components/admin/layout/types';
 import DashboardSection from '@/components/admin/sections/DashboardSection';
 import ExportSection from '@/components/admin/sections/ExportSection';
 import OffersSection from '@/components/admin/sections/OffersSection';
+import ContactsSection from '@/components/admin/sections/ContactsSection';
+
 import PermissionDenied from '@/components/ui/PermissionDenied';
 import { Product } from '@/types';
 
@@ -181,6 +183,9 @@ const Admin = () => {
         return <OffersSection products={products} />;
       case 'export':
         return <ExportSection products={products} />;
+      case 'contacts':
+        return <ContactsSection />;
+
       case 'seo':
         return <SEOManagerTool />;
       case 'faq':
