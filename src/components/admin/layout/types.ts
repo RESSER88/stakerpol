@@ -1,4 +1,4 @@
-export type AdminSection = 'start' | 'products' | 'offers' | 'export' | 'seo' | 'faq';
+export type AdminSection = 'start' | 'products' | 'offers' | 'export' | 'contacts' | 'seo' | 'faq';
 
 export interface AdminSectionItem {
   id: AdminSection;
@@ -11,6 +11,7 @@ export const adminSections: AdminSectionItem[] = [
   { id: 'products', label: 'Produkty' },
   { id: 'offers', label: 'Oferty' },
   { id: 'export', label: 'Eksport' },
+  { id: 'contacts', label: 'Kontakty' },
   { id: 'seo', label: 'SEO' },
   { id: 'faq', label: 'FAQ' },
 ];
@@ -22,6 +23,8 @@ export const sectionTitles: Record<AdminSection, string> = {
   products: 'Produkty',
   offers: 'Oferty',
   export: 'Eksport',
+  contacts: 'Kontakty',
   seo: 'SEO & Schema',
   faq: 'FAQ',
 };
+
