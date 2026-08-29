@@ -132,7 +132,12 @@ const SentOffersView = ({ reloadKey }: Props) => {
               key={row.id}
               className="flex flex-wrap items-center gap-3 py-4 border-b border-editorial-line"
             >
-              <div className="flex-1 min-w-0">
+              <button
+                type="button"
+                onClick={() => row.contact_id && setOpenContactId(row.contact_id)}
+                disabled={!row.contact_id}
+                className="flex-1 min-w-0 text-left disabled:cursor-default"
+              >
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm text-editorial-ink truncate">
                     {row.label || 'Bez nazwy'}
@@ -149,7 +154,7 @@ const SentOffersView = ({ reloadKey }: Props) => {
                   {row.last_viewed_at ? formatDate(row.last_viewed_at) : 'brak otwarć'} · do{' '}
                   {formatDate(row.expires_at)}
                 </div>
-              </div>
+              </button>
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
@@ -174,6 +179,13 @@ const SentOffersView = ({ reloadKey }: Props) => {
           );
         })}
       </ul>
+
+      <ContactCard
+        contactId={openContactId}
+        onClose={() => setOpenContactId(null)}
+        onChanged={() => void load()}
+      />
+
 
       <AlertDialog open={!!revokeTarget} onOpenChange={(o) => !o && setRevokeTarget(null)}>
         <AlertDialogContent>
