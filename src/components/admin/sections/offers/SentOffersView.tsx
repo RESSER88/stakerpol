@@ -50,66 +50,40 @@ const formatDate = (iso: string) =>
 
 const DAY = 24 * 60 * 60 * 1000;
 
-const KROK_LABELS: Record<string, string> = {
-  nowy: 'Nowy',
-  oferta: 'Oferta',
-  oddzwonic: 'Oddzwonić',
-  porownuje: 'Porównuje',
-  cena: 'Cena',
-  nieaktualne: 'Nieaktualne',
-};
-
-/** Chip terminu follow-upu: dziś/przeszłość → pilny, do 3 dni → bursztyn, dalej → szary. */
-type FollowUp = { label: string; urgent: boolean; className: string };
-
-const followUpOf = (termin: string | null | undefined): FollowUp | null => {
-  if (!termin) return null;
+/** Chip akcji: tylko gdy termin follow-upu wypada dziś lub minął. */
+const callToday = (termin: string | null | undefined): boolean => {
+  if (!termin) return false;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const due = new Date(`${termin}T00:00:00`);
-  const diffDays = Math.round((due.getTime() - today.getTime()) / DAY);
-  if (diffDays <= 0)
-    return {
-      label: 'Zadzwoń dziś',
-      urgent: true,
-      className:
-        'text-destructive border-destructive bg-destructive/10 animate-pulse motion-reduce:animate-none',
-    };
-  if (diffDays <= 3)
-    return {
-      label: `termin ${formatDate(termin)}`,
-      urgent: false,
-      className: 'text-editorial-accent border-editorial-accent',
-    };
-  return {
-    label: `termin ${formatDate(termin)}`,
-    urgent: false,
-    className: 'text-editorial-muted border-editorial-line',
-  };
+  return due.getTime() - today.getTime() <= 0;
 };
 
-type Signal = { label: string; tone: 'good' | 'warn' | 'off' };
+type State = { label: string; className: string };
 
-const signalOf = (row: OfferRow): Signal => {
+/** Stan oferty — jedyne źródło prawdy: shared_lists (expires_at, revoked_at, archived_at). */
+const stateOf = (row: OfferRow): State => {
   const now = Date.now();
-  if (row.archived_at) return { label: 'archiwalna', tone: 'off' };
-  if (row.revoked_at) return { label: 'zatrzymana', tone: 'off' };
-  if (new Date(row.expires_at).getTime() < now) return { label: 'wygasła', tone: 'off' };
-  if (row.view_count > 0 && row.last_viewed_at && now - new Date(row.last_viewed_at).getTime() <= 2 * DAY)
-    return { label: 'oglądał', tone: 'good' };
-  if (row.view_count > 0 && new Date(row.expires_at).getTime() - now <= 2 * DAY)
-    return { label: 'wygasa', tone: 'warn' };
-  if (row.view_count === 0 && now - new Date(row.created_at).getTime() > 5 * DAY)
-    return { label: 'cisza', tone: 'warn' };
-  return { label: 'brak otwarć', tone: 'off' };
+  const muted = 'text-editorial-muted border-editorial-line';
+  if (row.archived_at) return { label: 'archiwalna', className: muted };
+  if (row.revoked_at) return { label: 'zatrzymana', className: muted };
+  const left = new Date(row.expires_at).getTime() - now;
+  if (left <= 0) return { label: 'wygasła', className: muted };
+  const days = Math.ceil(left / DAY);
+  if (days <= 3)
+    return {
+      label: days === 1 ? 'wygasa dziś' : `wygasa za ${days} dni`,
+      className: 'text-editorial-ink border-editorial-ink',
+    };
+  return { label: 'aktywna', className: 'text-editorial-accent border-editorial-accent' };
 };
 
-const toneClass = (tone: Signal['tone']) =>
-  tone === 'good'
-    ? 'text-editorial-accent border-editorial-accent'
-    : tone === 'warn'
-      ? 'text-editorial-ink border-editorial-ink'
-      : 'text-editorial-muted border-editorial-line';
+/** Opis otwarć — wyłącznie view_count / last_viewed_at z shared_lists. */
+const viewsText = (row: OfferRow): string =>
+  row.view_count > 0
+    ? `Oglądał, ${row.view_count}×${row.last_viewed_at ? ` · ostatnio ${formatDate(row.last_viewed_at)}` : ''}`
+    : 'Brak otwarć';
+
 
 const isActive = (row: OfferRow) =>
   !row.archived_at && !row.revoked_at && new Date(row.expires_at).getTime() > Date.now();
