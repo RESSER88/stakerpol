@@ -100,6 +100,8 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
   const { toast } = useToast();
   const [krok, setKrok] = useState<string | null>(null);
   const [termin, setTermin] = useState<string | null>(null);
+  const [customDate, setCustomDate] = useState('');
+  const [showCustomDate, setShowCustomDate] = useState(false);
   const [tresc, setTresc] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -113,17 +115,24 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
     setSaving(true);
     const option = TERMIN_OPTIONS.find((t) => t.value === termin);
     const clear = option?.days === null;
+    // Data z pola „Inna data” i pigułki wykluczają się wzajemnie w UI.
+    const terminValue = customDate
+      ? customDate
+      : option && option.days !== null
+        ? addDays(option.days)
+        : undefined;
 
     const { error } = await supabase.rpc('log_contact_activity', {
       _contact_id: contactId,
       _typ: 'telefon',
       _tresc: tresc.trim() || undefined,
       _krok: krok ?? undefined,
-      _termin_followup: option && option.days !== null ? addDays(option.days) : undefined,
+      _termin_followup: terminValue,
       _wyczysc_termin: clear === true,
       _udzwig_kg: udzwigTouched ? udzwig : undefined,
       _wysokosc_m: wysokoscTouched ? wysokosc : undefined,
     });
+
     setSaving(false);
 
     if (error) {
@@ -133,6 +142,8 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
     toast({ title: '✓ Rozmowa zapisana' });
     setKrok(null);
     setTermin(null);
+    setCustomDate('');
+    setShowCustomDate(false);
     setTresc('');
     setUdzwigTouched(false);
     setWysokoscTouched(false);
@@ -169,14 +180,49 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
               <button
                 key={t.value}
                 type="button"
-                onClick={() => setTermin(termin === t.value ? null : t.value)}
-                className={pillClass(termin === t.value)}
+                onClick={() => {
+                  setTermin(termin === t.value ? null : t.value);
+                  setCustomDate('');
+                }}
+                className={pillClass(termin === t.value && !customDate)}
               >
                 {t.label}
               </button>
             ))}
           </div>
+          {showCustomDate || customDate ? (
+            <div className="mt-2 flex items-center gap-2">
+              <input
+                type="date"
+                aria-label="Inna data terminu powrotu"
+                value={customDate}
+                onChange={(e) => {
+                  setCustomDate(e.target.value);
+                  if (e.target.value) setTermin(null);
+                }}
+                className="h-9 px-2 bg-transparent border border-editorial-line text-sm text-editorial-ink focus:outline-none focus:border-editorial-ink"
+              />
+              {customDate && (
+                <button
+                  type="button"
+                  onClick={() => setCustomDate('')}
+                  className="text-[11px] uppercase tracking-wider text-editorial-muted hover:text-editorial-ink underline"
+                >
+                  Wyczyść
+                </button>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowCustomDate(true)}
+              className="mt-2 text-[11px] uppercase tracking-wider text-editorial-muted hover:text-editorial-ink underline"
+            >
+              Inna data
+            </button>
+          )}
         </div>
+
 
         <div>
           <span className={labelClass}>Udźwig</span>
