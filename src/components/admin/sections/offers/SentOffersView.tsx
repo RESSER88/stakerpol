@@ -70,9 +70,10 @@ const followUpOf = (termin: string | null | undefined): FollowUp | null => {
   const diffDays = Math.round((due.getTime() - today.getTime()) / DAY);
   if (diffDays <= 0)
     return {
-      label: `termin ${formatDate(termin)}`,
+      label: 'Zadzwoń dziś',
       urgent: true,
-      className: 'text-destructive border-destructive',
+      className:
+        'text-destructive border-destructive bg-destructive/10 animate-pulse motion-reduce:animate-none',
     };
   if (diffDays <= 3)
     return {
