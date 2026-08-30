@@ -292,16 +292,56 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
         {contact && (
           <div className="space-y-6">
             <div className="space-y-3 text-sm text-editorial-ink">
-              <div className="grid grid-cols-1 gap-3">
-                {FIELDS.map((f) => (
-                  <div key={f.key}>
-                    <label
-                      htmlFor={`contact-${f.key}`}
-                      className="block text-[10px] uppercase tracking-[0.2em] text-editorial-muted mb-1"
-                    >
-                      {f.label}
-                    </label>
-                    <div className="flex items-center gap-2">
+              {!editing ? (
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1 min-w-0">
+                    <div className="text-sm text-editorial-ink">
+                      {contact.osoba || '—'}
+                      {contact.firma && (
+                        <span className="text-editorial-muted"> · {contact.firma}</span>
+                      )}
+                    </div>
+                    {contact.telefon && (
+                      <a
+                        href={`tel:${contact.telefon}`}
+                        className="flex items-center gap-2 text-sm text-editorial-ink hover:underline"
+                      >
+                        <Phone className="h-3.5 w-3.5 text-editorial-muted" />
+                        {contact.telefon}
+                      </a>
+                    )}
+                    {contact.email && (
+                      <a
+                        href={`mailto:${contact.email}`}
+                        className="flex items-center gap-2 text-sm text-editorial-ink hover:underline break-all"
+                      >
+                        <Mail className="h-3.5 w-3.5 text-editorial-muted shrink-0" />
+                        {contact.email}
+                      </a>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDraft(toDraft(contact));
+                      setEditing(true);
+                    }}
+                    aria-label="Edytuj dane kontaktu"
+                    className="p-2 shrink-0 border border-editorial-line hover:border-editorial-ink"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3">
+                  {FIELDS.map((f) => (
+                    <div key={f.key}>
+                      <label
+                        htmlFor={`contact-${f.key}`}
+                        className="block text-[10px] uppercase tracking-[0.2em] text-editorial-muted mb-1"
+                      >
+                        {f.label}
+                      </label>
                       <input
                         id={`contact-${f.key}`}
                         value={draft[f.key] ?? ''}
@@ -309,46 +349,29 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
                         placeholder={f.placeholder}
                         className="w-full bg-transparent border-b border-editorial-line py-1.5 text-sm text-editorial-ink placeholder:text-editorial-muted/60 focus:outline-none focus:border-editorial-ink"
                       />
-                      {f.key === 'telefon' && contact.telefon && (
-                        <a
-                          href={`tel:${contact.telefon}`}
-                          aria-label="Zadzwoń"
-                          className="p-2 border border-editorial-line hover:border-editorial-ink"
-                        >
-                          <Phone className="h-3.5 w-3.5" />
-                        </a>
-                      )}
-                      {f.key === 'email' && contact.email && (
-                        <a
-                          href={`mailto:${contact.email}`}
-                          aria-label="Napisz e-mail"
-                          className="p-2 border border-editorial-line hover:border-editorial-ink"
-                        >
-                          <Mail className="h-3.5 w-3.5" />
-                        </a>
-                      )}
                     </div>
+                  ))}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void saveFields()}
+                      disabled={savingFields}
+                      className="h-9 px-3 text-[11px] uppercase tracking-wider border border-editorial-ink bg-editorial-ink text-background disabled:opacity-40"
+                    >
+                      {savingFields ? 'Zapisuję…' : 'Zapisz'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDraft(toDraft(contact));
+                        setEditing(false);
+                      }}
+                      disabled={savingFields}
+                      className="h-9 px-3 text-[11px] uppercase tracking-wider border border-editorial-line text-editorial-muted hover:border-editorial-ink"
+                    >
+                      Anuluj
+                    </button>
                   </div>
-                ))}
-              </div>
-              {dirty && (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => void saveFields()}
-                    disabled={savingFields}
-                    className="h-9 px-3 text-[11px] uppercase tracking-wider border border-editorial-ink bg-editorial-ink text-background disabled:opacity-40"
-                  >
-                    {savingFields ? 'Zapisuję…' : 'Zapisz dane'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDraft(toDraft(contact))}
-                    disabled={savingFields}
-                    className="h-9 px-3 text-[11px] uppercase tracking-wider border border-editorial-line text-editorial-muted hover:border-editorial-ink"
-                  >
-                    Anuluj
-                  </button>
                 </div>
               )}
               <div className="text-[11px] text-editorial-muted pt-1">
@@ -357,6 +380,7 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
                 {contact.wysokosc_m ? ` · ${contact.wysokosc_m} m` : ''}
               </div>
             </div>
+
 
             <div>
               <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-editorial-muted mb-3">
