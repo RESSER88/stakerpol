@@ -111,18 +111,23 @@ const isActive = (row: OfferRow) =>
 const newer = (a: OfferRow, b: OfferRow) =>
   new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
 
+const ts = (iso: string | null | undefined) => (iso ? new Date(iso).getTime() : 0);
+
 /**
  * Jeden wiersz na kontakt: bieżąca oferta to najnowsza aktywna, a gdy takiej
  * nie ma — najnowsza ze wszystkich. Oferty bez kontaktu zostają osobno.
- * Pozostałe oferty kontaktu widać na jego karcie (sekcja „Oferty”).
+ * Kolejność: najnowsza aktywność kontaktu — max(created_at ofert, data rozmów).
  */
-const groupRows = (rows: OfferRow[]): { row: OfferRow; extras: number }[] => {
+const groupRows = (
+  rows: OfferRow[],
+  lastActivity: Record<string, string>
+): { row: OfferRow; extras: number; activityAt: number }[] => {
   const byContact = new Map<string, OfferRow[]>();
-  const loose: { row: OfferRow; extras: number }[] = [];
+  const loose: { row: OfferRow; extras: number; activityAt: number }[] = [];
 
   for (const row of rows) {
     if (!row.contact_id) {
-      loose.push({ row, extras: 0 });
+      loose.push({ row, extras: 0, activityAt: ts(row.created_at) });
       continue;
     }
     const list = byContact.get(row.contact_id);
@@ -133,20 +138,16 @@ const groupRows = (rows: OfferRow[]): { row: OfferRow; extras: number }[] => {
   const grouped = [...byContact.values()].map((list) => {
     const actives = list.filter(isActive).sort(newer);
     const current = actives[0] ?? [...list].sort(newer)[0];
-    return { row: current, extras: list.length - 1 };
+    const newestOffer = Math.max(...list.map((r) => ts(r.created_at)));
+    const activityAt = Math.max(newestOffer, ts(lastActivity[current.contact_id ?? '']));
+    return { row: current, extras: list.length - 1, activityAt };
   });
 
-  return [...grouped, ...loose].sort((a, b) => {
-    const av = a.row.last_viewed_at ? new Date(a.row.last_viewed_at).getTime() : null;
-    const bv = b.row.last_viewed_at ? new Date(b.row.last_viewed_at).getTime() : null;
-    if (av !== bv) {
-      if (av === null) return 1;
-      if (bv === null) return -1;
-      return bv - av;
-    }
-    return newer(a.row, b.row);
-  });
+  return [...grouped, ...loose].sort(
+    (a, b) => b.activityAt - a.activityAt || newer(a.row, b.row)
+  );
 };
+
 
 
 
