@@ -346,6 +346,8 @@ const SentOffersView = ({ reloadKey }: Props) => {
           );
         })}
       </ul>
+      )}
+
 
       <ContactCard
         contactId={openContactId}
