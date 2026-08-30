@@ -48,7 +48,7 @@ const labelClass = 'block text-[11px] uppercase tracking-wider text-editorial-mu
 const UDZWIG_DEFAULT = 1000;
 const UDZWIG_STEP = 100;
 const WYSOKOSC_DEFAULT = 3;
-const WYSOKOSC_STEP = 0.5;
+const WYSOKOSC_STEP = 0.1;
 
 const Stepper = ({
   value,
@@ -57,6 +57,7 @@ const Stepper = ({
   min,
   onChange,
   suffix,
+  decimals = 0,
 }: {
   value: number;
   touched: boolean;
@@ -64,30 +65,31 @@ const Stepper = ({
   min: number;
   onChange: (next: number) => void;
   suffix: string;
+  decimals?: number;
 }) => {
   const commit = (next: number) => onChange(Math.max(min, Number(next.toFixed(1))));
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1">
       <button
         type="button"
         onClick={() => commit(value - step)}
         aria-label="Zmniejsz"
-        className="h-11 w-11 border border-editorial-line text-editorial-ink hover:border-editorial-ink"
+        className="h-11 w-9 shrink-0 border border-editorial-line text-editorial-ink hover:border-editorial-ink"
       >
         −
       </button>
       <div
-        className={`h-11 min-w-[104px] flex items-center justify-center border border-editorial-line text-sm ${
+        className={`h-11 flex-1 min-w-0 flex items-center justify-center border border-editorial-line text-sm whitespace-nowrap ${
           touched ? 'text-editorial-ink' : 'text-editorial-muted/50'
         }`}
       >
-        {value} {suffix}
+        {value.toFixed(decimals)} {suffix}
       </div>
       <button
         type="button"
         onClick={() => commit(value + step)}
         aria-label="Zwiększ"
-        className="h-11 w-11 border border-editorial-line text-editorial-ink hover:border-editorial-ink"
+        className="h-11 w-9 shrink-0 border border-editorial-line text-editorial-ink hover:border-editorial-ink"
       >
         +
       </button>
@@ -224,35 +226,39 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
         </div>
 
 
-        <div>
-          <span className={labelClass}>Udźwig</span>
-          <Stepper
-            value={udzwig}
-            touched={udzwigTouched}
-            step={UDZWIG_STEP}
-            min={UDZWIG_STEP}
-            suffix="kg"
-            onChange={(next) => {
-              setUdzwig(next);
-              setUdzwigTouched(true);
-            }}
-          />
+        <div className="grid grid-cols-2 gap-3">
+          <div className="min-w-0">
+            <span className={labelClass}>Udźwig</span>
+            <Stepper
+              value={udzwig}
+              touched={udzwigTouched}
+              step={UDZWIG_STEP}
+              min={UDZWIG_STEP}
+              suffix="kg"
+              onChange={(next) => {
+                setUdzwig(next);
+                setUdzwigTouched(true);
+              }}
+            />
+          </div>
+
+          <div className="min-w-0">
+            <span className={labelClass}>Wysokość</span>
+            <Stepper
+              value={wysokosc}
+              touched={wysokoscTouched}
+              step={WYSOKOSC_STEP}
+              min={WYSOKOSC_STEP}
+              suffix="m"
+              decimals={1}
+              onChange={(next) => {
+                setWysokosc(next);
+                setWysokoscTouched(true);
+              }}
+            />
+          </div>
         </div>
 
-        <div>
-          <span className={labelClass}>Wysokość</span>
-          <Stepper
-            value={wysokosc}
-            touched={wysokoscTouched}
-            step={WYSOKOSC_STEP}
-            min={WYSOKOSC_STEP}
-            suffix="m"
-            onChange={(next) => {
-              setWysokosc(next);
-              setWysokoscTouched(true);
-            }}
-          />
-        </div>
 
 
         <div>
