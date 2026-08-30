@@ -18,3 +18,13 @@
 - `SentOffersView.tsx`: dociągnięte `termin_followup` i `krok` z kontaktu; chip terminu (czerwony + pulsująca obwódka dla dziś/przeszłości, bursztynowy do 3 dni, szary dalej, brak chipa przy `NULL`), pulsowanie wyłączone przy `prefers-reduced-motion: reduce`.
 - `SentOffersView.tsx`: przycisk „ZATRZYMAJ DOSTĘP” → „ZATRZYMAJ”; brak otwarć pokazuje szarą plakietkę „brak otwarć” zamiast „–”.
 - Bez zmian: `create_offer`, `import_lead_to_contact`, `log_contact_activity`, Edge Functions, `CallForm.tsx`, logika sygnałów ogląda/cisza/wygasa, `renewed_from`, import leadów.
+
+## 2026-08-30 — nazewnictwo sygnałów (interfejs, zero migracji)
+
+- `OffersSection.tsx`: usunięty zdublowany nagłówek „— Oferty” (breadcrumb w górnym pasku wystarcza); przełącznik NOWA/WYSŁANE/ZAPYTANIA i wyszukiwarka bez zmian.
+- `SentOffersView.tsx`: chip terminu dziś/przeszłość → „Zadzwoń dziś”, pulsowanie przeniesione z całego wiersza na sam chip (wzorzec `animate-pulse` używany już w `DashboardSection.tsx` i `InquiriesSection.tsx`), `motion-reduce:animate-none` zachowane. Chip bursztynowy (do 3 dni) bez zmian.
+- `SentOffersView.tsx`: sygnał „ogląda” → „oglądał” (warunek bez zmian: otwarcie w ciągu 48 h). Jedno pojęcie dla braku otwarć: „brak otwarć”.
+
+### Notatka na przyszłość — prawdziwe „ktoś ogląda TERAZ”
+
+Maciej chce docelowo wykrywanie obecności na żywo na publicznej stronie oferty (`/oferta/:token`): heartbeat z tej strony przez kanał realtime Supabase i wskaźnik obecności w panelu. To osobna, spora funkcja — świadomie odłożona. Dzisiejsza zmiana to wyłącznie uczciwe nazewnictwo na bazie istniejących danych (`view_count`, `last_viewed_at`), bez realtime.

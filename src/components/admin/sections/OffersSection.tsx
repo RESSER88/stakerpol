@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Product } from '@/types';
-import SectionHeader from '../editorial/SectionHeader';
 import InquiriesSection from './InquiriesSection';
 import NewOfferView from './offers/NewOfferView';
 import SentOffersView from './offers/SentOffersView';
@@ -23,8 +22,6 @@ const OffersSection = ({ products }: Props) => {
 
   return (
     <div>
-      <SectionHeader number="—" title="Oferty" />
-
       <div className="flex flex-wrap gap-2 mb-8">
         {TABS.map((tab) => (
           <button
