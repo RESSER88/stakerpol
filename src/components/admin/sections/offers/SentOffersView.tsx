@@ -154,7 +154,9 @@ const groupRows = (
 const SentOffersView = ({ reloadKey }: Props) => {
   const { toast } = useToast();
   const [rows, setRows] = useState<OfferRow[]>([]);
+  const [lastActivity, setLastActivity] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
   const [revokeTarget, setRevokeTarget] = useState<OfferRow | null>(null);
   const [revoking, setRevoking] = useState(false);
   const [openContactId, setOpenContactId] = useState<string | null>(null);
@@ -165,9 +167,8 @@ const SentOffersView = ({ reloadKey }: Props) => {
     const { data, error } = await supabase
       .from('shared_lists')
       .select(
-        'id, token, label, created_at, expires_at, revoked_at, archived_at, last_viewed_at, view_count, contact_id, contacts(osoba, telefon, termin_followup, krok)'
+        'id, token, label, created_at, expires_at, revoked_at, archived_at, last_viewed_at, view_count, contact_id, contacts(osoba, firma, telefon, email, termin_followup, krok)'
       )
-      .order('last_viewed_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
     if (error) {
       toast({
@@ -175,8 +176,24 @@ const SentOffersView = ({ reloadKey }: Props) => {
         description: 'Nie udało się pobrać listy ofert',
         variant: 'destructive',
       });
+      setLoading(false);
+      return;
+    }
+    const list = (data ?? []) as unknown as OfferRow[];
+    setRows(list);
+
+    const ids = [...new Set(list.map((r) => r.contact_id).filter(Boolean))] as string[];
+    if (ids.length > 0) {
+      const { data: acts } = await supabase
+        .from('contact_activities')
+        .select('contact_id, data')
+        .in('contact_id', ids)
+        .order('data', { ascending: false });
+      const map: Record<string, string> = {};
+      for (const a of acts ?? []) if (!map[a.contact_id]) map[a.contact_id] = a.data;
+      setLastActivity(map);
     } else {
-      setRows((data ?? []) as unknown as OfferRow[]);
+      setLastActivity({});
     }
     setLoading(false);
   }, [toast]);
@@ -185,7 +202,18 @@ const SentOffersView = ({ reloadKey }: Props) => {
     void load();
   }, [load, reloadKey]);
 
-  const grouped = useMemo(() => groupRows(rows), [rows]);
+  const grouped = useMemo(() => groupRows(rows, lastActivity), [rows, lastActivity]);
+
+  const visible = useMemo(
+    () =>
+      grouped.filter(
+        (g) =>
+          matchesContactQuery(g.row.contacts ?? {}, query) ||
+          (g.row.label ?? '').toLowerCase().includes(normalizeQuery(query))
+      ),
+    [grouped, query]
+  );
+
 
 
   const copy = async (url: string) => {
