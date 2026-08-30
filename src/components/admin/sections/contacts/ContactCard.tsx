@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Copy, Link2, Loader2, Mail, Phone } from 'lucide-react';
+import { Copy, Link2, Loader2, Mail, Pencil, Phone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { buildToken, buildUrl, MAX_TOKEN_ATTEMPTS } from '@/utils/offerToken';
@@ -115,6 +115,7 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
   const [renewing, setRenewing] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>({ osoba: '', firma: '', telefon: '', email: '' });
   const [savingFields, setSavingFields] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const load = useCallback(async () => {
     if (!contactId) return;
@@ -221,6 +222,7 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
       return;
     }
     toast({ title: '✓ Zapisano', description: 'Dane kontaktu zaktualizowane' });
+    setEditing(false);
     await load();
     onChanged?.();
   };
