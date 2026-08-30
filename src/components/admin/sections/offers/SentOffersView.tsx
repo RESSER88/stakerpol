@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Copy, Loader2, Ban } from 'lucide-react';
+import { Copy, Loader2, Ban, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { buildUrl } from '@/utils/offerToken';
+import { matchesContactQuery, normalizeQuery } from '@/utils/contactSearch';
+
 import {
   AlertDialog,
   AlertDialogAction,
