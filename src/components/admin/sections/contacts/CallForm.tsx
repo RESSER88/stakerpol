@@ -226,35 +226,39 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
         </div>
 
 
-        <div>
-          <span className={labelClass}>Udźwig</span>
-          <Stepper
-            value={udzwig}
-            touched={udzwigTouched}
-            step={UDZWIG_STEP}
-            min={UDZWIG_STEP}
-            suffix="kg"
-            onChange={(next) => {
-              setUdzwig(next);
-              setUdzwigTouched(true);
-            }}
-          />
+        <div className="grid grid-cols-2 gap-3">
+          <div className="min-w-0">
+            <span className={labelClass}>Udźwig</span>
+            <Stepper
+              value={udzwig}
+              touched={udzwigTouched}
+              step={UDZWIG_STEP}
+              min={UDZWIG_STEP}
+              suffix="kg"
+              onChange={(next) => {
+                setUdzwig(next);
+                setUdzwigTouched(true);
+              }}
+            />
+          </div>
+
+          <div className="min-w-0">
+            <span className={labelClass}>Wysokość</span>
+            <Stepper
+              value={wysokosc}
+              touched={wysokoscTouched}
+              step={WYSOKOSC_STEP}
+              min={WYSOKOSC_STEP}
+              suffix="m"
+              decimals={1}
+              onChange={(next) => {
+                setWysokosc(next);
+                setWysokoscTouched(true);
+              }}
+            />
+          </div>
         </div>
 
-        <div>
-          <span className={labelClass}>Wysokość</span>
-          <Stepper
-            value={wysokosc}
-            touched={wysokoscTouched}
-            step={WYSOKOSC_STEP}
-            min={WYSOKOSC_STEP}
-            suffix="m"
-            onChange={(next) => {
-              setWysokosc(next);
-              setWysokoscTouched(true);
-            }}
-          />
-        </div>
 
 
         <div>
