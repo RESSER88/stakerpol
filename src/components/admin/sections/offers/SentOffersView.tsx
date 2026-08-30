@@ -96,7 +96,7 @@ const signalOf = (row: OfferRow): Signal => {
   if (row.revoked_at) return { label: 'zatrzymana', tone: 'off' };
   if (new Date(row.expires_at).getTime() < now) return { label: 'wygasła', tone: 'off' };
   if (row.view_count > 0 && row.last_viewed_at && now - new Date(row.last_viewed_at).getTime() <= 2 * DAY)
-    return { label: 'ogląda', tone: 'good' };
+    return { label: 'oglądał', tone: 'good' };
   if (row.view_count > 0 && new Date(row.expires_at).getTime() - now <= 2 * DAY)
     return { label: 'wygasa', tone: 'warn' };
   if (row.view_count === 0 && now - new Date(row.created_at).getTime() > 5 * DAY)
@@ -278,11 +278,7 @@ const SentOffersView = ({ reloadKey }: Props) => {
           return (
             <li
               key={row.id}
-              className={`flex flex-wrap items-center gap-3 py-4 border-b border-editorial-line ${
-                followUp?.urgent
-                  ? 'ring-1 ring-destructive/60 animate-pulse motion-reduce:animate-none'
-                  : ''
-              }`}
+              className="flex flex-wrap items-center gap-3 py-4 border-b border-editorial-line"
             >
               <button
                 type="button"
