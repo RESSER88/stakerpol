@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Copy, Link2, Loader2, Mail, Phone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -154,8 +154,56 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
     void load();
   }, [load]);
 
+  /** Oferta bieżąca: najnowsza aktywna (jak na liście WYSŁANE). */
+  const currentOffer = useMemo(() => {
+    const actives = offers
+      .filter((o) => offerState(o) === 'aktywna')
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return actives[0] ?? null;
+  }, [offers]);
+
+  /** Wspólna oś czasu: rozmowy/formularze + oferty historyczne i zatrzymane. */
+  const timeline = useMemo(() => {
+    const items: {
+      key: string;
+      at: string;
+      label: string;
+      tresc: string | null;
+      wynik: string | null;
+      offer?: OfferRow;
+    }[] = activities.map((a) => ({
+      key: `a-${a.id}`,
+      at: a.data,
+      label: TYP_LABELS[a.typ] ?? a.typ,
+      tresc: a.tresc,
+      wynik: a.wynik,
+    }));
+
+    for (const o of offers) {
+      if (currentOffer && o.id === currentOffer.id) continue;
+      const state = offerState(o);
+      const at = o.revoked_at ?? o.archived_at ?? o.created_at;
+      const label = o.revoked_at
+        ? 'Oferta zatrzymana'
+        : o.renewed_from
+          ? 'Oferta odnowiona'
+          : 'Oferta utworzona';
+      items.push({
+        key: `o-${o.id}`,
+        at,
+        label,
+        tresc: o.label || 'Bez nazwy',
+        wynik: `${state} · ${o.view_count} ${o.view_count === 1 ? 'otwarcie' : 'otwarć'} · do ${fmtDate(o.expires_at)}`,
+        offer: o,
+      });
+    }
+
+    return items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+  }, [activities, offers, currentOffer]);
+
   const dirty =
     !!contact && FIELDS.some((f) => (draft[f.key] ?? '').trim() !== (contact[f.key] ?? ''));
+
 
   const saveFields = async () => {
     if (!contact || savingFields) return;
@@ -312,85 +360,97 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
 
             <div>
               <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-editorial-muted mb-3">
-                Oferty ({offers.length})
+                Oferta bieżąca
               </div>
-              {offers.length === 0 ? (
-                <p className="text-xs text-editorial-muted italic">Brak ofert.</p>
+              {!currentOffer ? (
+                <p className="text-xs text-editorial-muted italic">Brak aktywnej oferty.</p>
               ) : (
-                <ul className="border-t border-editorial-line">
-                  {offers.map((o) => {
-                    const state = offerState(o);
-                    const canRenew = state !== 'aktywna';
-                    return (
-                      <li key={o.id} className="py-3 border-b border-editorial-line">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm text-editorial-ink">{o.label || 'Bez nazwy'}</span>
-                          <span className="text-[10px] uppercase tracking-wider border px-1.5 py-0.5 border-editorial-line text-editorial-muted">
-                            {state}
-                          </span>
-                          {o.renewed_from && (
-                            <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-editorial-accent">
-                              <Link2 className="h-3 w-3" />
-                              odnowiona
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[11px] text-editorial-muted mt-1">
-                          {o.view_count} {o.view_count === 1 ? 'otwarcie' : 'otwarć'} · do{' '}
-                          {fmtDate(o.expires_at)}
-                        </div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <button
-                            type="button"
-                            onClick={() => copy(buildUrl(o.token))}
-                            aria-label="Kopiuj adres linku"
-                            className="p-2 border border-editorial-line hover:border-editorial-ink"
-                          >
-                            <Copy className="h-3.5 w-3.5" />
-                          </button>
-                          {canRenew && (
-                            <button
-                              type="button"
-                              onClick={() => void renew(o)}
-                              disabled={renewing === o.id}
-                              className="h-9 px-3 text-[11px] uppercase tracking-wider border border-editorial-line text-editorial-ink hover:border-editorial-ink disabled:opacity-40"
-                            >
-                              {renewing === o.id ? 'Tworzę…' : 'Nowy link'}
-                            </button>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
+                <div className="py-3 border-t border-b border-editorial-line">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm text-editorial-ink">
+                      {currentOffer.label || 'Bez nazwy'}
+                    </span>
+                    <span className="text-[10px] uppercase tracking-wider border px-1.5 py-0.5 border-editorial-line text-editorial-muted">
+                      {offerState(currentOffer)}
+                    </span>
+                    {currentOffer.renewed_from && (
+                      <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-editorial-accent">
+                        <Link2 className="h-3 w-3" />
+                        odnowiona
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-editorial-muted mt-1">
+                    {currentOffer.view_count}{' '}
+                    {currentOffer.view_count === 1 ? 'otwarcie' : 'otwarć'} · do{' '}
+                    {fmtDate(currentOffer.expires_at)}
+                  </div>
+                  <div className="flex items-center gap-2 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => copy(buildUrl(currentOffer.token))}
+                      aria-label="Kopiuj adres linku"
+                      className="p-2 border border-editorial-line hover:border-editorial-ink"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
 
             <div>
               <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-editorial-muted mb-3">
-                Historia ({activities.length})
+                Historia ({timeline.length})
               </div>
-              {activities.length === 0 ? (
+              {timeline.length === 0 ? (
                 <p className="text-xs text-editorial-muted italic">Brak wpisów.</p>
               ) : (
                 <ul className="border-t border-editorial-line">
-                  {activities.map((a) => (
-                    <li key={a.id} className="py-3 border-b border-editorial-line">
+                  {timeline.map((item) => (
+                    <li key={item.key} className="py-3 border-b border-editorial-line">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-editorial-ink">
-                          {TYP_LABELS[a.typ] ?? a.typ}
+                          {item.label}
                         </span>
-                        <span className="text-[11px] text-editorial-muted">{fmtDateTime(a.data)}</span>
+                        <span className="text-[11px] text-editorial-muted">
+                          {fmtDateTime(item.at)}
+                        </span>
                       </div>
-                      {a.tresc && (
-                        <p className="text-sm text-editorial-ink whitespace-pre-wrap mt-1">{a.tresc}</p>
+                      {item.tresc && (
+                        <p className="text-sm text-editorial-ink whitespace-pre-wrap mt-1">
+                          {item.tresc}
+                        </p>
                       )}
-                      {a.wynik && <p className="text-[11px] text-editorial-muted mt-1">{a.wynik}</p>}
+                      {item.wynik && (
+                        <p className="text-[11px] text-editorial-muted mt-1">{item.wynik}</p>
+                      )}
+                      {item.offer && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <button
+                            type="button"
+                            onClick={() => copy(buildUrl(item.offer!.token))}
+                            aria-label="Kopiuj adres linku"
+                            className="p-2 border border-editorial-line hover:border-editorial-ink"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void renew(item.offer!)}
+                            disabled={renewing === item.offer.id}
+                            className="h-9 px-3 text-[11px] uppercase tracking-wider border border-editorial-line text-editorial-ink hover:border-editorial-ink disabled:opacity-40"
+                          >
+                            {renewing === item.offer.id ? 'Tworzę…' : 'Nowy link'}
+                          </button>
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>
               )}
             </div>
+
 
             <CallForm
               contactId={contact.id}

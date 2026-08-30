@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Copy, Loader2, Ban } from 'lucide-react';
+import { Copy, Loader2, Ban, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { buildUrl } from '@/utils/offerToken';
+import { matchesContactQuery, normalizeQuery } from '@/utils/contactSearch';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,10 +35,13 @@ interface OfferRow {
   contact_id: string | null;
   contacts: {
     osoba: string | null;
+    firma: string | null;
     telefon: string | null;
+    email: string | null;
     termin_followup: string | null;
     krok: string | null;
   } | null;
+
 
 }
 
@@ -111,18 +116,23 @@ const isActive = (row: OfferRow) =>
 const newer = (a: OfferRow, b: OfferRow) =>
   new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
 
+const ts = (iso: string | null | undefined) => (iso ? new Date(iso).getTime() : 0);
+
 /**
  * Jeden wiersz na kontakt: bieżąca oferta to najnowsza aktywna, a gdy takiej
  * nie ma — najnowsza ze wszystkich. Oferty bez kontaktu zostają osobno.
- * Pozostałe oferty kontaktu widać na jego karcie (sekcja „Oferty”).
+ * Kolejność: najnowsza aktywność kontaktu — max(created_at ofert, data rozmów).
  */
-const groupRows = (rows: OfferRow[]): { row: OfferRow; extras: number }[] => {
+const groupRows = (
+  rows: OfferRow[],
+  lastActivity: Record<string, string>
+): { row: OfferRow; extras: number; activityAt: number }[] => {
   const byContact = new Map<string, OfferRow[]>();
-  const loose: { row: OfferRow; extras: number }[] = [];
+  const loose: { row: OfferRow; extras: number; activityAt: number }[] = [];
 
   for (const row of rows) {
     if (!row.contact_id) {
-      loose.push({ row, extras: 0 });
+      loose.push({ row, extras: 0, activityAt: ts(row.created_at) });
       continue;
     }
     const list = byContact.get(row.contact_id);
@@ -133,27 +143,25 @@ const groupRows = (rows: OfferRow[]): { row: OfferRow; extras: number }[] => {
   const grouped = [...byContact.values()].map((list) => {
     const actives = list.filter(isActive).sort(newer);
     const current = actives[0] ?? [...list].sort(newer)[0];
-    return { row: current, extras: list.length - 1 };
+    const newestOffer = Math.max(...list.map((r) => ts(r.created_at)));
+    const activityAt = Math.max(newestOffer, ts(lastActivity[current.contact_id ?? '']));
+    return { row: current, extras: list.length - 1, activityAt };
   });
 
-  return [...grouped, ...loose].sort((a, b) => {
-    const av = a.row.last_viewed_at ? new Date(a.row.last_viewed_at).getTime() : null;
-    const bv = b.row.last_viewed_at ? new Date(b.row.last_viewed_at).getTime() : null;
-    if (av !== bv) {
-      if (av === null) return 1;
-      if (bv === null) return -1;
-      return bv - av;
-    }
-    return newer(a.row, b.row);
-  });
+  return [...grouped, ...loose].sort(
+    (a, b) => b.activityAt - a.activityAt || newer(a.row, b.row)
+  );
 };
+
 
 
 
 const SentOffersView = ({ reloadKey }: Props) => {
   const { toast } = useToast();
   const [rows, setRows] = useState<OfferRow[]>([]);
+  const [lastActivity, setLastActivity] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
   const [revokeTarget, setRevokeTarget] = useState<OfferRow | null>(null);
   const [revoking, setRevoking] = useState(false);
   const [openContactId, setOpenContactId] = useState<string | null>(null);
@@ -164,9 +172,8 @@ const SentOffersView = ({ reloadKey }: Props) => {
     const { data, error } = await supabase
       .from('shared_lists')
       .select(
-        'id, token, label, created_at, expires_at, revoked_at, archived_at, last_viewed_at, view_count, contact_id, contacts(osoba, telefon, termin_followup, krok)'
+        'id, token, label, created_at, expires_at, revoked_at, archived_at, last_viewed_at, view_count, contact_id, contacts(osoba, firma, telefon, email, termin_followup, krok)'
       )
-      .order('last_viewed_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
     if (error) {
       toast({
@@ -174,8 +181,24 @@ const SentOffersView = ({ reloadKey }: Props) => {
         description: 'Nie udało się pobrać listy ofert',
         variant: 'destructive',
       });
+      setLoading(false);
+      return;
+    }
+    const list = (data ?? []) as unknown as OfferRow[];
+    setRows(list);
+
+    const ids = [...new Set(list.map((r) => r.contact_id).filter(Boolean))] as string[];
+    if (ids.length > 0) {
+      const { data: acts } = await supabase
+        .from('contact_activities')
+        .select('contact_id, data')
+        .in('contact_id', ids)
+        .order('data', { ascending: false });
+      const map: Record<string, string> = {};
+      for (const a of acts ?? []) if (!map[a.contact_id]) map[a.contact_id] = a.data;
+      setLastActivity(map);
     } else {
-      setRows((data ?? []) as unknown as OfferRow[]);
+      setLastActivity({});
     }
     setLoading(false);
   }, [toast]);
@@ -184,7 +207,18 @@ const SentOffersView = ({ reloadKey }: Props) => {
     void load();
   }, [load, reloadKey]);
 
-  const grouped = useMemo(() => groupRows(rows), [rows]);
+  const grouped = useMemo(() => groupRows(rows, lastActivity), [rows, lastActivity]);
+
+  const visible = useMemo(
+    () =>
+      grouped.filter(
+        (g) =>
+          matchesContactQuery(g.row.contacts ?? {}, query) ||
+          (g.row.label ?? '').toLowerCase().includes(normalizeQuery(query))
+      ),
+    [grouped, query]
+  );
+
 
 
   const copy = async (url: string) => {
@@ -219,8 +253,23 @@ const SentOffersView = ({ reloadKey }: Props) => {
 
   return (
     <div className="max-w-3xl">
+      <div className="flex items-center gap-2 border-b border-editorial-line mb-4">
+        <Search className="h-3.5 w-3.5 text-editorial-muted" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Szukaj: osoba, telefon, e-mail"
+          aria-label="Szukaj kontaktu w wysłanych ofertach"
+          className="w-full bg-transparent py-2 text-sm text-editorial-ink placeholder:text-editorial-muted/60 focus:outline-none"
+        />
+      </div>
+
+      {visible.length === 0 ? (
+        <p className="text-xs text-editorial-muted italic">Brak wyników.</p>
+      ) : (
       <ul className="border-t border-editorial-line">
-        {grouped.map(({ row, extras }) => {
+        {visible.map(({ row, extras }) => {
+
           const signal = signalOf(row);
           const followUp = followUpOf(row.contacts?.termin_followup);
 
@@ -297,6 +346,8 @@ const SentOffersView = ({ reloadKey }: Props) => {
           );
         })}
       </ul>
+      )}
+
 
       <ContactCard
         contactId={openContactId}
