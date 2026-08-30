@@ -184,6 +184,9 @@ const SentOffersView = ({ reloadKey }: Props) => {
     void load();
   }, [load, reloadKey]);
 
+  const grouped = useMemo(() => groupRows(rows), [rows]);
+
+
   const copy = async (url: string) => {
     try {
       await navigator.clipboard.writeText(url);
