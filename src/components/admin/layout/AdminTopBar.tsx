@@ -6,7 +6,12 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import type { AdminSection } from './types';
+import { adminSections, sectionNumber, sectionTitles, type AdminSection } from './types';
+
+/** Pozycje nieobecne w dolnym pasku (pierwsze cztery) trafiają do menu „więcej”. */
+const OVERFLOW = adminSections
+  .map((item, index) => ({ item, index }))
+  .filter(({ index }) => index >= 4);
 
 interface Props {
   title: string;
@@ -31,8 +36,11 @@ const AdminTopBar = ({ title, onChange, onSignOut }: Props) => {
           <MoreVertical className="h-5 w-5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onChange('seo')}>05 — SEO &amp; Schema</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onChange('faq')}>06 — FAQ</DropdownMenuItem>
+          {OVERFLOW.map(({ item, index }) => (
+            <DropdownMenuItem key={item.id} onClick={() => onChange(item.id)}>
+              {sectionNumber(index)} — {sectionTitles[item.id]}
+            </DropdownMenuItem>
+          ))}
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={onSignOut}>
             <LogOut className="h-4 w-4" />

@@ -42,6 +42,7 @@ const NewOfferView = ({ products, onCreated }: Props) => {
   const [criteria, setCriteria] = useState<ExportFilterCriteria>(DEFAULT_EXPORT_CRITERIA);
 
   const [nazwa, setNazwa] = useState('');
+  const [firma, setFirma] = useState('');
   const [telefon, setTelefon] = useState('');
   const [email, setEmail] = useState('');
   const [notatka, setNotatka] = useState('');
@@ -76,6 +77,7 @@ const NewOfferView = ({ products, onCreated }: Props) => {
     if (saving || !canSubmit) return;
     setSaving(true);
     const nazwaValue = nazwa.trim();
+    const firmaValue = firma.trim();
     try {
       let token = '';
       let kontaktNowy = true;
@@ -97,6 +99,21 @@ const NewOfferView = ({ products, onCreated }: Props) => {
           token = candidate;
           const row = Array.isArray(data) ? data[0] : data;
           kontaktNowy = row?.kontakt_nowy ?? true;
+          // Firma nie jest parametrem create_offer — sygnatura funkcji zostaje
+          // nietknięta, nazwę firmy dopisujemy osobnym UPDATE-em na kontakcie.
+          if (firmaValue && row?.contact_id) {
+            const { error: firmaError } = await supabase
+              .from('contacts')
+              .update({ firma: firmaValue })
+              .eq('id', row.contact_id);
+            if (firmaError) {
+              toast({
+                title: 'Oferta utworzona, firma niezapisana',
+                description: firmaError.message,
+                variant: 'destructive',
+              });
+            }
+          }
           lastError = null;
           break;
         }
@@ -119,6 +136,7 @@ const NewOfferView = ({ products, onCreated }: Props) => {
 
       setLastUrl(buildUrl(token));
       setNazwa('');
+      setFirma('');
       setTelefon('');
       setEmail('');
       setNotatka('');
@@ -159,6 +177,17 @@ const NewOfferView = ({ products, onCreated }: Props) => {
             value={nazwa}
             onChange={(e) => setNazwa(e.target.value.slice(0, 120))}
             placeholder="Nazwa klienta lub firmy"
+            className={inputClass}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="offer-firma">Firma (opcjonalnie)</Label>
+          <input
+            id="offer-firma"
+            value={firma}
+            onChange={(e) => setFirma(e.target.value.slice(0, 160))}
+            placeholder="Nazwa firmy"
             className={inputClass}
           />
         </div>
