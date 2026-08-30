@@ -142,6 +142,8 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
     toast({ title: '✓ Rozmowa zapisana' });
     setKrok(null);
     setTermin(null);
+    setCustomDate('');
+    setShowCustomDate(false);
     setTresc('');
     setUdzwigTouched(false);
     setWysokoscTouched(false);
