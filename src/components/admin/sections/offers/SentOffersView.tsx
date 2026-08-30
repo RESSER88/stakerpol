@@ -105,6 +105,50 @@ const toneClass = (tone: Signal['tone']) =>
       ? 'text-editorial-ink border-editorial-ink'
       : 'text-editorial-muted border-editorial-line';
 
+const isActive = (row: OfferRow) =>
+  !row.archived_at && !row.revoked_at && new Date(row.expires_at).getTime() > Date.now();
+
+const newer = (a: OfferRow, b: OfferRow) =>
+  new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+
+/**
+ * Jeden wiersz na kontakt: bieżąca oferta to najnowsza aktywna, a gdy takiej
+ * nie ma — najnowsza ze wszystkich. Oferty bez kontaktu zostają osobno.
+ * Pozostałe oferty kontaktu widać na jego karcie (sekcja „Oferty”).
+ */
+const groupRows = (rows: OfferRow[]): { row: OfferRow; extras: number }[] => {
+  const byContact = new Map<string, OfferRow[]>();
+  const loose: { row: OfferRow; extras: number }[] = [];
+
+  for (const row of rows) {
+    if (!row.contact_id) {
+      loose.push({ row, extras: 0 });
+      continue;
+    }
+    const list = byContact.get(row.contact_id);
+    if (list) list.push(row);
+    else byContact.set(row.contact_id, [row]);
+  }
+
+  const grouped = [...byContact.values()].map((list) => {
+    const actives = list.filter(isActive).sort(newer);
+    const current = actives[0] ?? [...list].sort(newer)[0];
+    return { row: current, extras: list.length - 1 };
+  });
+
+  return [...grouped, ...loose].sort((a, b) => {
+    const av = a.row.last_viewed_at ? new Date(a.row.last_viewed_at).getTime() : null;
+    const bv = b.row.last_viewed_at ? new Date(b.row.last_viewed_at).getTime() : null;
+    if (av !== bv) {
+      if (av === null) return 1;
+      if (bv === null) return -1;
+      return bv - av;
+    }
+    return newer(a.row, b.row);
+  });
+};
+
+
 
 const SentOffersView = ({ reloadKey }: Props) => {
   const { toast } = useToast();
