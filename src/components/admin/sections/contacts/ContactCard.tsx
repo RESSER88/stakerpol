@@ -88,6 +88,24 @@ const offerState = (o: OfferRow): OfferState => {
   return 'aktywna';
 };
 
+type EditableKey = 'osoba' | 'firma' | 'telefon' | 'email';
+
+const FIELDS: { key: EditableKey; label: string; placeholder: string }[] = [
+  { key: 'osoba', label: 'Osoba', placeholder: 'Imię i nazwisko' },
+  { key: 'firma', label: 'Firma', placeholder: 'Nazwa firmy' },
+  { key: 'telefon', label: 'Telefon', placeholder: 'np. +48 123 456 789' },
+  { key: 'email', label: 'E-mail', placeholder: 'adres@firma.pl' },
+];
+
+type Draft = Record<EditableKey, string>;
+
+const toDraft = (c: ContactRow): Draft => ({
+  osoba: c.osoba ?? '',
+  firma: c.firma ?? '',
+  telefon: c.telefon ?? '',
+  email: c.email ?? '',
+});
+
 const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
   const { toast } = useToast();
   const [contact, setContact] = useState<ContactRow | null>(null);
@@ -95,6 +113,8 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
   const [activities, setActivities] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [renewing, setRenewing] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Draft>({ osoba: '', firma: '', telefon: '', email: '' });
+  const [savingFields, setSavingFields] = useState(false);
 
   const load = useCallback(async () => {
     if (!contactId) return;
@@ -122,7 +142,9 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
     if (c.error) {
       toast({ title: 'Błąd odczytu', description: c.error.message, variant: 'destructive' });
     }
-    setContact((c.data ?? null) as ContactRow | null);
+    const row = (c.data ?? null) as ContactRow | null;
+    setContact(row);
+    if (row) setDraft(toDraft(row));
     setOffers((o.data ?? []) as OfferRow[]);
     setActivities((a.data ?? []) as ActivityRow[]);
     setLoading(false);
@@ -131,6 +153,29 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const dirty =
+    !!contact && FIELDS.some((f) => (draft[f.key] ?? '').trim() !== (contact[f.key] ?? ''));
+
+  const saveFields = async () => {
+    if (!contact || savingFields) return;
+    setSavingFields(true);
+    const payload = {
+      osoba: draft.osoba.trim() || null,
+      firma: draft.firma.trim() || null,
+      telefon: draft.telefon.trim() || null,
+      email: draft.email.trim() || null,
+    };
+    const { error } = await supabase.from('contacts').update(payload).eq('id', contact.id);
+    setSavingFields(false);
+    if (error) {
+      toast({ title: 'Błąd zapisu', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: '✓ Zapisano', description: 'Dane kontaktu zaktualizowane' });
+    await load();
+    onChanged?.();
+  };
 
   const copy = async (url: string) => {
     try {
@@ -198,19 +243,65 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
 
         {contact && (
           <div className="space-y-6">
-            <div className="space-y-1 text-sm text-editorial-ink">
-              {contact.firma && <div className="text-editorial-muted">{contact.firma}</div>}
-              {contact.telefon && (
-                <a href={`tel:${contact.telefon}`} className="flex items-center gap-2 hover:text-editorial-accent">
-                  <Phone className="h-3.5 w-3.5" />
-                  {contact.telefon}
-                </a>
-              )}
-              {contact.email && (
-                <a href={`mailto:${contact.email}`} className="flex items-center gap-2 hover:text-editorial-accent">
-                  <Mail className="h-3.5 w-3.5" />
-                  {contact.email}
-                </a>
+            <div className="space-y-3 text-sm text-editorial-ink">
+              <div className="grid grid-cols-1 gap-3">
+                {FIELDS.map((f) => (
+                  <div key={f.key}>
+                    <label
+                      htmlFor={`contact-${f.key}`}
+                      className="block text-[10px] uppercase tracking-[0.2em] text-editorial-muted mb-1"
+                    >
+                      {f.label}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        id={`contact-${f.key}`}
+                        value={draft[f.key] ?? ''}
+                        onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
+                        placeholder={f.placeholder}
+                        className="w-full bg-transparent border-b border-editorial-line py-1.5 text-sm text-editorial-ink placeholder:text-editorial-muted/60 focus:outline-none focus:border-editorial-ink"
+                      />
+                      {f.key === 'telefon' && contact.telefon && (
+                        <a
+                          href={`tel:${contact.telefon}`}
+                          aria-label="Zadzwoń"
+                          className="p-2 border border-editorial-line hover:border-editorial-ink"
+                        >
+                          <Phone className="h-3.5 w-3.5" />
+                        </a>
+                      )}
+                      {f.key === 'email' && contact.email && (
+                        <a
+                          href={`mailto:${contact.email}`}
+                          aria-label="Napisz e-mail"
+                          className="p-2 border border-editorial-line hover:border-editorial-ink"
+                        >
+                          <Mail className="h-3.5 w-3.5" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {dirty && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void saveFields()}
+                    disabled={savingFields}
+                    className="h-9 px-3 text-[11px] uppercase tracking-wider border border-editorial-ink bg-editorial-ink text-background disabled:opacity-40"
+                  >
+                    {savingFields ? 'Zapisuję…' : 'Zapisz dane'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDraft(toDraft(contact))}
+                    disabled={savingFields}
+                    className="h-9 px-3 text-[11px] uppercase tracking-wider border border-editorial-line text-editorial-muted hover:border-editorial-ink"
+                  >
+                    Anuluj
+                  </button>
+                </div>
               )}
               <div className="text-[11px] text-editorial-muted pt-1">
                 Termin powrotu: {contact.termin_followup ? fmtDate(contact.termin_followup) : 'brak'}
