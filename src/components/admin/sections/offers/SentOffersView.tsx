@@ -244,9 +244,9 @@ const SentOffersView = ({ reloadKey }: Props) => {
       ) : (
       <ul className="border-t border-editorial-line">
         {visible.map(({ row, extras }) => {
-
-          const signal = signalOf(row);
-          const followUp = followUpOf(row.contacts?.termin_followup);
+          const state = stateOf(row);
+          const urgent = callToday(row.contacts?.termin_followup);
+          const name = row.contacts?.firma || row.contacts?.osoba || row.label || 'Bez nazwy';
 
           const active = !row.revoked_at && !row.archived_at;
           return (
@@ -261,38 +261,34 @@ const SentOffersView = ({ reloadKey }: Props) => {
                 className="flex-1 min-w-0 text-left disabled:cursor-default"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm text-editorial-ink truncate">
-                    {row.label || 'Bez nazwy'}
+                  <span className="text-sm text-editorial-ink truncate">{name}</span>
+                  <span className="text-[11px] text-editorial-muted">
+                    {row.contacts?.telefon || 'brak telefonu'}
                   </span>
-                  <span
-                    className={`text-[10px] uppercase tracking-wider border px-1.5 py-0.5 ${toneClass(signal.tone)}`}
-                  >
-                    {signal.label}
-                  </span>
-                  {followUp && (
-                    <span
-                      className={`text-[10px] uppercase tracking-wider border px-1.5 py-0.5 ${followUp.className}`}
-                    >
-                      {followUp.label}
-                      {row.contacts?.krok
-                        ? ` · ${KROK_LABELS[row.contacts.krok] ?? row.contacts.krok}`
-                        : ''}
-                    </span>
-                  )}
-                  {extras > 0 && (
-                    <span className="text-[10px] uppercase tracking-wider border px-1.5 py-0.5 text-editorial-muted border-editorial-line">
-                      +{extras} {extras === 1 ? 'oferta' : 'ofert'} w historii
-                    </span>
-                  )}
                 </div>
 
-                <div className="text-[11px] text-editorial-muted mt-1 tracking-wide">
-                  {row.contacts?.telefon || 'brak telefonu'} · {row.view_count}{' '}
-                  {row.view_count === 1 ? 'otwarcie' : 'otwarć'} ·{' '}
-                  {row.last_viewed_at ? formatDate(row.last_viewed_at) : 'brak otwarć'} · do{' '}
+                <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                  {urgent && (
+                    <span className="text-[10px] uppercase tracking-wider border px-1.5 py-0.5 text-destructive border-destructive bg-destructive/10 animate-pulse motion-reduce:animate-none">
+                      Zadzwoń dziś
+                    </span>
+                  )}
+                  <span
+                    className={`text-[10px] uppercase tracking-wider border px-1.5 py-0.5 ${state.className}`}
+                  >
+                    {state.label}
+                  </span>
+                </div>
+
+                <div className="text-[11px] text-editorial-muted mt-1.5 tracking-wide">
+                  {viewsText(row)} · wysłano {formatDate(row.created_at)} · ważna do{' '}
                   {formatDate(row.expires_at)}
+                  {extras > 0
+                    ? ` · +${extras} ${extras === 1 ? 'oferta' : 'ofert'} w historii`
+                    : ''}
                 </div>
               </button>
+
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
