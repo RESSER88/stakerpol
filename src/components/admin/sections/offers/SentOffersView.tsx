@@ -253,8 +253,23 @@ const SentOffersView = ({ reloadKey }: Props) => {
 
   return (
     <div className="max-w-3xl">
+      <div className="flex items-center gap-2 border-b border-editorial-line mb-4">
+        <Search className="h-3.5 w-3.5 text-editorial-muted" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Szukaj: osoba, telefon, e-mail"
+          aria-label="Szukaj kontaktu w wysłanych ofertach"
+          className="w-full bg-transparent py-2 text-sm text-editorial-ink placeholder:text-editorial-muted/60 focus:outline-none"
+        />
+      </div>
+
+      {visible.length === 0 ? (
+        <p className="text-xs text-editorial-muted italic">Brak wyników.</p>
+      ) : (
       <ul className="border-t border-editorial-line">
-        {grouped.map(({ row, extras }) => {
+        {visible.map(({ row, extras }) => {
+
           const signal = signalOf(row);
           const followUp = followUpOf(row.contacts?.termin_followup);
 
