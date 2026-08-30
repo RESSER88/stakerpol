@@ -120,7 +120,7 @@ const SentOffersView = ({ reloadKey }: Props) => {
     const { data, error } = await supabase
       .from('shared_lists')
       .select(
-        'id, token, label, created_at, expires_at, revoked_at, archived_at, last_viewed_at, view_count, contact_id, contacts(osoba, telefon)'
+        'id, token, label, created_at, expires_at, revoked_at, archived_at, last_viewed_at, view_count, contact_id, contacts(osoba, telefon, termin_followup, krok)'
       )
       .order('last_viewed_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
@@ -175,11 +175,16 @@ const SentOffersView = ({ reloadKey }: Props) => {
       <ul className="border-t border-editorial-line">
         {rows.map((row) => {
           const signal = signalOf(row);
+          const followUp = followUpOf(row.contacts?.termin_followup);
           const active = !row.revoked_at && !row.archived_at;
           return (
             <li
               key={row.id}
-              className="flex flex-wrap items-center gap-3 py-4 border-b border-editorial-line"
+              className={`flex flex-wrap items-center gap-3 py-4 border-b border-editorial-line ${
+                followUp?.urgent
+                  ? 'ring-1 ring-destructive/60 animate-pulse motion-reduce:animate-none'
+                  : ''
+              }`}
             >
               <button
                 type="button"
@@ -196,6 +201,16 @@ const SentOffersView = ({ reloadKey }: Props) => {
                   >
                     {signal.label}
                   </span>
+                  {followUp && (
+                    <span
+                      className={`text-[10px] uppercase tracking-wider border px-1.5 py-0.5 ${followUp.className}`}
+                    >
+                      {followUp.label}
+                      {row.contacts?.krok
+                        ? ` · ${KROK_LABELS[row.contacts.krok] ?? row.contacts.krok}`
+                        : ''}
+                    </span>
+                  )}
                 </div>
                 <div className="text-[11px] text-editorial-muted mt-1 tracking-wide">
                   {row.contacts?.telefon || 'brak telefonu'} · {row.view_count}{' '}
@@ -220,7 +235,7 @@ const SentOffersView = ({ reloadKey }: Props) => {
                     className="flex items-center gap-1.5 px-2.5 py-2 text-[11px] uppercase tracking-wider border border-editorial-line text-editorial-muted hover:border-destructive hover:text-destructive"
                   >
                     <Ban className="h-3.5 w-3.5" />
-                    Zatrzymaj dostęp
+                    Zatrzymaj
                   </button>
                 )}
               </div>
