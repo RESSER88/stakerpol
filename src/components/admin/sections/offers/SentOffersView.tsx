@@ -35,10 +35,13 @@ interface OfferRow {
   contact_id: string | null;
   contacts: {
     osoba: string | null;
+    firma: string | null;
     telefon: string | null;
+    email: string | null;
     termin_followup: string | null;
     krok: string | null;
   } | null;
+
 
 }
 
