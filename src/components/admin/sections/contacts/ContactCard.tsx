@@ -154,8 +154,56 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
     void load();
   }, [load]);
 
+  /** Oferta bieżąca: najnowsza aktywna (jak na liście WYSŁANE). */
+  const currentOffer = useMemo(() => {
+    const actives = offers
+      .filter((o) => offerState(o) === 'aktywna')
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return actives[0] ?? null;
+  }, [offers]);
+
+  /** Wspólna oś czasu: rozmowy/formularze + oferty historyczne i zatrzymane. */
+  const timeline = useMemo(() => {
+    const items: {
+      key: string;
+      at: string;
+      label: string;
+      tresc: string | null;
+      wynik: string | null;
+      offer?: OfferRow;
+    }[] = activities.map((a) => ({
+      key: `a-${a.id}`,
+      at: a.data,
+      label: TYP_LABELS[a.typ] ?? a.typ,
+      tresc: a.tresc,
+      wynik: a.wynik,
+    }));
+
+    for (const o of offers) {
+      if (currentOffer && o.id === currentOffer.id) continue;
+      const state = offerState(o);
+      const at = o.revoked_at ?? o.archived_at ?? o.created_at;
+      const label = o.revoked_at
+        ? 'Oferta zatrzymana'
+        : o.renewed_from
+          ? 'Oferta odnowiona'
+          : 'Oferta utworzona';
+      items.push({
+        key: `o-${o.id}`,
+        at,
+        label,
+        tresc: o.label || 'Bez nazwy',
+        wynik: `${state} · ${o.view_count} ${o.view_count === 1 ? 'otwarcie' : 'otwarć'} · do ${fmtDate(o.expires_at)}`,
+        offer: o,
+      });
+    }
+
+    return items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+  }, [activities, offers, currentOffer]);
+
   const dirty =
     !!contact && FIELDS.some((f) => (draft[f.key] ?? '').trim() !== (contact[f.key] ?? ''));
+
 
   const saveFields = async () => {
     if (!contact || savingFields) return;
