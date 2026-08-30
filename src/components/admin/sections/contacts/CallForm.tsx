@@ -100,6 +100,8 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
   const { toast } = useToast();
   const [krok, setKrok] = useState<string | null>(null);
   const [termin, setTermin] = useState<string | null>(null);
+  const [customDate, setCustomDate] = useState('');
+  const [showCustomDate, setShowCustomDate] = useState(false);
   const [tresc, setTresc] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -113,17 +115,24 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
     setSaving(true);
     const option = TERMIN_OPTIONS.find((t) => t.value === termin);
     const clear = option?.days === null;
+    // Data z pola „Inna data” i pigułki wykluczają się wzajemnie w UI.
+    const terminValue = customDate
+      ? customDate
+      : option && option.days !== null
+        ? addDays(option.days)
+        : undefined;
 
     const { error } = await supabase.rpc('log_contact_activity', {
       _contact_id: contactId,
       _typ: 'telefon',
       _tresc: tresc.trim() || undefined,
       _krok: krok ?? undefined,
-      _termin_followup: option && option.days !== null ? addDays(option.days) : undefined,
+      _termin_followup: terminValue,
       _wyczysc_termin: clear === true,
       _udzwig_kg: udzwigTouched ? udzwig : undefined,
       _wysokosc_m: wysokoscTouched ? wysokosc : undefined,
     });
+
     setSaving(false);
 
     if (error) {
