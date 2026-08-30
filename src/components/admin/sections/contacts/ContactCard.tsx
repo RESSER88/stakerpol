@@ -152,6 +152,7 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
   }, [contactId, toast]);
 
   useEffect(() => {
+    setEditing(false);
     void load();
   }, [load]);
 
@@ -201,10 +202,6 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
 
     return items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
   }, [activities, offers, currentOffer]);
-
-  const dirty =
-    !!contact && FIELDS.some((f) => (draft[f.key] ?? '').trim() !== (contact[f.key] ?? ''));
-
 
   const saveFields = async () => {
     if (!contact || savingFields) return;
