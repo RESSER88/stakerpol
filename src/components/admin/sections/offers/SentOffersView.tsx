@@ -217,9 +217,10 @@ const SentOffersView = ({ reloadKey }: Props) => {
   return (
     <div className="max-w-3xl">
       <ul className="border-t border-editorial-line">
-        {rows.map((row) => {
+        {grouped.map(({ row, extras }) => {
           const signal = signalOf(row);
           const followUp = followUpOf(row.contacts?.termin_followup);
+
           const active = !row.revoked_at && !row.archived_at;
           return (
             <li
