@@ -124,6 +124,7 @@ export const exportProductListToPDF = async (products: Product[]): Promise<void>
         r.workingHours === '' ? '' : String(r.workingHours),
         r.mastLiftingCapacity,
         r.liftHeight,
+        r.minHeight,
         r.mast,
         r.battery,
         r.availability,
@@ -361,12 +362,13 @@ const renderListHTML = (model: ExportModel): string => {
             `<td style="${cellBase(al(4), `color:${base};`)}">${escapeHtml(r.workingHours)}</td>`,
             `<td style="${cellBase(al(5), `color:${base};`)}">${escapeHtml(r.mastLiftingCapacity)}</td>`,
             `<td style="${cellBase(al(6), `color:${base};`)}">${escapeHtml(r.liftHeight)}</td>`,
-            `<td style="${cellBase(al(7), `color:${base};`)}">${escapeHtml(r.mast)}</td>`,
-            `<td style="${cellBase(al(8), `color:${base};`)}">${escapeHtml(r.battery)}</td>`,
-            `<td style="${cellBase(al(9), `color:${base};`)}">${escapeHtml(r.availability)}</td>`,
-            `<td style="${cellBase(al(10), priceStyle)}">${escapeHtml(priceText(r))}</td>`,
-            `<td style="${cellBase(al(11), `color:${base};`)}">${escapeHtml(r.priceCurrency)}</td>`,
-            `<td style="${cellBase(al(12), `color:${r.isSold ? COLORS.muted : COLORS.navy};`)}">${escapeHtml(photoLabel)}</td>`,
+            `<td style="${cellBase(al(7), `color:${base};`)}">${escapeHtml(r.minHeight)}</td>`,
+            `<td style="${cellBase(al(8), `color:${base};`)}">${escapeHtml(r.mast)}</td>`,
+            `<td style="${cellBase(al(9), `color:${base};`)}">${escapeHtml(r.battery)}</td>`,
+            `<td style="${cellBase(al(10), `color:${base};`)}">${escapeHtml(r.availability)}</td>`,
+            `<td style="${cellBase(al(11), priceStyle)}">${escapeHtml(priceText(r))}</td>`,
+            `<td style="${cellBase(al(12), `color:${base};`)}">${escapeHtml(r.priceCurrency)}</td>`,
+            `<td style="${cellBase(al(13), `color:${r.isSold ? COLORS.muted : COLORS.navy};`)}">${escapeHtml(photoLabel)}</td>`,
           ].join('');
 
 
