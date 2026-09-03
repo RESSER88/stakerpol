@@ -1,6 +1,8 @@
 import { LogOut, Moon, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { adminSections, sectionNumber, type AdminSection } from './types';
+import { useNewLeadsCount } from '@/hooks/useNewLeadsCount';
+import PulseDot from '../editorial/PulseDot';
 
 interface Props {
   active: AdminSection;
@@ -11,6 +13,7 @@ interface Props {
 }
 
 const AdminSidebar = ({ active, onChange, onSignOut, isDark, onToggleTheme }: Props) => {
+  const { count: newLeadsCount } = useNewLeadsCount();
 
   return (
     <aside className="hidden lg:flex fixed top-0 left-0 h-screen w-[240px] bg-editorial-bg border-r border-editorial-line flex-col z-40">
@@ -57,6 +60,15 @@ const AdminSidebar = ({ active, onChange, onSignOut, isDark, onToggleTheme }: Pr
               >
                 {item.label}
               </span>
+              {item.id === 'offers' && newLeadsCount > 0 && (
+                <span
+                  className="ml-auto flex items-center gap-1.5 text-[10px] font-bold tracking-[0.1em] text-editorial-accent"
+                  aria-label={`Nieobsłużone zapytania: ${newLeadsCount}`}
+                >
+                  {newLeadsCount}
+                  <PulseDot />
+                </span>
+              )}
             </button>
           );
         })}

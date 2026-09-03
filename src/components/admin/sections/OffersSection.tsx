@@ -6,6 +6,7 @@ import SentOffersView from './offers/SentOffersView';
 
 interface Props {
   products: Product[];
+  initialView?: 'new' | 'sent' | 'inquiries';
 }
 
 type OffersView = 'new' | 'sent' | 'inquiries';
@@ -16,8 +17,8 @@ const TABS: { id: OffersView; label: string }[] = [
   { id: 'inquiries', label: 'Zapytania' },
 ];
 
-const OffersSection = ({ products }: Props) => {
-  const [view, setView] = useState<OffersView>('new');
+const OffersSection = ({ products, initialView = 'new' }: Props) => {
+  const [view, setView] = useState<OffersView>(initialView);
   const [sentReloadKey, setSentReloadKey] = useState(0);
 
   return (

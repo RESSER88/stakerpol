@@ -1,35 +1,23 @@
-import { useEffect, useState } from 'react';
 import { ArrowRight, Package } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { useNewLeadsCount } from '@/hooks/useNewLeadsCount';
 import { cn } from '@/lib/utils';
 import type { AdminSection } from '../layout/types';
 import type { Product } from '@/types';
 import StatusDot from '../editorial/StatusDot';
 import QuoteOfTheDay from '../editorial/QuoteOfTheDay';
+import PulseDot from '../editorial/PulseDot';
 
 interface Props {
   productCount: number;
   products: Product[];
   onNavigate: (section: AdminSection) => void;
+  onOpenInquiries: () => void;
   onAddProduct: () => void;
   onEditProduct: (product: Product) => void;
 }
 
-const DashboardSection = ({ productCount, products, onNavigate, onAddProduct, onEditProduct }: Props) => {
-  const [newLeadsCount, setNewLeadsCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const load = async () => {
-      const { count } = await supabase
-        .from('leads')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'new');
-      setNewLeadsCount(count ?? 0);
-      setLoading(false);
-    };
-    load();
-  }, []);
+const DashboardSection = ({ productCount, products, onNavigate, onOpenInquiries, onAddProduct, onEditProduct }: Props) => {
+  const { count: newLeadsCount, loading } = useNewLeadsCount();
 
   const availableCount = products.filter(
     (p) => (p.availabilityStatus || 'available') === 'available'
@@ -53,9 +41,14 @@ const DashboardSection = ({ productCount, products, onNavigate, onAddProduct, on
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 2);
 
-  const stats: { label: string; value: string | number; onClick?: () => void }[] = [
+  const stats: { label: string; value: string | number; onClick?: () => void; highlight?: boolean }[] = [
     { label: 'Produkty', value: productCount, onClick: () => onNavigate('products') },
-    { label: 'Nowe zapytania', value: loading ? '…' : newLeadsCount, onClick: () => onNavigate('offers') },
+    {
+      label: 'Nowe zapytania',
+      value: loading ? '…' : newLeadsCount,
+      onClick: onOpenInquiries,
+      highlight: !loading && newLeadsCount > 0,
+    },
     { label: 'Dostępnych', value: availableCount },
   ];
 
@@ -81,7 +74,7 @@ const DashboardSection = ({ productCount, products, onNavigate, onAddProduct, on
         </h1>
         {newLeadsCount > 0 && (
           <button
-            onClick={() => onNavigate('offers')}
+            onClick={onOpenInquiries}
             className="mt-6 inline-flex items-center gap-2 text-sm text-editorial-ink hover:text-editorial-accent transition-colors group"
           >
             <span className="h-1.5 w-1.5 rounded-full bg-editorial-ok animate-pulse" />
@@ -105,10 +98,13 @@ const DashboardSection = ({ productCount, products, onNavigate, onAddProduct, on
           const content = (
             <>
               <div className={cn(
-                'font-editorial text-3xl lg:text-4xl transition-colors',
-                s.onClick ? 'text-editorial-ink group-hover:text-editorial-accent' : 'text-editorial-ink'
+                'font-editorial text-3xl lg:text-4xl transition-colors flex items-center gap-2',
+                s.highlight
+                  ? 'text-editorial-accent'
+                  : s.onClick ? 'text-editorial-ink group-hover:text-editorial-accent' : 'text-editorial-ink'
               )}>
                 {s.value}
+                {s.highlight && <PulseDot />}
               </div>
               <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-editorial-muted mt-2">
                 {s.label}
