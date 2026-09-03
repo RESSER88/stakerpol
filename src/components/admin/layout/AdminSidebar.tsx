@@ -61,7 +61,15 @@ const AdminSidebar = ({ active, onChange, onSignOut }: Props) => {
           );
         })}
       </nav>
-      <div className="p-6 border-t border-editorial-line">
+      <div className="p-6 border-t border-editorial-line space-y-3">
+        <button
+          onClick={toggleTheme}
+          aria-label={isDark ? 'Włącz tryb dzienny' : 'Włącz tryb nocny'}
+          className="w-full flex items-center gap-2 text-xs font-bold tracking-[0.15em] uppercase text-editorial-muted hover:text-editorial-ink transition-colors"
+        >
+          {isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+          {isDark ? 'Tryb dzienny' : 'Tryb nocny'}
+        </button>
         <button
           onClick={onSignOut}
           className="w-full flex items-center gap-2 text-xs font-bold tracking-[0.15em] uppercase text-editorial-muted hover:text-editorial-ink transition-colors"
