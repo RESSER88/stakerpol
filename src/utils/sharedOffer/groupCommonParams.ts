@@ -5,6 +5,7 @@ import { logger } from '@/utils/logger';
 export const COMMON_PARAM_KEYS = [
   'mastLiftingCapacity',
   'liftHeight',
+  'minHeight',
   'mast',
   'battery',
 ] as const;
@@ -14,6 +15,7 @@ export type CommonParamKey = (typeof COMMON_PARAM_KEYS)[number];
 export const COMMON_PARAM_LABELS: Record<CommonParamKey, string> = {
   mastLiftingCapacity: 'Udźwig',
   liftHeight: 'Podnoszenie',
+  minHeight: 'Wys. konstr.',
   mast: 'Maszt',
   battery: 'Bateria',
 };

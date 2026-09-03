@@ -161,6 +161,7 @@ export async function exportProductListToBrandedXLSX(products: Product[]): Promi
         r.workingHours,
         r.mastLiftingCapacity,
         r.liftHeight,
+        r.minHeight,
         r.mast,
         r.battery,
         r.availability,
