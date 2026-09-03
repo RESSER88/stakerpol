@@ -11,11 +11,12 @@ interface Props {
   productCount: number;
   products: Product[];
   onNavigate: (section: AdminSection) => void;
+  onOpenInquiries: () => void;
   onAddProduct: () => void;
   onEditProduct: (product: Product) => void;
 }
 
-const DashboardSection = ({ productCount, products, onNavigate, onAddProduct, onEditProduct }: Props) => {
+const DashboardSection = ({ productCount, products, onNavigate, onOpenInquiries, onAddProduct, onEditProduct }: Props) => {
   const { count: newLeadsCount, loading } = useNewLeadsCount();
 
   const availableCount = products.filter(
@@ -45,7 +46,7 @@ const DashboardSection = ({ productCount, products, onNavigate, onAddProduct, on
     {
       label: 'Nowe zapytania',
       value: loading ? '…' : newLeadsCount,
-      onClick: () => onNavigate('offers'),
+      onClick: onOpenInquiries,
       highlight: !loading && newLeadsCount > 0,
     },
     { label: 'Dostępnych', value: availableCount },
@@ -73,7 +74,7 @@ const DashboardSection = ({ productCount, products, onNavigate, onAddProduct, on
         </h1>
         {newLeadsCount > 0 && (
           <button
-            onClick={() => onNavigate('offers')}
+            onClick={onOpenInquiries}
             className="mt-6 inline-flex items-center gap-2 text-sm text-editorial-ink hover:text-editorial-accent transition-colors group"
           >
             <span className="h-1.5 w-1.5 rounded-full bg-editorial-ok animate-pulse" />

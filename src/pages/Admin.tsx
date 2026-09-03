@@ -23,6 +23,7 @@ const Admin = () => {
   const { products, addProduct, updateProduct, deleteProduct, addProductAsync, updateProductAsync } = useSupabaseProducts() as any;
 
   const [activeSection, setActiveSection] = useState<AdminSection>('start');
+  const [offersView, setOffersView] = useState<'new' | 'sent' | 'inquiries'>('new');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [productImages, setProductImages] = useState<string[]>([]);
@@ -154,6 +155,7 @@ const Admin = () => {
             productCount={products.length}
             products={products}
             onNavigate={setActiveSection}
+            onOpenInquiries={() => { setOffersView('inquiries'); setActiveSection('offers'); }}
             onAddProduct={() => { setActiveSection('products'); handleAdd(); }}
             onEditProduct={(p) => { setActiveSection('products'); handleEdit(p); }}
           />
@@ -180,7 +182,7 @@ const Admin = () => {
           />
         );
       case 'offers':
-        return <OffersSection products={products} />;
+        return <OffersSection key={offersView} products={products} initialView={offersView} />;
       case 'export':
         return <ExportSection products={products} />;
       case 'contacts':

@@ -1,5 +1,7 @@
 import { cn } from '@/lib/utils';
 import { adminSections, sectionNumber, type AdminSection } from './types';
+import { useNewLeadsCount } from '@/hooks/useNewLeadsCount';
+import PulseDot from '../editorial/PulseDot';
 
 interface Props {
   active: AdminSection;
@@ -8,6 +10,7 @@ interface Props {
 
 const AdminBottomNav = ({ active, onChange }: Props) => {
   const items = adminSections.slice(0, 4);
+  const { count: newLeadsCount } = useNewLeadsCount();
 
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-editorial-bg border-t border-editorial-ink h-12 grid grid-cols-4 z-50">
@@ -17,8 +20,11 @@ const AdminBottomNav = ({ active, onChange }: Props) => {
           <button
             key={item.id}
             onClick={() => onChange(item.id)}
-            className="flex flex-col items-center justify-center gap-0.5 transition-colors"
+            className="relative flex flex-col items-center justify-center gap-0.5 transition-colors"
           >
+            {item.id === 'offers' && newLeadsCount > 0 && (
+              <PulseDot className="absolute top-1 right-[22%]" />
+            )}
             <span
               className={cn(
                 'text-[9px] font-bold tracking-[0.2em]',
