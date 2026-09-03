@@ -91,6 +91,11 @@ const DashboardSection = ({ productCount, products, onNavigate, onAddProduct, on
         )}
       </header>
 
+      {/* Ciekawostka dnia */}
+      <QuoteOfTheDay />
+
+
+
       {/* Stats — vertical lines */}
       <section className="grid grid-cols-3 border-y border-editorial-line py-8">
         {stats.map((s, i) => {
