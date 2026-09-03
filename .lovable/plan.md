@@ -1,31 +1,46 @@
-# Odpowiedzi na trzy pytania + jedna poprawka komunikatu
+# Tryb nocny panelu administracyjnego
 
-## 1. Firma zapisywana osobnym update() — obsługa błędu
+## Stan faktyczny (sprawdzony w kodzie)
 
-Stan potwierdzony w kodzie (`NewOfferView.tsx`, linie 104–116): błąd drugiego zapisu **nie jest przemilczany**. Jeśli `update({ firma })` na `contacts` zawiedzie, pokazuje się czerwony toast „Oferta utworzona, firma niezapisana” z treścią błędu z bazy. Oferta i link powstają normalnie (transakcja `create_offer` już się zakończyła), więc proces nie jest przerywany.
+- `tailwind.config.ts` ma `darkMode: ["class"]` — mechanizm klasowy jest gotowy po stronie konfiguracji.
+- `src/index.css` zawiera blok `.dark { ... }`, ale wyłącznie dla ogólnych tokenów shadcn (`--background`, `--card`, `--border`, itd.).
+- Tokeny panelu — `--admin-*` (linie 52-60) i `--editorial-*` (linie 62-69) — są zdefiniowane **tylko** w `:root`. W `.dark` nie mają odpowiedników, więc panel po dodaniu klasy `dark` pozostanie jasny.
+- Nie ma przełącznika ani żadnego kodu ustawiającego klasę `dark` na `document.documentElement` (brak `next-themes`, brak `ThemeProvider`). W całym `src/` jest 5 wystąpień klas `dark:` (tylko `alert.tsx` i CSS) — panel ich nie używa.
+- W `src/components/admin` jest 28 zahardkodowanych wystąpień kolorów (`bg-white`, `text-white`, itp.), m.in. `AdminLayout` (`bg-white`), `AdminSidebar`, `AdminTopBar`. To one blokują motyw i wymagają zamiany na tokeny.
 
-Czego brakuje: komunikat nie mówi użytkownikowi, co ma zrobić dalej.
+Wniosek: mechanizm trzeba zbudować, ale nie od zera — brakuje wariantów tokenów dla ciemnego motywu, przełącznika i sprzątnięcia zahardkodowanych kolorów.
 
-Zmiana do wykonania (jedna, wyłącznie tekst komunikatu w `NewOfferView.tsx`):
+## Rozmiar pracy
 
-- Treść toastu: „Oferta i kontakt zostały utworzone, ale nazwy firmy nie udało się zapisać. Uzupełnij ją ręcznie na karcie kontaktu (zakładka Kontakty).”
-- Techniczny komunikat błędu z bazy zostaje dopisany na końcu opisu, żeby nie tracić informacji diagnostycznej.
-- Bez zmian: sygnatura `create_offer`, kolejność operacji, walidacja, obsługa kolizji tokenu.
+Zadanie **średnie** (nie proste, nie duże). Dominuje praca mechaniczna: podmiana kolorów na tokeny w komponentach panelu. Logika przełącznika jest prosta.
 
-## 2. Status pozostałych czterech punktów zlecenia
+## Plan pracy — etapy
 
-Wszystkie cztery są **wykonane** — potwierdzone odczytem plików w tej turze:
+**Etap 1 — Tokeny ciemne (mały)**
+W `src/index.css`, w bloku `.dark`, dopisać ciemne warianty `--editorial-*` i `--admin-*`. Konwencja graficzna bez zmian: nadal ta sama paleta pomarańcz-akcent (`24 95% 53%`), te same fonty (`font-editorial` = Georgia, `font-sans` = system-ui), te same promienie (`--radius`) i skala odstępów. Zmieniamy wyłącznie jasność powierzchni i tekstu:
+- `--editorial-bg` → ciemne tło (np. `222 47% 9%`)
+- `--editorial-ink` → jasny tekst, `--editorial-muted` → przygaszony jasny
+- `--editorial-line` → subtelna ciemna linia
+- `--admin-bg`, `--admin-border`, `--admin-text`, `--admin-muted` — analogicznie
+- akcenty (`accent`, `ok`, `bad`, `orange`, `green`, `red`) — lekkie podniesienie jasności dla kontrastu na ciemnym tle, bez zmiany odcienia
 
-- Punkt 3 — chip terminu powrotu w WYSŁANE: `SentOffersView.tsx` dociąga `termin_followup` z kontaktu, funkcja `followUpOf` wyznacza próg, chip dla dziś/przeszłości ma czerwoną obwódkę z pulsowaniem i `motion-reduce:animate-none`.
-- Punkt 4 — etykieta przycisku: w wierszu oferty widnieje „Zatrzymaj” (dawniej „Zatrzymaj dostęp”); pełne „Zatrzymaj dostęp” zostało tylko w potwierdzeniu akcji.
-- Punkt 5 — „brak otwarć”: sygnał zwraca `{ label: 'brak otwarć', tone: 'off' }` (szara plakietka) w miejsce dawnego „–”.
-- Punkt 7 — PROGRESS.md: wpis z datą 2026-08-30 istnieje i wymienia wszystkie zmiany oraz listę rzeczy nietkniętych.
+**Etap 2 — Przełącznik (mały)**
+- Nowy hook `src/hooks/useAdminTheme.ts`: stan `light | dark | system`, zapis w `localStorage` (klucz `stakerpol-admin-theme`), dodawanie/usuwanie klasy `dark` na `document.documentElement`, respektowanie `prefers-color-scheme` dla `system`.
+- Ikona słońce/księżyc (lucide-react `Sun`/`Moon`) w `AdminSidebar` (obok „Wyloguj”) oraz w menu „więcej” w `AdminTopBar` na mobile.
+- Klasa `dark` zdejmowana przy wyjściu z `/admin`, żeby tryb nocny nie przeciekał na stronę publiczną.
 
-## 3. Edycja kontaktu — status deklaratywny
+**Etap 3 — Sprzątanie zahardkodowanych kolorów (średni, najwięcej plików)**
+Zamiana `bg-white` / `text-white` / wartości `#...` na tokeny `bg-editorial-bg`, `text-editorial-ink`, `border-editorial-line` w plikach panelu:
+- `layout/AdminLayout.tsx`, `AdminSidebar.tsx`, `AdminTopBar.tsx`, `AdminBottomNav.tsx`, `AdminPageHeader.tsx`
+- `sections/*` (Dashboard, Offers, Contacts, Export, Inquiries, InquiryStats)
+- `sections/offers/NewOfferView.tsx`, `SentOffersView.tsx`
+- `sections/contacts/ContactCard.tsx`, `CallForm.tsx`
+- `editor/*` i `editorial/*`
+- `products/*`
 
-Zgadza się. Edycja pól osoba / firma / telefon / e-mail na karcie kontaktu została **napisana i przechodzi typecheck, ale nie była klikana na żywo** — nie ma dowodu z uruchomionej aplikacji, że zapis utrzymuje się po odświeżeniu. Traktujemy ten punkt jako otwarty do Twojego ręcznego testu na telefonie. W tym planie nie zamykam go i nie dopisuję go do PROGRESS.md jako zweryfikowanego.
+**Etap 4 — Weryfikacja (mały)**
+Playwright: `/admin` w obu trybach, zrzuty ekranu 384px i 1280px, sprawdzenie że nie zostało białe tło pod ciemnym motywem i że wybór trwa po odświeżeniu.
 
-## Zakres techniczny
+## Zakres wyłączony
 
-- Zmiana wyłącznie w `src/components/admin/sections/offers/NewOfferView.tsx` (treść jednego toastu).
-- Zero migracji, zero zmian w bazie, zero zmian w Edge Functions, zero zmian w `SentOffersView.tsx` i `ContactCard.tsx`.
+Bez zmian w bazie, RPC (`create_offer`, `log_contact_activity`, `import_lead_to_contact`), Edge Functions i bez tryb nocnego dla stron publicznych. Bez zmiany layoutu, typografii, odstępów i promieni — wyłącznie warstwa kolorów plus przełącznik.
