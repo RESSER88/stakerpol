@@ -6,7 +6,8 @@ interface Quote {
   description: string | null;
 }
 
-const STORAGE_PREFIX = 'stakerpol-quote-';
+const STORAGE_PREFIX = 'stakerpol-quote-pl-';
+const LEGACY_PREFIX = 'stakerpol-quote-';
 const ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/daily-quote`;
 
 const todayKey = () => {
