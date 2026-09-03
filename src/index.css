@@ -67,6 +67,9 @@
     --editorial-ok: 142 71% 45%;
     --editorial-bad: 0 73% 51%;
     --editorial-bg: 0 0% 100%;
+    /* Kolor treści na wypełnieniach editorial-ink / accent / bad */
+    --editorial-onink: 0 0% 100%;
+
   }
 
   .dark {
