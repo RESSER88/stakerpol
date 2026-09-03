@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import type { AdminSection } from '../layout/types';
 import type { Product } from '@/types';
 import StatusDot from '../editorial/StatusDot';
+import QuoteOfTheDay from '../editorial/QuoteOfTheDay';
 
 interface Props {
   productCount: number;
@@ -89,6 +90,11 @@ const DashboardSection = ({ productCount, products, onNavigate, onAddProduct, on
           </button>
         )}
       </header>
+
+      {/* Ciekawostka dnia */}
+      <QuoteOfTheDay />
+
+
 
       {/* Stats — vertical lines */}
       <section className="grid grid-cols-3 border-y border-editorial-line py-8">
