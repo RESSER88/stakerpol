@@ -6,7 +6,8 @@ interface Quote {
   description: string | null;
 }
 
-const STORAGE_PREFIX = 'stakerpol-quote-';
+const STORAGE_PREFIX = 'stakerpol-quote-pl-';
+const LEGACY_PREFIX = 'stakerpol-quote-';
 const ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/daily-quote`;
 
 const todayKey = () => {
@@ -32,7 +33,7 @@ const writeCache = (key: string, quote: Quote) => {
   try {
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const k = localStorage.key(i);
-      if (k && k.startsWith(STORAGE_PREFIX) && k !== STORAGE_PREFIX + key) {
+      if (k && k.startsWith(LEGACY_PREFIX) && k !== STORAGE_PREFIX + key) {
         localStorage.removeItem(k);
       }
     }
