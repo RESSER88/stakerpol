@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import type { AdminSection } from '../layout/types';
 import type { Product } from '@/types';
 import StatusDot from '../editorial/StatusDot';
+import QuoteOfTheDay from '../editorial/QuoteOfTheDay';
 
 interface Props {
   productCount: number;
