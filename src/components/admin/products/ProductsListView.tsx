@@ -64,7 +64,7 @@ const ProductsListView = ({
               className={cn(
                 'px-3 h-8 text-[11px] font-bold tracking-[0.15em] uppercase transition-colors',
                 filter === f.key
-                  ? 'bg-editorial-ink text-white'
+                  ? 'bg-editorial-ink text-editorial-onink'
                   : 'text-editorial-muted hover:text-editorial-ink'
               )}
             >
@@ -202,7 +202,7 @@ const ProductsListView = ({
       {/* Sticky add button */}
       <button
         onClick={onAdd}
-        className="fixed lg:sticky bottom-16 lg:bottom-4 left-4 right-4 lg:left-auto lg:right-auto lg:mt-6 lg:max-w-xs lg:mx-auto lg:flex z-30 inline-flex items-center justify-center gap-2 h-11 border border-editorial-ink bg-white/95 backdrop-blur text-editorial-ink hover:bg-editorial-ink hover:text-white text-[11px] font-bold tracking-[0.2em] uppercase transition-colors"
+        className="fixed lg:sticky bottom-16 lg:bottom-4 left-4 right-4 lg:left-auto lg:right-auto lg:mt-6 lg:max-w-xs lg:mx-auto lg:flex z-30 inline-flex items-center justify-center gap-2 h-11 border border-editorial-ink bg-editorial-bg/95 backdrop-blur text-editorial-ink hover:bg-editorial-ink hover:text-editorial-onink text-[11px] font-bold tracking-[0.2em] uppercase transition-colors"
       >
         <Plus className="h-3.5 w-3.5" />
         Dodaj produkt

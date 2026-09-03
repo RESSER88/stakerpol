@@ -67,6 +67,9 @@
     --editorial-ok: 142 71% 45%;
     --editorial-bad: 0 73% 51%;
     --editorial-bg: 0 0% 100%;
+    /* Kolor treści na wypełnieniach editorial-ink / accent / bad */
+    --editorial-onink: 0 0% 100%;
+
   }
 
   .dark {
@@ -97,6 +100,26 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+
+    /* Admin panel tokens — wariant nocny (ta sama paleta, inna jasność) */
+    --admin-orange: 24 95% 58%;
+    --admin-dark: 210 40% 98%;
+    --admin-bg: 222 47% 9%;
+    --admin-border: 220 18% 22%;
+    --admin-text: 210 30% 94%;
+    --admin-muted: 215 16% 65%;
+    --admin-green: 142 66% 52%;
+    --admin-red: 0 76% 60%;
+
+    /* Editorial admin tokens — wariant nocny */
+    --editorial-ink: 210 30% 94%;
+    --editorial-muted: 215 16% 62%;
+    --editorial-line: 220 18% 22%;
+    --editorial-accent: 24 95% 58%;
+    --editorial-ok: 142 66% 52%;
+    --editorial-bad: 0 76% 60%;
+    --editorial-bg: 222 47% 9%;
+    --editorial-onink: 222 47% 9%;
   }
 }
 

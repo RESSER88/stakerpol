@@ -1,4 +1,4 @@
-import { LogOut } from 'lucide-react';
+import { LogOut, Moon, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { adminSections, sectionNumber, type AdminSection } from './types';
 
@@ -6,11 +6,14 @@ interface Props {
   active: AdminSection;
   onChange: (section: AdminSection) => void;
   onSignOut: () => void;
+  isDark: boolean;
+  onToggleTheme: () => void;
 }
 
-const AdminSidebar = ({ active, onChange, onSignOut }: Props) => {
+const AdminSidebar = ({ active, onChange, onSignOut, isDark, onToggleTheme }: Props) => {
+
   return (
-    <aside className="hidden lg:flex fixed top-0 left-0 h-screen w-[240px] bg-white border-r border-editorial-line flex-col z-40">
+    <aside className="hidden lg:flex fixed top-0 left-0 h-screen w-[240px] bg-editorial-bg border-r border-editorial-line flex-col z-40">
       <div className="px-8 py-8 border-b border-editorial-line">
         <button
           type="button"
@@ -58,7 +61,15 @@ const AdminSidebar = ({ active, onChange, onSignOut }: Props) => {
           );
         })}
       </nav>
-      <div className="p-6 border-t border-editorial-line">
+      <div className="p-6 border-t border-editorial-line space-y-3">
+        <button
+          onClick={onToggleTheme}
+          aria-label={isDark ? 'Włącz tryb dzienny' : 'Włącz tryb nocny'}
+          className="w-full flex items-center gap-2 text-xs font-bold tracking-[0.15em] uppercase text-editorial-muted hover:text-editorial-ink transition-colors"
+        >
+          {isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+          {isDark ? 'Tryb dzienny' : 'Tryb nocny'}
+        </button>
         <button
           onClick={onSignOut}
           className="w-full flex items-center gap-2 text-xs font-bold tracking-[0.15em] uppercase text-editorial-muted hover:text-editorial-ink transition-colors"

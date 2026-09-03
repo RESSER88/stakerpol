@@ -1,4 +1,4 @@
-import { MoreVertical, LogOut } from 'lucide-react';
+import { MoreVertical, LogOut, Moon, Sun } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,11 +17,13 @@ interface Props {
   title: string;
   onChange: (section: AdminSection) => void;
   onSignOut: () => void;
+  isDark: boolean;
+  onToggleTheme: () => void;
 }
 
-const AdminTopBar = ({ title, onChange, onSignOut }: Props) => {
+const AdminTopBar = ({ title, onChange, onSignOut, isDark, onToggleTheme }: Props) => {
   return (
-    <header className="lg:hidden sticky top-0 bg-white border-b border-editorial-line px-4 h-12 flex items-center justify-between z-40">
+    <header className="lg:hidden sticky top-0 bg-editorial-bg border-b border-editorial-line px-4 h-12 flex items-center justify-between z-40">
       <button
         type="button"
         onClick={() => onChange('start')}
@@ -42,6 +44,10 @@ const AdminTopBar = ({ title, onChange, onSignOut }: Props) => {
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={onToggleTheme}>
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {isDark ? 'Tryb dzienny' : 'Tryb nocny'}
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={onSignOut}>
             <LogOut className="h-4 w-4" />
             Wyloguj

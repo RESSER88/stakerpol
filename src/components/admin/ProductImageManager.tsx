@@ -237,7 +237,7 @@ const ProductImageManager = ({
 
   return (
     <div className={cn("space-y-5", className)}>
-      <div className="border border-dashed border-gray-200 rounded-lg bg-white">
+      <div className="border border-dashed border-editorial-line rounded-lg bg-editorial-bg">
         <div
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
@@ -300,10 +300,10 @@ const ProductImageManager = ({
             {previews.map((preview, index) => (
               <div key={index} className="relative group">
                 <div className={cn(
-                  "relative aspect-[4/3] bg-white rounded-md overflow-hidden border transition-all",
+                  "relative aspect-[4/3] bg-editorial-bg rounded-md overflow-hidden border transition-all",
                   index === mainImageIndex 
                     ? "border-stakerpol-orange/60 ring-1 ring-stakerpol-orange/30" 
-                    : "border-gray-200 hover:border-gray-300"
+                    : "border-editorial-line hover:border-editorial-muted"
                 )}>
                   <img
                     src={preview}
@@ -328,7 +328,7 @@ const ProductImageManager = ({
                         type="button"
                         size="sm"
                         variant="secondary"
-                        className="h-6 w-6 p-0 bg-white/90 hover:bg-white"
+                        className="h-6 w-6 p-0 bg-editorial-bg/90 hover:bg-editorial-bg"
                         onClick={() => setAsMainImage(index)}
                         title="Ustaw jako zdjęcie główne"
                       >
@@ -349,7 +349,7 @@ const ProductImageManager = ({
                 </div>
                 
                 <div className="mt-2 text-center">
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-editorial-muted">
                     Zdjęcie {index + 1}
                     {index === mainImageIndex && (
                       <span className="text-stakerpol-orange font-semibold"> (Główne)</span>

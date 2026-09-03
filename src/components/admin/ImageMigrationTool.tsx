@@ -113,17 +113,17 @@ const ImageMigrationTool = () => {
 
         {stats && (
           <div className="grid grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
+            <div className="text-center p-4 bg-editorial-line/30 rounded-lg">
               <div className="text-2xl font-bold text-stakerpol-navy">{stats.total}</div>
-              <div className="text-sm text-gray-600">Całkowite</div>
+              <div className="text-sm text-editorial-muted">Całkowite</div>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <div className="text-2xl font-bold text-green-600">{stats.success}</div>
-              <div className="text-sm text-gray-600">Sukces</div>
+              <div className="text-sm text-editorial-muted">Sukces</div>
             </div>
             <div className="text-center p-4 bg-red-50 rounded-lg">
               <div className="text-2xl font-bold text-red-600">{stats.errors}</div>
-              <div className="text-sm text-gray-600">Błędy</div>
+              <div className="text-sm text-editorial-muted">Błędy</div>
             </div>
           </div>
         )}
@@ -135,7 +135,7 @@ const ImageMigrationTool = () => {
               {migrationResults.map((result, index) => (
                 <div
                   key={result.imageId}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-editorial-line/30 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
                     {result.status === 'success' ? (
@@ -145,7 +145,7 @@ const ImageMigrationTool = () => {
                     )}
                     <div>
                       <div className="font-medium">Obraz #{index + 1}</div>
-                      <div className="text-sm text-gray-600">{result.imageId}</div>
+                      <div className="text-sm text-editorial-muted">{result.imageId}</div>
                     </div>
                   </div>
                   

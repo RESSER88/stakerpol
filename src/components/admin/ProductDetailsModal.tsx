@@ -141,7 +141,7 @@ const ProductDetailsModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto bg-white">
+      <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto bg-editorial-bg">
         <DialogHeader className="border-b border-editorial-line pb-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
@@ -232,7 +232,7 @@ const ProductDetailsModal = ({
           <button
             onClick={handleSave}
             disabled={isLoading}
-            className="w-full sm:w-auto px-6 h-11 bg-editorial-ink text-white hover:bg-editorial-ink/90 disabled:opacity-50 text-[11px] font-bold tracking-[0.2em] uppercase transition-colors"
+            className="w-full sm:w-auto px-6 h-11 bg-editorial-ink text-editorial-onink hover:bg-editorial-ink/90 disabled:opacity-50 text-[11px] font-bold tracking-[0.2em] uppercase transition-colors"
           >
             {isLoading ? 'Zapisywanie…' : 'Zapisz zmiany'}
           </button>

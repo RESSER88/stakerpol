@@ -106,6 +106,7 @@ export default {
 					ok: 'hsl(var(--editorial-ok))',
 					bad: 'hsl(var(--editorial-bad))',
 					bg: 'hsl(var(--editorial-bg))',
+					onink: 'hsl(var(--editorial-onink))',
 				}
 			},
 			borderRadius: {

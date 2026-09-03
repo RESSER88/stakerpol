@@ -147,25 +147,25 @@ const ProductionReadinessPanel = ({ className }: ProductionReadinessPanelProps) 
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="p-3 bg-editorial-line/30 rounded-lg">
                   <Shield className="w-6 h-6 mx-auto mb-1 text-red-500" />
                   <div className="text-sm font-medium">Security</div>
                   <div className="text-xs text-red-600">Issues: {securityIssues.length}</div>
                 </div>
-                <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="p-3 bg-editorial-line/30 rounded-lg">
                   <Zap className="w-6 h-6 mx-auto mb-1 text-yellow-500" />
                   <div className="text-sm font-medium">Performance</div>
                   <div className="text-xs text-yellow-600">Needs optimization</div>
                 </div>
-                <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="p-3 bg-editorial-line/30 rounded-lg">
                   <Search className="w-6 h-6 mx-auto mb-1 text-red-500" />
                   <div className="text-sm font-medium">SEO</div>
                   <div className="text-xs text-red-600">Zero indexing</div>
                 </div>
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <Monitor className="w-6 h-6 mx-auto mb-1 text-gray-500" />
+                <div className="p-3 bg-editorial-line/30 rounded-lg">
+                  <Monitor className="w-6 h-6 mx-auto mb-1 text-editorial-muted" />
                   <div className="text-sm font-medium">Monitoring</div>
-                  <div className="text-xs text-gray-600">Not configured</div>
+                  <div className="text-xs text-editorial-muted">Not configured</div>
                 </div>
               </div>
             </div>
@@ -239,7 +239,7 @@ const ProductionReadinessPanel = ({ className }: ProductionReadinessPanelProps) 
                           {issue.description}
                         </AlertDescription>
                         {issue.action && (
-                          <div className="mt-2 text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                          <div className="mt-2 text-xs text-editorial-muted bg-editorial-line/30 p-2 rounded">
                             <strong>Akcja:</strong> {issue.action}
                           </div>
                         )}

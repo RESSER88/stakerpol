@@ -66,7 +66,7 @@ const ProductsTableDesktop = ({ products, onEdit, onCopy, onDelete }: Props) => 
   );
 
   return (
-    <div className="rounded-lg border border-admin-border bg-white overflow-hidden">
+    <div className="rounded-lg border border-admin-border bg-editorial-bg overflow-hidden">
       <Table>
         <TableHeader className="bg-admin-bg">
           <TableRow>
