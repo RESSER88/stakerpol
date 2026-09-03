@@ -46,6 +46,7 @@ export const EXPORT_COLUMNS: { header: string; key: string; align: ExportAlign }
   { header: 'Godziny [mth]', key: 'workingHours', align: 'center' },
   { header: 'Udźwig', key: 'mastLiftingCapacity', align: 'center' },
   { header: 'Podnoszenie', key: 'liftHeight', align: 'center' },
+  { header: 'Wys. konstr.', key: 'minHeight', align: 'center' },
   { header: 'Maszt', key: 'mast', align: 'center' },
   { header: 'Bateria', key: 'battery', align: 'center' },
   { header: 'Dostępność', key: 'availability', align: 'center' },
@@ -119,6 +120,7 @@ export interface ExportRow {
   workingHours: number | string;
   mastLiftingCapacity: string;
   liftHeight: string;
+  minHeight: string;
   mast: string;
   battery: string;
   availability: string;
@@ -201,6 +203,7 @@ export function buildExportRows(products: Product[]): ExportModel {
         workingHours: Number(p.specs?.workingHours) || (p.specs?.workingHours as any) || '',
         mastLiftingCapacity: formatCapacity(p.specs?.mastLiftingCapacity),
         liftHeight: formatLift(p.specs?.liftHeight),
+        minHeight: formatLift(p.specs?.minHeight),
         mast: normalizeMast(p.specs?.mast),
         battery: normalizeBattery(p.specs?.battery),
         availability: availabilityLabel(p.availabilityStatus),
