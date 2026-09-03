@@ -1,6 +1,7 @@
-import { LogOut } from 'lucide-react';
+import { LogOut, Moon, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { adminSections, sectionNumber, type AdminSection } from './types';
+import { useAdminTheme } from '@/hooks/useAdminTheme';
 
 interface Props {
   active: AdminSection;
@@ -9,6 +10,8 @@ interface Props {
 }
 
 const AdminSidebar = ({ active, onChange, onSignOut }: Props) => {
+  const { isDark, toggleTheme } = useAdminTheme();
+
   return (
     <aside className="hidden lg:flex fixed top-0 left-0 h-screen w-[240px] bg-editorial-bg border-r border-editorial-line flex-col z-40">
       <div className="px-8 py-8 border-b border-editorial-line">
