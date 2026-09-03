@@ -1,4 +1,4 @@
-import { MoreVertical, LogOut } from 'lucide-react';
+import { MoreVertical, LogOut, Moon, Sun } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,6 +7,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { adminSections, sectionNumber, sectionTitles, type AdminSection } from './types';
+import { useAdminTheme } from '@/hooks/useAdminTheme';
 
 /** Pozycje nieobecne w dolnym pasku (pierwsze cztery) trafiają do menu „więcej”. */
 const OVERFLOW = adminSections
@@ -20,6 +21,8 @@ interface Props {
 }
 
 const AdminTopBar = ({ title, onChange, onSignOut }: Props) => {
+  const { isDark, toggleTheme } = useAdminTheme();
+
   return (
     <header className="lg:hidden sticky top-0 bg-editorial-bg border-b border-editorial-line px-4 h-12 flex items-center justify-between z-40">
       <button
@@ -42,6 +45,10 @@ const AdminTopBar = ({ title, onChange, onSignOut }: Props) => {
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={toggleTheme}>
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {isDark ? 'Tryb dzienny' : 'Tryb nocny'}
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={onSignOut}>
             <LogOut className="h-4 w-4" />
             Wyloguj
