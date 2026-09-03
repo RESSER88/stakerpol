@@ -7,7 +7,8 @@ Sprawdzone na żywo:
 - `https://dailystoic.pl` odpowiada `Content-Type: text/html` i pełną stroną HTML. `odpowiedz.json()` rzuci wyjątek za każdym razem, więc zobaczysz wyłącznie komunikat błędu.
 - `/api/quote`, `/api`, `/quote.json`, `/api/v1/quote` na tej domenie zwracają 404 — publicznego API JSON tam nie ma.
 - Pola `quote`, `author`, `book` nie istnieją w żadnej odpowiedzi tego serwisu.
-- Inline kolory (`#f7fafc`, `#2d3748`) łamią wdrożony tryb nocny panelu, a `<script>` z `getElementById` to wzorzec statycznego HTML, nie React.
+- Serwer nie wysyła nagłówka `Access-Control-Allow-Origin`, więc przeglądarka zablokuje to żądanie z panelu jeszcze przed parsowaniem odpowiedzi. Dotyczy to tak samo wersji w czystym HTML, jak i przesłanej później wersji w React — obie trafią w gałąź błędu.
+- Kolory (`#f7fafc`, `#2d3748`, `bg-slate-50`, `border-blue-500`) nie są tokenami projektu i łamią wdrożony tryb nocny panelu.
 
 ## Rozwiązanie: prawdziwe API + tłumaczenie na polski
 
