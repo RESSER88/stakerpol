@@ -10,7 +10,7 @@ interface Props {
 
 const AdminSidebar = ({ active, onChange, onSignOut }: Props) => {
   return (
-    <aside className="hidden lg:flex fixed top-0 left-0 h-screen w-[240px] bg-white border-r border-editorial-line flex-col z-40">
+    <aside className="hidden lg:flex fixed top-0 left-0 h-screen w-[240px] bg-editorial-bg border-r border-editorial-line flex-col z-40">
       <div className="px-8 py-8 border-b border-editorial-line">
         <button
           type="button"

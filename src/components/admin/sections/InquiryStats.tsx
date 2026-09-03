@@ -235,7 +235,7 @@ const InquiryStats = () => {
               className={cn(
                 'px-2.5 h-7 text-[10px] font-bold tracking-[0.15em] uppercase transition-colors',
                 range === r.value
-                  ? 'bg-editorial-ink text-white'
+                  ? 'bg-editorial-ink text-editorial-onink'
                   : 'text-editorial-muted hover:text-editorial-ink'
               )}
             >

@@ -10,7 +10,7 @@ const AdminBottomNav = ({ active, onChange }: Props) => {
   const items = adminSections.slice(0, 4);
 
   return (
-    <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-editorial-ink h-12 grid grid-cols-4 z-50">
+    <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-editorial-bg border-t border-editorial-ink h-12 grid grid-cols-4 z-50">
       {items.map((item, i) => {
         const isActive = active === item.id;
         return (

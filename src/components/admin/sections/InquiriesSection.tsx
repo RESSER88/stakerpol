@@ -211,7 +211,7 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
             className={cn(
               'w-full sm:w-auto px-3 h-8 text-[11px] font-bold tracking-[0.15em] uppercase transition-colors',
               tab === c.value
-                ? 'bg-editorial-ink text-white'
+                ? 'bg-editorial-ink text-editorial-onink'
                 : 'text-editorial-muted hover:text-editorial-ink'
             )}
           >
@@ -340,7 +340,7 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                   {lead.phone && (
                     <a
                       href={`tel:${lead.phone}`}
-                      className="px-3 h-8 inline-flex items-center gap-1.5 bg-editorial-ink text-white text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-editorial-ink/90 transition-colors"
+                      className="px-3 h-8 inline-flex items-center gap-1.5 bg-editorial-ink text-editorial-onink text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-editorial-ink/90 transition-colors"
                     >
                       <Phone className="h-3 w-3" />
                       Zadzwoń
@@ -349,7 +349,7 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                   {lead.email && (
                     <a
                       href={`mailto:${lead.email}`}
-                      className="px-3 h-8 inline-flex items-center gap-1.5 bg-editorial-ink text-white text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-editorial-ink/90 transition-colors"
+                      className="px-3 h-8 inline-flex items-center gap-1.5 bg-editorial-ink text-editorial-onink text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-editorial-ink/90 transition-colors"
                     >
                       <Mail className="h-3 w-3" />
                       Napisz
@@ -362,7 +362,7 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                       'px-3 h-8 inline-flex items-center gap-1.5 border text-[11px] font-bold tracking-[0.15em] uppercase transition-colors disabled:opacity-50',
                       isHandled
                         ? 'border-editorial-line text-editorial-muted hover:border-editorial-ink hover:text-editorial-ink'
-                        : 'border-editorial-ok text-editorial-ok hover:bg-editorial-ok hover:text-white'
+                        : 'border-editorial-ok text-editorial-ok hover:bg-editorial-ok hover:text-editorial-onink'
                     )}
                   >
                     <Check className="h-3 w-3" />
@@ -384,8 +384,8 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                       className={cn(
                         'px-3 h-8 inline-flex items-center gap-1.5 border text-[11px] font-bold tracking-[0.15em] uppercase transition-colors disabled:opacity-50',
                         isSold
-                          ? 'border-editorial-accent bg-editorial-accent text-white hover:bg-editorial-accent/90'
-                          : 'border-editorial-accent text-editorial-accent hover:bg-editorial-accent hover:text-white'
+                          ? 'border-editorial-accent bg-editorial-accent text-editorial-onink hover:bg-editorial-accent/90'
+                          : 'border-editorial-accent text-editorial-accent hover:bg-editorial-accent hover:text-editorial-onink'
                       )}
                     >
                       <BadgeCheck className="h-3 w-3" />

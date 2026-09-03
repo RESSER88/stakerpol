@@ -59,7 +59,7 @@ const Chip = ({
     className={cn(
       'px-3 h-8 text-xs tracking-wide border transition-colors',
       active
-        ? 'border-editorial-ink bg-editorial-ink text-white'
+        ? 'border-editorial-ink bg-editorial-ink text-editorial-onink'
         : 'border-editorial-line text-editorial-ink hover:bg-editorial-line/40'
     )}
   >

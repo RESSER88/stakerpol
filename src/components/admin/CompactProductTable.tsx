@@ -49,7 +49,7 @@ const CompactProductTable = ({ products, onEdit, onCopy, onDelete }: CompactProd
     <div className="space-y-4">
       {/* Pasek wyszukiwania */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-editorial-muted h-4 w-4" />
         <Input
           placeholder="Szukaj produktów..."
           value={searchTerm}
@@ -71,7 +71,7 @@ const CompactProductTable = ({ products, onEdit, onCopy, onDelete }: CompactProd
           <TableBody>
             {filteredProducts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={3} className="text-center py-8 text-editorial-muted">
                   {searchTerm ? 'Nie znaleziono produktów odpowiadających wyszukiwaniu' : 'Brak produktów do wyświetlenia'}
                 </TableCell>
               </TableRow>
@@ -79,13 +79,13 @@ const CompactProductTable = ({ products, onEdit, onCopy, onDelete }: CompactProd
               filteredProducts.map((product) => (
                 <>
                   {/* Główny wiersz produktu */}
-                  <TableRow key={product.id} className="hover:bg-gray-50/50">
+                  <TableRow key={product.id} className="hover:bg-editorial-line/20">
                     <TableCell className="w-8">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleRowExpansion(product.id)}
-                        className="h-6 w-6 p-0 hover:bg-gray-100"
+                        className="h-6 w-6 p-0 hover:bg-editorial-line/50"
                       >
                         {isRowExpanded(product.id) ? (
                           <ChevronUp className="h-3 w-3" />
@@ -107,11 +107,11 @@ const CompactProductTable = ({ products, onEdit, onCopy, onDelete }: CompactProd
                           <h3 className="font-semibold text-stakerpol-navy text-sm hover:underline group-hover:text-blue-600 transition-colors">
                             {product.model}
                           </h3>
-                          <ExternalLink className="ml-1 h-3 w-3 text-gray-400 group-hover:text-blue-600" />
+                          <ExternalLink className="ml-1 h-3 w-3 text-editorial-muted group-hover:text-blue-600" />
                         </Link>
                         
                         {/* Numer seryjny pod modelem */}
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-editorial-muted">
                           Nr seryjny: {product.specs.serialNumber || 'Brak'}
                         </p>
                       </div>
@@ -155,76 +155,76 @@ const CompactProductTable = ({ products, onEdit, onCopy, onDelete }: CompactProd
                   {isRowExpanded(product.id) && (
                     <TableRow>
                       <TableCell colSpan={3} className="p-0">
-                        <div className="px-4 py-3 bg-gray-50/30 border-t">
+                        <div className="px-4 py-3 bg-editorial-line/20 border-t">
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                             <div className="space-y-1">
-                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                              <span className="text-xs font-medium text-editorial-muted uppercase tracking-wide">
                                 Rok produkcji
                               </span>
-                              <p className="text-gray-900">
+                              <p className="text-editorial-ink">
                                 {product.specs.productionYear || 'Brak danych'}
                               </p>
                             </div>
                             
                             <div className="space-y-1">
-                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                              <span className="text-xs font-medium text-editorial-muted uppercase tracking-wide">
                                 Udźwig maszt
                               </span>
-                              <p className="text-gray-900">
+                              <p className="text-editorial-ink">
                                 {product.specs.mastLiftingCapacity || 'Brak danych'}
                               </p>
                             </div>
                             
                             <div className="space-y-1">
-                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                              <span className="text-xs font-medium text-editorial-muted uppercase tracking-wide">
                                 Godziny pracy
                               </span>
-                              <p className="text-gray-900">
+                              <p className="text-editorial-ink">
                                 {product.specs.workingHours ? `${product.specs.workingHours} mh` : 'Brak danych'}
                               </p>
                             </div>
                             
                             <div className="space-y-1">
-                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                              <span className="text-xs font-medium text-editorial-muted uppercase tracking-wide">
                                 Wysokość podnoszenia
                               </span>
-                              <p className="text-gray-900">
+                              <p className="text-editorial-ink">
                                 {product.specs.liftHeight || 'Brak danych'}
                               </p>
                             </div>
                             
                             <div className="space-y-1">
-                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                              <span className="text-xs font-medium text-editorial-muted uppercase tracking-wide">
                                 Stan
                               </span>
-                              <p className="text-gray-900">
+                              <p className="text-editorial-ink">
                                 {product.specs.condition || 'Brak danych'}
                               </p>
                             </div>
                             
                             <div className="space-y-1">
-                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                              <span className="text-xs font-medium text-editorial-muted uppercase tracking-wide">
                                 Bateria
                               </span>
-                              <p className="text-gray-900">
+                              <p className="text-editorial-ink">
                                 {product.specs.battery || 'Brak danych'}
                               </p>
                             </div>
                             
                             <div className="space-y-1">
-                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                              <span className="text-xs font-medium text-editorial-muted uppercase tracking-wide">
                                 Maszt
                               </span>
-                              <p className="text-gray-900">
+                              <p className="text-editorial-ink">
                                 {product.specs.mast || 'Brak danych'}
                               </p>
                             </div>
                             
                             <div className="space-y-1">
-                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                              <span className="text-xs font-medium text-editorial-muted uppercase tracking-wide">
                                 Opis skrócony
                               </span>
-                              <p className="text-gray-900 text-xs leading-relaxed">
+                              <p className="text-editorial-ink text-xs leading-relaxed">
                                 {product.shortDescription || 'Brak opisu'}
                               </p>
                             </div>
@@ -241,7 +241,7 @@ const CompactProductTable = ({ products, onEdit, onCopy, onDelete }: CompactProd
       </div>
 
       {/* Podsumowanie */}
-      <div className="text-xs text-gray-600 text-center py-2 bg-gray-50 rounded-lg">
+      <div className="text-xs text-editorial-muted text-center py-2 bg-editorial-line/30 rounded-lg">
         Wyświetlono {filteredProducts.length} z {products.length} produktów
         {expandedRows.size > 0 && ` • Rozwinięto ${expandedRows.size} wierszy`}
       </div>

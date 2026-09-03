@@ -308,7 +308,7 @@ const ProductEditorView = ({
                 setShowDeleteConfirm(false);
                 onClose();
               }}
-              className="bg-editorial-bad hover:bg-editorial-bad/90 text-white"
+              className="bg-editorial-bad hover:bg-editorial-bad/90 text-editorial-onink"
             >
               Usuń
             </AlertDialogAction>

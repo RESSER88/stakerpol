@@ -21,7 +21,7 @@ interface Props {
 
 const AdminTopBar = ({ title, onChange, onSignOut }: Props) => {
   return (
-    <header className="lg:hidden sticky top-0 bg-white border-b border-editorial-line px-4 h-12 flex items-center justify-between z-40">
+    <header className="lg:hidden sticky top-0 bg-editorial-bg border-b border-editorial-line px-4 h-12 flex items-center justify-between z-40">
       <button
         type="button"
         onClick={() => onChange('start')}

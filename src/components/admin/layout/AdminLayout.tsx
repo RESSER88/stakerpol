@@ -16,7 +16,7 @@ const AdminLayout = ({ active, onChange, onSignOut, children }: Props) => {
   const title = sectionTitles[active];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-editorial-bg">
       <AdminSidebar active={active} onChange={onChange} onSignOut={onSignOut} />
       <AdminTopBar title={title} onChange={onChange} onSignOut={onSignOut} />
       <div className="lg:ml-[240px] min-h-screen flex flex-col">

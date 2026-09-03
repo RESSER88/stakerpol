@@ -9,9 +9,9 @@ const EditorialButton = forwardRef<HTMLButtonElement, Props>(
   ({ className, variant = 'solid', children, ...props }, ref) => {
     const styles =
       variant === 'solid'
-        ? 'bg-editorial-ink text-white hover:bg-editorial-ink/90'
+        ? 'bg-editorial-ink text-editorial-onink hover:bg-editorial-ink/90'
         : variant === 'outline'
-        ? 'border border-editorial-ink text-editorial-ink hover:bg-editorial-ink hover:text-white'
+        ? 'border border-editorial-ink text-editorial-ink hover:bg-editorial-ink hover:text-editorial-onink'
         : 'text-editorial-ink hover:bg-editorial-line/50';
     return (
       <button
