@@ -7,7 +7,6 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { adminSections, sectionNumber, sectionTitles, type AdminSection } from './types';
-import { useAdminTheme } from '@/hooks/useAdminTheme';
 
 /** Pozycje nieobecne w dolnym pasku (pierwsze cztery) trafiają do menu „więcej”. */
 const OVERFLOW = adminSections
@@ -18,11 +17,11 @@ interface Props {
   title: string;
   onChange: (section: AdminSection) => void;
   onSignOut: () => void;
+  isDark: boolean;
+  onToggleTheme: () => void;
 }
 
-const AdminTopBar = ({ title, onChange, onSignOut }: Props) => {
-  const { isDark, toggleTheme } = useAdminTheme();
-
+const AdminTopBar = ({ title, onChange, onSignOut, isDark, onToggleTheme }: Props) => {
   return (
     <header className="lg:hidden sticky top-0 bg-editorial-bg border-b border-editorial-line px-4 h-12 flex items-center justify-between z-40">
       <button
@@ -45,7 +44,7 @@ const AdminTopBar = ({ title, onChange, onSignOut }: Props) => {
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={toggleTheme}>
+          <DropdownMenuItem onClick={onToggleTheme}>
             {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             {isDark ? 'Tryb dzienny' : 'Tryb nocny'}
           </DropdownMenuItem>

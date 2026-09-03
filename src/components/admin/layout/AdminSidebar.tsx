@@ -1,16 +1,16 @@
 import { LogOut, Moon, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { adminSections, sectionNumber, type AdminSection } from './types';
-import { useAdminTheme } from '@/hooks/useAdminTheme';
 
 interface Props {
   active: AdminSection;
   onChange: (section: AdminSection) => void;
   onSignOut: () => void;
+  isDark: boolean;
+  onToggleTheme: () => void;
 }
 
-const AdminSidebar = ({ active, onChange, onSignOut }: Props) => {
-  const { isDark, toggleTheme } = useAdminTheme();
+const AdminSidebar = ({ active, onChange, onSignOut, isDark, onToggleTheme }: Props) => {
 
   return (
     <aside className="hidden lg:flex fixed top-0 left-0 h-screen w-[240px] bg-editorial-bg border-r border-editorial-line flex-col z-40">
@@ -63,7 +63,7 @@ const AdminSidebar = ({ active, onChange, onSignOut }: Props) => {
       </nav>
       <div className="p-6 border-t border-editorial-line space-y-3">
         <button
-          onClick={toggleTheme}
+          onClick={onToggleTheme}
           aria-label={isDark ? 'Włącz tryb dzienny' : 'Włącz tryb nocny'}
           className="w-full flex items-center gap-2 text-xs font-bold tracking-[0.15em] uppercase text-editorial-muted hover:text-editorial-ink transition-colors"
         >
