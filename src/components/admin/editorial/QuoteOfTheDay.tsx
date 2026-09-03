@@ -33,7 +33,7 @@ const writeCache = (key: string, quote: Quote) => {
   try {
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const k = localStorage.key(i);
-      if (k && k.startsWith(STORAGE_PREFIX) && k !== STORAGE_PREFIX + key) {
+      if (k && k.startsWith(LEGACY_PREFIX) && k !== STORAGE_PREFIX + key) {
         localStorage.removeItem(k);
       }
     }
