@@ -303,7 +303,7 @@ const ProductImageManager = ({
                   "relative aspect-[4/3] bg-editorial-bg rounded-md overflow-hidden border transition-all",
                   index === mainImageIndex 
                     ? "border-stakerpol-orange/60 ring-1 ring-stakerpol-orange/30" 
-                    : "border-editorial-line hover:border-gray-300"
+                    : "border-editorial-line hover:border-editorial-muted"
                 )}>
                   <img
                     src={preview}
