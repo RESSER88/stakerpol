@@ -80,3 +80,5 @@ Maciej chce docelowo wykrywanie obecności na żywo na publicznej stronie oferty
 ### UWAGA METODOLOGICZNA
 
 Cała dzisiejsza sesja szła bez Claude Code — bez niezależnego odczytu bazy weryfikującego raporty. Gdy Claude Code wróci, pierwszy krok: `get_diff` na wszystkich dzisiejszych commitach + odczyt `adminSections`, `pg_proc` i `pg_policies`, żeby potwierdzić zgodność z tym wpisem.
+
+docs/plan_panel.md nigdy nie powstał (plan z 28.08 zakładał jego utworzenie, ale sesja została przerwana wcześniej) — jedynym źródłem prawdy o stanie i historii projektu jest ten plik, PROGRESS.md.
