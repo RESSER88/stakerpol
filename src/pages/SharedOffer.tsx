@@ -400,6 +400,20 @@ const SharedOffer = () => {
             </div>
           ) : (
             <>
+              {/* Główna akcja — własny rząd, NIE przyklejony przy przewijaniu */}
+              {photoRows.length > 0 && (
+                <div className="md:hidden mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setPhotoMode(true)}
+                    className="w-full inline-flex items-center justify-center gap-2 h-12 px-4 rounded-md bg-stakerpol-orange text-white text-base font-bold shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-navy"
+                  >
+                    <Images className="h-5 w-5" />
+                    Przeglądaj ze zdjęciami
+                  </button>
+                </div>
+              )}
+
               {/* Filtry — pasek mobilny poza wrapperem, aby przyklejenie działało w całym obszarze listy */}
               <div
                 className={cn(
@@ -407,16 +421,7 @@ const SharedOffer = () => {
                   hideFilterBar ? '-translate-y-[150%]' : 'translate-y-0'
                 )}
               >
-                {photoRows.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setPhotoMode(true)}
-                    className="w-full mb-3 inline-flex items-center justify-center gap-2 h-12 px-4 rounded-md bg-stakerpol-orange text-white text-base font-bold shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-navy"
-                  >
-                    <Images className="h-5 w-5" />
-                    Przeglądaj ze zdjęciami
-                  </button>
-                )}
+
 
                 <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
                   <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
