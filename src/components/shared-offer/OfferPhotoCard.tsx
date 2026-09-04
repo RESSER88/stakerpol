@@ -60,28 +60,30 @@ const Spec = ({
  * (biała ramka, navy/orange, znak wodny STAKERPOL). Bez akcji i bez galerii.
  */
 const OfferPhotoCard = ({ row, image, eager }: Props) => (
-  <article className="h-[100dvh] snap-start shrink-0 flex flex-col bg-gray-50 px-1.5 py-1.5">
-    <div className="basis-2/3 grow shrink-0 min-h-0 bg-white rounded-md shadow-sm ring-1 ring-gray-200 overflow-hidden relative flex items-center justify-center">
+  <article className="h-[100dvh] snap-start shrink-0 flex flex-col bg-gray-50">
+    {/* Zdjęcie: ~70% wysokości karty, watermark jako warstwa NA zdjęciu */}
+    <div className="h-[70%] shrink-0 min-h-0 bg-white overflow-hidden relative flex items-center justify-center">
       {image ? (
         <img
           src={image}
           alt={`${row.model} ${row.serialNumber}`.trim()}
           loading={eager ? 'eager' : 'lazy'}
           decoding="async"
-          className="max-h-full max-w-full w-auto h-auto object-contain"
+          className="h-full w-full object-contain"
         />
       ) : (
         <span className="text-sm text-gray-400">Brak zdjęcia</span>
       )}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-2 right-3 text-base font-bold tracking-[0.3em] text-white/60 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]"
+        className="pointer-events-none absolute bottom-2 right-3 z-10 text-base font-bold tracking-[0.3em] text-white/70 [text-shadow:0_1px_3px_rgba(0,0,0,0.7)]"
       >
         STAKERPOL
       </span>
     </div>
 
-    <div className="shrink-0 mt-1.5 bg-white rounded-md ring-1 ring-gray-200 px-2.5 py-2">
+    <div className="flex-1 min-h-0 bg-white border-t border-gray-200 px-3 py-2">
+
       <div className="flex items-baseline gap-2">
         <span className="text-sm font-bold text-stakerpol-navy truncate">{row.model}</span>
         <span className="h-1 w-8 bg-stakerpol-orange rounded-full shrink-0" />
