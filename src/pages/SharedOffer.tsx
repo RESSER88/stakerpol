@@ -221,6 +221,8 @@ const SharedOffer = () => {
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT);
   const [inquiryProduct, setInquiryProduct] = useState<Product | null>(null);
   const [barInquiryOpen, setBarInquiryOpen] = useState(false);
+  const [photoMode, setPhotoMode] = useState(false);
+
 
   const { direction: scrollDirection, y: scrollY } = useScrollState(8);
   /** W pobliżu początku listy pasek jest zawsze widoczny. */
