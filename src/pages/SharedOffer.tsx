@@ -293,6 +293,20 @@ const SharedOffer = () => {
     [model, sortKey]
   );
 
+  /** Płaska lista wierszy w kolejności widocznej na liście — dla trybu zdjęć. */
+  const photoRows = useMemo(
+    () => sortedGroups.flatMap((g) => g.rows),
+    [sortedGroups]
+  );
+
+  /** productId -> główne zdjęcie produktu. */
+  const imageById = useMemo(() => {
+    const map = new Map<string, string | undefined>();
+    visible.forEach((p) => map.set(p.id, p.images?.[0] || p.image || undefined));
+    return map;
+  }, [visible]);
+
+
 
   const isLoading = link.status === 'loading' || productsLoading;
 
