@@ -1,97 +1,35 @@
-# Raport diagnostyczny — ikony przy pozycjach oferty (/oferta/:token)
+# Tryb "Przeglądaj ze zdjęciami" na stronie oferty
 
-Tylko analiza. Nie zmieniano żadnego pliku, nie uruchamiano migracji.
+## KROK 0 — wynik weryfikacji (ważne, zmienia założenie)
 
-## 1. Stan obecny — struktura wiersza
+Sprawdziłem kod eksportów. **Nie istnieje eksport JPG pojedynczego produktu ze zdjęciem, białą ramką i znakiem wodnym "STAKERPOL".**
 
-Cała strona jest w jednym pliku: `src/pages/SharedOffer.tsx`.
+Co faktycznie jest:
+- `src/utils/listExporter.ts` — jeden eksport JPG: `exportProductListToJPG()` renderuje **całą tabelę stanu magazynu** (HTML + `html2canvas`), bez żadnych zdjęć produktów. Napis "STAKERPOL" to nagłówek dokumentu (34 px, bold, navy `#1E3A5F`, pod nim pomarańczowa kreska `#F97316`), nie znak wodny na zdjęciu.
+- PDF (`pdfGenerator.ts`) i XLSX (`xlsxExporterV2.ts`) — również listy tabelaryczne.
+- Karta zdjęciowa produktu z paskiem danych pod fotografią **nigdzie nie istnieje** — nie ma czego "odtworzyć 1:1".
 
-Desktop (`<tr>`, ~linie 494–535): kolumny generowane z `EXPORT_COLUMNS`
-(`src/utils/exportListModel.ts`): Nr, Model, Nr seryjny, Rok, Godziny, Udźwig,
-Podnoszenie (`row.liftHeight`), Wys. konstr. (`row.minHeight`), Maszt,
-Bateria (`row.battery`), Dostępność, Cena, Waluta, Zdjęcia.
-Status i cena to dwie osobne komórki: `<td><StatusTag/></td>` a następnie
-`<td colSpan={2}><PriceCell/></td>`. Kolejność: status po lewej, cena po prawej
-— ale w osobnych komórkach, nie w jednej linii.
+Wniosek: nie da się skopiować istniejącej karty, bo jej nie ma. Zamiast zgadywać, proponuję zbudować kartę z **istniejących tokenów wizualnych oferty i eksportu** (navy `#1E3A5F`, orange `#F97316`, biała ramka, `font-sans` = system-ui/Segoe UI/Roboto — ta sama czcionka co strona główna). Format liczb 1:1 z listy oferty: `formatLift` (`1.54m`), `normalizeBattery` (`210 Ah`), `availabilityLabel`, `formatPrice` z `exportListModel.ts` — bez żadnej nowej logiki formatowania.
 
-Mobile (`<article>`, ~linie 580–607), dwa rzędy:
-- rząd 1: `flex justify-between` — numer + `inlineParams` (rok, mth oraz te
-  parametry z `COMMON_PARAM_KEYS`, których nie przejął nagłówek grupy) po lewej,
-  `StatusTag` po prawej;
-- rząd 2: `flex justify-between` — nr seryjny + link „Zdjęcia" po lewej,
-  `PriceCellMobile` po prawej.
+Karuzela: w projekcie jest `embla-carousel-react` (przez shadcn), ale **nie będzie użyta** — pionowe przewijanie zrobię natywnym CSS `scroll-snap` (`snap-y mandatory`, karta `h-[100dvh]`, `snap-start`). Zero nowych zależności.
 
-Zatem dziś „Dostępny" jest w innej linii niż cena (rząd 1 vs rząd 2).
-To odrębna zmiana: przeniesienie `StatusTag` do rzędu drugiego, bezpośrednio
-przed komponentem ceny.
+Dane: `SharedOffer.tsx` już ma pełne produkty z `usePublicSupabaseProducts()` (w tym `images[]`), więc **zero zmian w Edge Function `shared-list`** i zero migracji.
 
-Ważne: parametry mogą nie być w wierszu wcale — `getGroupCommonParams`
-(`src/utils/sharedOffer/groupCommonParams.ts`) wynosi udźwig, podnoszenie,
-wys. konstr., maszt i baterię do nagłówka grupy, gdy są identyczne we wszystkich
-pozycjach grupy. Ikony w wierszu wymagają decyzji: albo duplikować wartość
-w wierszu, albo dodać ikony również w pasku nagłówka grupy.
+## Co zbuduję (po Twojej akceptacji)
 
-## 2. Źródło danych — wysokość podnoszenia
+1. Nowy komponent `src/components/shared-offer/OfferPhotoCard.tsx` — bezstanowa karta:
+   - zdjęcie główne (`product.images[0]`, fallback `product.image`) na białym tle, w białej ramce, `object-contain`, zajmuje większość ekranu,
+   - znak wodny "STAKERPOL" na dole na środku zdjęcia (półprzezroczysty biały tekst z delikatnym cieniem, bold, tracking — czytelny na jasnym i ciemnym zdjęciu),
+   - pod zdjęciem pasek: model + rok · nr seryjny · mth, a niżej WYS. KONSTR. / PODNOSZENIE / BATERIA (te same ikony co dziś w liście: `MoveVertical`, `ArrowUpFromLine`, `BatteryCharging`), na końcu dostępność i cena,
+   - brak strzałek zdjęć, brak przycisków akcji (zadzwoń/zapytaj) — widok czysto przeglądowy.
+2. Nowy komponent `src/components/shared-offer/OfferPhotoBrowser.tsx` — `fixed inset-0 z-50` overlay, kontener `overflow-y-auto snap-y snap-mandatory`, jedna karta = `100dvh` + `snap-start`, przycisk X w prawym górnym rogu (zamyka bez przeładowania), licznik "3 / 42" i blokada scrolla `body` na czas otwarcia.
+3. `SharedOffer.tsx` — przycisk **"Przeglądaj ze zdjęciami"** w pasku obok filtrów + stan `photoMode`. Karty budowane z `visible` (dokładnie ta sama, już przefiltrowana lista co tekstowa), w tej samej kolejności co posortowane grupy.
+4. Wydajność: `loading="lazy"`, `decoding="async"`, jawne `sizes`; pierwsze 2 karty eager, reszta lazy — przy 42+ pozycjach nic nie ładuje się z góry.
 
-- Kolumna: `public.products.lift_height`, typ `numeric` (mm).
-- Mapowanie: `specs.liftHeight` (`src/types/supabase.ts`), następnie
-  `ExportRow.liftHeight = formatLift(...)` → format `2.10m` (metry, 2 miejsca).
-- Dostępne per pojedynczy produkt (`row.liftHeight`); grupowo pojawia się tylko
-  wtedy, gdy jest jednakowe w całej grupie (`commonKeys`).
-- Wypełnienie (odczyt produkcyjny): 47 produktów w tabeli, `lift_height`
-  niepuste w 47/47, `min_height` 47/47, `battery` niepuste 47/47, z czego 46
-  pasuje do wzorca „NNN Ah" używanego przez `normalizeBattery` — 1 rekord
-  wyświetli się jako „—".
+## Poza zakresem (nie tykam)
 
-## 3. Zależności w widoku mobilnym
+`create_offer`, generatory JPG/PDF/XLSX, `exportListModel.ts` / `EXPORT_COLUMNS`, Edge Function `shared-list`, filtry listy tekstowej, formularz zapytania, sticky controls.
 
-Interaktywne elementy w obrębie pojedynczej oferty:
-- link „Zdjęcia" (`target="_blank"`, ikona `ExternalLink`, ring focus),
-- `PriceCellMobile` — przy braku ceny to przycisk otwierający
-  `PriceInquiryModal`.
-Poza wierszem, ale nakładające się wizualnie: przyciski sortowania (h-11),
-sticky nagłówek grupy (`STICKY_GROUP_TOP = 60`), stały `ProductStickyBar`
-(„Zadzwoń"/„Zapytaj", dolny padding `72px + safe-area`) oraz
-`FloatingContactBubble`. Brak rozwijania/zwijania i brak własnej obsługi dotyku.
+## Pytanie do decyzji
 
-Ryzyka przy dodaniu trzech kafli z ikonami:
-- oba rzędy to `flex justify-between gap-2`; dodanie trzech kafli w tym samym
-  rzędzie ściśnie link „Zdjęcia" i przycisk ceny, obniżając ich obszar dotyku
-  poniżej wygodnego minimum na ekranach ~360 px (bieżący viewport 384 px);
-- `truncate` na numerze seryjnym zacznie ucinać wcześniej;
-- bezpieczniej: osobny, trzeci rząd na ikony, bez elementów klikalnych,
-  co nie zmienia obecnych targetów dotyku;
-- przy ~45 pozycjach to ~135 dodatkowych SVG — nadal akceptowalne, ale lista
-  nie ma paginacji ani wirtualizacji, więc renderuje się w całości.
-
-## 4. Ponowne użycie
-
-Istnieje gotowy wzorzec „ikona + wartość + podpis":
-`src/components/products/ProductKeySpecsBar.tsx` — siatka komórek
-`{ Icon, value, label }` (`MoveVertical`, `Calendar`, `Clock`, `Package`),
-ikona 18 px, wartość mono/bold, podpis 9 px uppercase.
-Nie jest to jednak komponent współdzielony (przyjmuje `Product`, nie
-`ExportRow`, i używa tokenów `text-ink`/`red-accent` karty produktu, a strona
-oferty używa `stakerpol-navy`/`gray`). Do ponownego użycia trzeba by wydzielić
-mały bezstanowy komponent kafla; nie ma dziś hooka do tego celu.
-Ikon dla baterii/podnoszenia jeszcze nie użyto — `lucide-react` jest już
-zainstalowany (`BatteryCharging`, `MoveVertical`, `ArrowUpFromLine`).
-
-## 5. Zakres zmiany
-
-Nie dotyczy: formularzy (poza istniejącym `PriceInquiryModal`, bez zmian),
-wysyłki e-maili, danych strukturalnych/meta (strona ma `noindex, nofollow`),
-panelu admina, uprawnień/RLS, RPC (`create_offer`, `log_contact_activity`,
-`import_lead_to_contact`), Edge Functions ani GA4 — w `SharedOffer.tsx`
-i `ProductStickyBar.tsx` nie ma żadnych wywołań `gtag`/`trackEvent`.
-
-Uwaga: `EXPORT_COLUMNS` jest współdzielone z eksportami PDF/JPG/XLSX, więc
-zmiany wizualne należy trzymać w `SharedOffer.tsx`, bez modyfikacji modelu
-eksportu.
-
-## Wnioski do ewentualnego zlecenia (bez przebudowy działających elementów)
-
-1. Trzy kafle ikon w osobnym rzędzie w `<article>` (mobile) i, jeśli trzeba,
-   ikony w nagłówkach kolumn desktopu — bez zmian w `EXPORT_COLUMNS`.
-2. Osobna zmiana: przeniesienie `StatusTag` do rzędu z ceną, przed kwotą.
-3. Decyzja: co pokazać, gdy parametr został wyniesiony do nagłówka grupy.
+Skoro karty JPG pojedynczego produktu nie ma, akceptujesz wersję "w duchu eksportu" (biała ramka + navy/orange + te same pola i formaty liczb), czy chcesz najpierw zobaczyć propozycję wizualną karty?
