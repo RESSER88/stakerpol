@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowDown, ArrowUp, ArrowUpFromLine, BatteryCharging, ExternalLink, MapPin, MoveVertical, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpFromLine, BatteryCharging, ExternalLink, Images, MapPin, MoveVertical, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePublicSupabaseProducts } from '@/hooks/usePublicSupabaseProducts';
 import {
@@ -25,6 +25,8 @@ import SharedOfferFilters, {
 } from '@/components/shared-offer/SharedOfferFilters';
 import PriceInquiryModal from '@/components/products/PriceInquiryModal';
 import SpecIconTile from '@/components/shared-offer/SpecIconTile';
+import OfferPhotoBrowser from '@/components/shared-offer/OfferPhotoBrowser';
+
 
 import ProductStickyBar from '@/components/products/ProductStickyBar';
 import type { Product } from '@/types';
@@ -221,6 +223,8 @@ const SharedOffer = () => {
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT);
   const [inquiryProduct, setInquiryProduct] = useState<Product | null>(null);
   const [barInquiryOpen, setBarInquiryOpen] = useState(false);
+  const [photoMode, setPhotoMode] = useState(false);
+
 
   const { direction: scrollDirection, y: scrollY } = useScrollState(8);
   /** W pobliżu początku listy pasek jest zawsze widoczny. */
@@ -292,6 +296,20 @@ const SharedOffer = () => {
       })),
     [model, sortKey]
   );
+
+  /** Płaska lista wierszy w kolejności widocznej na liście — dla trybu zdjęć. */
+  const photoRows = useMemo(
+    () => sortedGroups.flatMap((g) => g.rows),
+    [sortedGroups]
+  );
+
+  /** productId -> główne zdjęcie produktu. */
+  const imageById = useMemo(() => {
+    const map = new Map<string, string | undefined>();
+    visible.forEach((p) => map.set(p.id, p.images?.[0] || p.image || undefined));
+    return map;
+  }, [visible]);
+
 
 
   const isLoading = link.status === 'loading' || productsLoading;
@@ -412,8 +430,19 @@ const SharedOffer = () => {
                     </SheetContent>
                   </Sheet>
                   <SortButtons value={sortKey} onChange={setSortKey} />
+                  {photoRows.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setPhotoMode(true)}
+                      className="inline-flex shrink-0 items-center gap-2 h-11 px-4 rounded-md bg-stakerpol-orange text-white text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-navy"
+                    >
+                      <Images className="h-4 w-4" />
+                      Przeglądaj ze zdjęciami
+                    </button>
+                  )}
 
                 </div>
+
               <details className="hidden md:block mb-6 bg-white border border-gray-200 rounded-md">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-stakerpol-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange">
                   Filtry listy
@@ -461,7 +490,18 @@ const SharedOffer = () => {
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-gray-700 mb-4">{model.summary}</p>
+                  <div className="mb-4 flex flex-wrap items-center gap-3">
+                    <p className="text-sm text-gray-700">{model.summary}</p>
+                    <button
+                      type="button"
+                      onClick={() => setPhotoMode(true)}
+                      className="hidden md:inline-flex items-center gap-2 h-10 px-4 rounded-md bg-stakerpol-orange text-white text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-navy"
+                    >
+                      <Images className="h-4 w-4" />
+                      Przeglądaj ze zdjęciami
+                    </button>
+                  </div>
+
 
                   {/* Desktop: tabela */}
                   <div className="hidden md:block space-y-8">
@@ -666,6 +706,15 @@ const SharedOffer = () => {
             product={inquiryProduct}
           />
         )}
+
+        {photoMode && photoRows.length > 0 && (
+          <OfferPhotoBrowser
+            rows={photoRows}
+            imageById={imageById}
+            onClose={() => setPhotoMode(false)}
+          />
+        )}
+
 
         {barInquiryOpen && (
           <PriceInquiryModal isOpen onClose={() => setBarInquiryOpen(false)} />
