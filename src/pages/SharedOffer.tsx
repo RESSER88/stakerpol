@@ -603,36 +603,43 @@ const SharedOffer = () => {
                               { key: 'battery', Icon: BatteryCharging, label: 'Bateria' },
                             ].filter((t) => !common[t.key as (typeof tileKeys)[number]]);
 
+                            const mainLine = [
+                              row.productionYear ? String(row.productionYear) : null,
+                              row.serialNumber ? row.serialNumber : null,
+                              row.workingHours ? `${row.workingHours} mth` : null,
+                              ...COMMON_PARAM_KEYS.filter(
+                                (k) => !common[k] && !(tileKeys as readonly string[]).includes(k)
+                              ).map((k) => {
+                                const v = String(row[k] ?? '').trim();
+                                return v && v !== '—' ? v : null;
+                              }),
+                            ].filter(Boolean) as string[];
+
                             return (
                               <article key={row.productId} className="px-3 py-2">
-                                <div className="flex items-start justify-between gap-2">
-                                  <p className="text-sm text-stakerpol-navy">
+                                <div className="flex items-center justify-between gap-2 text-sm text-stakerpol-navy">
+                                  <p className="min-w-0">
                                     <span className="font-bold">{row.index}.</span>{' '}
-                                    <span>{inlineParams.join(' · ')}</span>
+                                    <span>{mainLine.join(' · ')}</span>
                                   </p>
+                                  <a
+                                    href={row.productUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex shrink-0 items-center gap-1 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+                                  >
+                                    Zdjęcia
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
                                 </div>
-                                <div className="mt-0.5 pl-5 flex items-center justify-between gap-2 text-xs text-gray-700">
-                                  <span className="flex items-center gap-2 min-w-0">
-                                    <span className="truncate">{row.serialNumber || '—'}</span>
-                                    <a
-                                      href={row.productUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-flex shrink-0 items-center gap-1 text-stakerpol-navy underline focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
-                                    >
-                                      Zdjęcia
-                                      <ExternalLink className="h-3 w-3" />
-                                    </a>
-                                  </span>
-                                  <span className="flex shrink-0 items-center gap-2">
-                                    <StatusTag value={row.availability} />
-                                    <PriceCellMobile
-                                      showPrice={row.showPrice}
-                                      netPrice={row.netPrice}
-                                      currency={row.priceCurrency}
-                                      onInquiry={() => openInquiry(row.productId)}
-                                    />
-                                  </span>
+                                <div className="mt-0.5 pl-5 flex items-center justify-end gap-2 text-xs text-gray-700">
+                                  <StatusTag value={row.availability} />
+                                  <PriceCellMobile
+                                    showPrice={row.showPrice}
+                                    netPrice={row.netPrice}
+                                    currency={row.priceCurrency}
+                                    onInquiry={() => openInquiry(row.productId)}
+                                  />
                                 </div>
                                 {tiles.length > 0 && (
                                   <div className="mt-1.5 pl-5 grid grid-cols-3 gap-x-2">
