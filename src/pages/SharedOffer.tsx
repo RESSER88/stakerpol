@@ -707,6 +707,15 @@ const SharedOffer = () => {
           />
         )}
 
+        {photoMode && photoRows.length > 0 && (
+          <OfferPhotoBrowser
+            rows={photoRows}
+            imageById={imageById}
+            onClose={() => setPhotoMode(false)}
+          />
+        )}
+
+
         {barInquiryOpen && (
           <PriceInquiryModal isOpen onClose={() => setBarInquiryOpen(false)} />
         )}
