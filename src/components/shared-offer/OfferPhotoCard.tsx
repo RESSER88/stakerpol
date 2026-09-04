@@ -1,11 +1,11 @@
-import { ArrowUpFromLine, BatteryCharging, MoveVertical } from 'lucide-react';
-import { ExportRow, formatPrice } from '@/utils/exportListModel';
+import { ArrowUpFromLine, BatteryCharging, MoveVertical, Mail } from 'lucide-react';
+import { COMPANY, ExportRow, formatPrice } from '@/utils/exportListModel';
 import { cn } from '@/lib/utils';
 
 interface Props {
   row: ExportRow;
-  /** Główne zdjęcie produktu (pierwsze z galerii). */
-  image?: string;
+  /** Wszystkie zdjęcia produktu (karuzela). */
+  images?: string[];
   /** Pierwsze karty ładujemy natychmiast, pozostałe leniwie. */
   eager?: boolean;
 }
