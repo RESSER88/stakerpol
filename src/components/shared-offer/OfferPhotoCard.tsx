@@ -60,8 +60,8 @@ const Spec = ({
  * (biała ramka, navy/orange, znak wodny STAKERPOL). Bez akcji i bez galerii.
  */
 const OfferPhotoCard = ({ row, image, eager }: Props) => (
-  <article className="h-[100dvh] snap-start shrink-0 flex flex-col bg-gray-50 px-3 py-3">
-    <div className="flex-1 min-h-0 bg-white border-4 border-white rounded-md shadow-sm ring-1 ring-gray-200 overflow-hidden relative flex items-center justify-center">
+  <article className="h-[100dvh] snap-start shrink-0 flex flex-col bg-gray-50 px-1.5 py-1.5">
+    <div className="basis-2/3 grow shrink-0 min-h-0 bg-white rounded-md shadow-sm ring-1 ring-gray-200 overflow-hidden relative flex items-center justify-center">
       {image ? (
         <img
           src={image}
@@ -75,13 +75,13 @@ const OfferPhotoCard = ({ row, image, eager }: Props) => (
       )}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-3 left-0 right-0 text-center text-lg font-bold tracking-[0.35em] text-white/70 [text-shadow:0_1px_3px_rgba(0,0,0,0.55)]"
+        className="pointer-events-none absolute bottom-2 right-3 text-base font-bold tracking-[0.3em] text-white/60 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]"
       >
         STAKERPOL
       </span>
     </div>
 
-    <div className="shrink-0 mt-3 bg-white rounded-md ring-1 ring-gray-200 px-3 py-2.5">
+    <div className="shrink-0 mt-1.5 bg-white rounded-md ring-1 ring-gray-200 px-2.5 py-2">
       <div className="flex items-baseline gap-2">
         <span className="text-sm font-bold text-stakerpol-navy truncate">{row.model}</span>
         <span className="h-1 w-8 bg-stakerpol-orange rounded-full shrink-0" />
@@ -100,7 +100,7 @@ const OfferPhotoCard = ({ row, image, eager }: Props) => (
         <Spec Icon={ArrowUpFromLine} label="Podnoszenie" value={dash(row.liftHeight)} />
         <Spec Icon={BatteryCharging} label="Bateria" value={dash(row.battery)} />
       </div>
-      <div className="mt-2.5 flex items-center justify-end gap-2">
+      <div className="mt-2 flex items-center justify-end gap-2">
         <span
           className={cn(
             'inline-block px-2 py-0.5 rounded text-[11px] font-semibold',
