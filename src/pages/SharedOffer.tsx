@@ -403,11 +403,22 @@ const SharedOffer = () => {
               {/* Filtry — pasek mobilny poza wrapperem, aby przyklejenie działało w całym obszarze listy */}
               <div
                 className={cn(
-                  'md:hidden sticky top-0 z-30 -mx-4 mb-4 px-4 py-2 bg-gray-50 border-b border-gray-200 transition-transform duration-200 motion-reduce:transition-none flex items-center gap-2 overflow-x-auto no-scrollbar',
+                  'md:hidden sticky top-0 z-30 -mx-4 mb-4 px-4 py-2 bg-gray-50 border-b border-gray-200 transition-transform duration-200 motion-reduce:transition-none',
                   hideFilterBar ? '-translate-y-[150%]' : 'translate-y-0'
                 )}
               >
+                {photoRows.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setPhotoMode(true)}
+                    className="w-full mb-3 inline-flex items-center justify-center gap-2 h-12 px-4 rounded-md bg-stakerpol-orange text-white text-base font-bold shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-navy"
+                  >
+                    <Images className="h-5 w-5" />
+                    Przeglądaj ze zdjęciami
+                  </button>
+                )}
 
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
                   <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                     <SheetTrigger className="inline-flex shrink-0 items-center gap-2 border border-gray-300 rounded-md px-4 h-11 text-sm font-semibold text-stakerpol-navy bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange">
                       <SlidersHorizontal className="h-4 w-4" />
@@ -430,18 +441,11 @@ const SharedOffer = () => {
                     </SheetContent>
                   </Sheet>
                   <SortButtons value={sortKey} onChange={setSortKey} />
-                  {photoRows.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setPhotoMode(true)}
-                      className="inline-flex shrink-0 items-center gap-2 h-11 px-4 rounded-md bg-stakerpol-orange text-white text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-navy"
-                    >
-                      <Images className="h-4 w-4" />
-                      Przeglądaj ze zdjęciami
-                    </button>
-                  )}
-
                 </div>
+              </div>
+
+
+
 
               <details className="hidden md:block mb-6 bg-white border border-gray-200 rounded-md">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-stakerpol-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange">
