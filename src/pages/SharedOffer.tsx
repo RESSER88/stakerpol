@@ -490,7 +490,18 @@ const SharedOffer = () => {
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-gray-700 mb-4">{model.summary}</p>
+                  <div className="mb-4 flex flex-wrap items-center gap-3">
+                    <p className="text-sm text-gray-700">{model.summary}</p>
+                    <button
+                      type="button"
+                      onClick={() => setPhotoMode(true)}
+                      className="hidden md:inline-flex items-center gap-2 h-10 px-4 rounded-md bg-stakerpol-orange text-white text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-navy"
+                    >
+                      <Images className="h-4 w-4" />
+                      Przeglądaj ze zdjęciami
+                    </button>
+                  </div>
+
 
                   {/* Desktop: tabela */}
                   <div className="hidden md:block space-y-8">
