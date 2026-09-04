@@ -163,18 +163,38 @@ const OfferPhotoCard = ({ row, images = [], eager }: Props) => (
         <Spec Icon={ArrowUpFromLine} label="Podnoszenie" value={dash(row.liftHeight)} />
         <Spec Icon={BatteryCharging} label="Bateria" value={dash(row.battery)} />
       </div>
-      <div className="mt-2 flex items-center justify-end gap-2">
-        <span
-          className={cn(
-            'inline-block px-2 py-0.5 rounded text-[11px] font-semibold',
-            statusTone(row.availability)
-          )}
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <a
+          href={row.productUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs font-semibold text-stakerpol-navy underline underline-offset-2 shrink-0"
         >
-          {row.availability}
-        </span>
-        <span className="text-sm font-semibold text-stakerpol-navy whitespace-nowrap">
-          {row.showPrice ? `${formatPrice(row.netPrice)} ${row.priceCurrency}` : 'Cena na zapytanie'}
-        </span>
+          Karta produktu
+        </a>
+        <div className="flex items-center gap-2 min-w-0">
+          <span
+            className={cn(
+              'inline-block px-2 py-0.5 rounded text-[11px] font-semibold',
+              statusTone(row.availability)
+            )}
+          >
+            {row.availability}
+          </span>
+          <span className="text-sm font-semibold text-stakerpol-navy whitespace-nowrap">
+            {row.showPrice ? `${formatPrice(row.netPrice)} ${row.priceCurrency}` : 'Cena na zapytanie'}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-2 flex">
+        <a
+          href={buildOrderMailto(row)}
+          className="inline-flex items-center gap-2 rounded-lg bg-stakerpol-orange px-4 py-2 text-sm font-bold text-white shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-navy"
+        >
+          <Mail className="h-4 w-4" aria-hidden="true" />
+          Zamawiam
+        </a>
       </div>
     </div>
   </article>
