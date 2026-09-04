@@ -430,18 +430,22 @@ const SharedOffer = () => {
                     </SheetContent>
                   </Sheet>
                   <SortButtons value={sortKey} onChange={setSortKey} />
-                  {photoRows.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setPhotoMode(true)}
-                      className="inline-flex shrink-0 items-center gap-2 h-11 px-4 rounded-md bg-stakerpol-orange text-white text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-navy"
-                    >
-                      <Images className="h-4 w-4" />
-                      Przeglądaj ze zdjęciami
-                    </button>
-                  )}
 
                 </div>
+
+              {photoRows.length > 0 && (
+                <div className="md:hidden mb-5">
+                  <button
+                    type="button"
+                    onClick={() => setPhotoMode(true)}
+                    className="w-full inline-flex items-center justify-center gap-2 h-12 px-4 rounded-md bg-stakerpol-orange text-white text-base font-bold shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-navy"
+                  >
+                    <Images className="h-5 w-5" />
+                    Przeglądaj ze zdjęciami
+                  </button>
+                </div>
+              )}
+
 
               <details className="hidden md:block mb-6 bg-white border border-gray-200 rounded-md">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-stakerpol-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange">
