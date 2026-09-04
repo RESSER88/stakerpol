@@ -583,14 +583,23 @@ const SharedOffer = () => {
                         </h2>
                         <div className="divide-y divide-gray-200 bg-white border border-t-0 border-gray-200 rounded-b-md">
                           {group.rows.map((row) => {
+                            const tileKeys = ['minHeight', 'liftHeight', 'battery'] as const;
                             const inlineParams = [
                               row.productionYear ? String(row.productionYear) : null,
                               row.workingHours ? `${row.workingHours} mth` : null,
-                              ...COMMON_PARAM_KEYS.filter((k) => !common[k]).map((k) => {
+                              ...COMMON_PARAM_KEYS.filter(
+                                (k) => !common[k] && !(tileKeys as readonly string[]).includes(k)
+                              ).map((k) => {
                                 const v = String(row[k] ?? '').trim();
                                 return v && v !== '—' ? v : null;
                               }),
                             ].filter(Boolean) as string[];
+
+                            const tiles = [
+                              { key: 'minHeight', Icon: MoveVertical, label: 'Wys. konstr.' },
+                              { key: 'liftHeight', Icon: ArrowUpFromLine, label: 'Podnoszenie' },
+                              { key: 'battery', Icon: BatteryCharging, label: 'Bateria' },
+                            ].filter((t) => !common[t.key as (typeof tileKeys)[number]]);
 
                             return (
                               <article key={row.productId} className="px-3 py-2">
@@ -599,7 +608,6 @@ const SharedOffer = () => {
                                     <span className="font-bold">{row.index}.</span>{' '}
                                     <span>{inlineParams.join(' · ')}</span>
                                   </p>
-                                  <StatusTag value={row.availability} />
                                 </div>
                                 <div className="mt-0.5 pl-5 flex items-center justify-between gap-2 text-xs text-gray-700">
                                   <span className="flex items-center gap-2 min-w-0">
@@ -614,15 +622,31 @@ const SharedOffer = () => {
                                       <ExternalLink className="h-3 w-3" />
                                     </a>
                                   </span>
-                                  <PriceCellMobile
-                                    showPrice={row.showPrice}
-                                    netPrice={row.netPrice}
-                                    currency={row.priceCurrency}
-                                    onInquiry={() => openInquiry(row.productId)}
-                                  />
+                                  <span className="flex shrink-0 items-center gap-2">
+                                    <StatusTag value={row.availability} />
+                                    <PriceCellMobile
+                                      showPrice={row.showPrice}
+                                      netPrice={row.netPrice}
+                                      currency={row.priceCurrency}
+                                      onInquiry={() => openInquiry(row.productId)}
+                                    />
+                                  </span>
                                 </div>
+                                {tiles.length > 0 && (
+                                  <div className="mt-1.5 pl-5 grid grid-cols-3 gap-x-2">
+                                    {tiles.map((t) => (
+                                      <SpecIconTile
+                                        key={t.key}
+                                        Icon={t.Icon}
+                                        label={t.label}
+                                        value={row[t.key as (typeof tileKeys)[number]]}
+                                      />
+                                    ))}
+                                  </div>
+                                )}
                               </article>
                             );
+
                           })}
                         </div>
                       </section>
