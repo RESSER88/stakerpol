@@ -1,11 +1,11 @@
-import { ArrowUpFromLine, BatteryCharging, MoveVertical } from 'lucide-react';
-import { ExportRow, formatPrice } from '@/utils/exportListModel';
+import { ArrowUpFromLine, BatteryCharging, MoveVertical, Mail } from 'lucide-react';
+import { COMPANY, ExportRow, formatPrice } from '@/utils/exportListModel';
 import { cn } from '@/lib/utils';
 
 interface Props {
   row: ExportRow;
-  /** Główne zdjęcie produktu (pierwsze z galerii). */
-  image?: string;
+  /** Wszystkie zdjęcia produktu (karuzela). */
+  images?: string[];
   /** Pierwsze karty ładujemy natychmiast, pozostałe leniwie. */
   eager?: boolean;
 }
@@ -59,27 +59,88 @@ const Spec = ({
  * Pełnoekranowa karta przeglądania oferty — wizualnie w duchu eksportu
  * (biała ramka, navy/orange, znak wodny STAKERPOL). Bez akcji i bez galerii.
  */
-const OfferPhotoCard = ({ row, image, eager }: Props) => (
+const buildOrderMailto = (row: ExportRow) => {
+  const title = `${row.model} ${row.serialNumber}`.trim();
+  const subject = `Zamówienie - ${title}`;
+  const price = row.showPrice
+    ? `${formatPrice(row.netPrice)} ${row.priceCurrency} netto`
+    : 'cena na zapytanie';
+  const body = [
+    'Dzień dobry,',
+    '',
+    'chcę zamówić poniższy wózek widłowy:',
+    '',
+    `Model: ${row.model}`,
+    `Rok produkcji: ${dash(row.productionYear)}`,
+    `Nr seryjny: ${dash(row.serialNumber)}`,
+    `Motogodziny: ${row.workingHours ? `${row.workingHours} mth` : '—'}`,
+    `Wys. konstrukcyjna: ${dash(row.minHeight)}`,
+    `Podnoszenie: ${dash(row.liftHeight)}`,
+    `Bateria: ${dash(row.battery)}`,
+    `Cena: ${price}`,
+    `Karta produktu: ${row.productUrl}`,
+    '',
+    'DANE DO FAKTURY',
+    'Nazwa firmy / imię i nazwisko: ',
+    'NIP: ',
+    'Adres: ',
+    '',
+    'ADRES WYSYŁKI',
+    'Adres dostawy: ',
+    '',
+    'OSOBA KONTAKTOWA',
+    'Imię i nazwisko: ',
+    'Telefon: ',
+    'E-mail: ',
+    '',
+    'Uwagi: ',
+  ].join('\r\n');
+  return `mailto:${COMPANY.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+};
+
+const OfferPhotoCard = ({ row, images = [], eager }: Props) => (
   <article className="h-[100dvh] snap-start shrink-0 flex flex-col bg-gray-50">
     {/* Zdjęcie: ~70% wysokości karty, watermark jako warstwa NA zdjęciu */}
-    <div className="h-[70%] shrink-0 min-h-0 bg-white overflow-hidden relative flex items-center justify-center">
-      {image ? (
-        <img
-          src={image}
-          alt={`${row.model} ${row.serialNumber}`.trim()}
-          loading={eager ? 'eager' : 'lazy'}
-          decoding="async"
-          className="h-full w-full object-contain"
-        />
+    <div className="h-[70%] shrink-0 min-h-0 bg-white overflow-hidden relative">
+      {images.length > 0 ? (
+        <div className="flex h-full w-full overflow-x-auto snap-x snap-mandatory overscroll-x-contain scrollbar-none">
+          {images.map((src, i) => (
+            <div key={src + i} className="h-full w-full shrink-0 snap-center flex items-center justify-center">
+              <img
+                src={src}
+                alt={`${row.model} ${row.serialNumber} — zdjęcie ${i + 1}`.trim()}
+                loading={eager && i === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                className="h-full w-full object-contain"
+                draggable={false}
+              />
+            </div>
+          ))}
+        </div>
       ) : (
-        <span className="text-sm text-gray-400">Brak zdjęcia</span>
+        <div className="flex h-full w-full items-center justify-center">
+          <span className="text-sm text-gray-400">Brak zdjęcia</span>
+        </div>
       )}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-2 right-3 z-10 text-base font-bold tracking-[0.3em] text-white/70 [text-shadow:0_1px_3px_rgba(0,0,0,0.7)]"
+        className="pointer-events-none absolute left-3 top-14 z-10 text-base font-bold tracking-[0.3em] text-white/70 [text-shadow:0_1px_3px_rgba(0,0,0,0.7)]"
       >
         STAKERPOL
       </span>
+      {images.length > 1 && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-2 left-0 right-0 z-10 flex items-center justify-center gap-1.5"
+        >
+          {images.map((src, i) => (
+            <span
+              key={`dot-${src}-${i}`}
+              className="h-1.5 w-1.5 rounded-full bg-stakerpol-navy/40 [box-shadow:0_0_0_1px_rgba(255,255,255,0.7)]"
+            />
+          ))}
+        </div>
+      )}
     </div>
 
     <div className="flex-1 min-h-0 bg-white border-t border-gray-200 px-3 py-2">
@@ -102,18 +163,38 @@ const OfferPhotoCard = ({ row, image, eager }: Props) => (
         <Spec Icon={ArrowUpFromLine} label="Podnoszenie" value={dash(row.liftHeight)} />
         <Spec Icon={BatteryCharging} label="Bateria" value={dash(row.battery)} />
       </div>
-      <div className="mt-2 flex items-center justify-end gap-2">
-        <span
-          className={cn(
-            'inline-block px-2 py-0.5 rounded text-[11px] font-semibold',
-            statusTone(row.availability)
-          )}
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <a
+          href={row.productUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs font-semibold text-stakerpol-navy underline underline-offset-2 shrink-0"
         >
-          {row.availability}
-        </span>
-        <span className="text-sm font-semibold text-stakerpol-navy whitespace-nowrap">
-          {row.showPrice ? `${formatPrice(row.netPrice)} ${row.priceCurrency}` : 'Cena na zapytanie'}
-        </span>
+          Karta produktu
+        </a>
+        <div className="flex items-center gap-2 min-w-0">
+          <span
+            className={cn(
+              'inline-block px-2 py-0.5 rounded text-[11px] font-semibold',
+              statusTone(row.availability)
+            )}
+          >
+            {row.availability}
+          </span>
+          <span className="text-sm font-semibold text-stakerpol-navy whitespace-nowrap">
+            {row.showPrice ? `${formatPrice(row.netPrice)} ${row.priceCurrency}` : 'Cena na zapytanie'}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-2 flex">
+        <a
+          href={buildOrderMailto(row)}
+          className="inline-flex items-center gap-2 rounded-lg bg-stakerpol-orange px-4 py-2 text-sm font-bold text-white shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-navy"
+        >
+          <Mail className="h-4 w-4" aria-hidden="true" />
+          Zamawiam
+        </a>
       </div>
     </div>
   </article>

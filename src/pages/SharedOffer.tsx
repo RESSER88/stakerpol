@@ -303,10 +303,13 @@ const SharedOffer = () => {
     [sortedGroups]
   );
 
-  /** productId -> główne zdjęcie produktu. */
+  /** productId -> wszystkie zdjęcia produktu (galeria trybu zdjęć). */
   const imageById = useMemo(() => {
-    const map = new Map<string, string | undefined>();
-    visible.forEach((p) => map.set(p.id, p.images?.[0] || p.image || undefined));
+    const map = new Map<string, string[]>();
+    visible.forEach((p) => {
+      const list = (p.images?.length ? p.images : p.image ? [p.image] : []).filter(Boolean);
+      map.set(p.id, list as string[]);
+    });
     return map;
   }, [visible]);
 

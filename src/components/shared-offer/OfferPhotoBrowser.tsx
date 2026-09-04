@@ -5,8 +5,8 @@ import OfferPhotoCard from './OfferPhotoCard';
 
 interface Props {
   rows: ExportRow[];
-  /** productId -> główne zdjęcie */
-  imageById: Map<string, string | undefined>;
+  /** productId -> wszystkie zdjęcia produktu */
+  imageById: Map<string, string[]>;
   onClose: () => void;
 }
 
@@ -68,7 +68,7 @@ const OfferPhotoBrowser = ({ rows, imageById, onClose }: Props) => {
           <OfferPhotoCard
             key={row.productId}
             row={row}
-            image={imageById.get(row.productId)}
+            images={imageById.get(row.productId) ?? []}
             eager={i < 2}
           />
         ))}
