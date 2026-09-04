@@ -504,10 +504,26 @@ const SharedOffer = () => {
                                   <td className="px-3 py-2 text-center">{row.productionYear}</td>
                                   <td className="px-3 py-2 text-center">{row.workingHours}</td>
                                   <td className="px-3 py-2 text-center">{row.mastLiftingCapacity}</td>
-                                  <td className="px-3 py-2 text-center">{row.liftHeight}</td>
-                                  <td className="px-3 py-2 text-center">{row.minHeight}</td>
+                                  <td className="px-3 py-2 text-center">
+                                    <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                                      <ArrowUpFromLine aria-hidden="true" className="h-3.5 w-3.5 text-stakerpol-navy" />
+                                      {row.liftHeight || '—'}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-2 text-center">
+                                    <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                                      <MoveVertical aria-hidden="true" className="h-3.5 w-3.5 text-stakerpol-navy" />
+                                      {row.minHeight || '—'}
+                                    </span>
+                                  </td>
                                   <td className="px-3 py-2 text-center">{row.mast}</td>
-                                  <td className="px-3 py-2 text-center">{row.battery}</td>
+                                  <td className="px-3 py-2 text-center">
+                                    <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                                      <BatteryCharging aria-hidden="true" className="h-3.5 w-3.5 text-stakerpol-navy" />
+                                      {row.battery || '—'}
+                                    </span>
+                                  </td>
+
                                   <td className="px-3 py-2 text-center">
                                     <StatusTag value={row.availability} />
                                   </td>
