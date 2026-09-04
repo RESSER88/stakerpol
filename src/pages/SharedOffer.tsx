@@ -621,15 +621,6 @@ const SharedOffer = () => {
                                     <ExternalLink className="h-3 w-3" />
                                   </a>
                                 </div>
-                                <div className="mt-0.5 pl-5 flex items-center justify-end gap-2 text-xs text-gray-700">
-                                  <StatusTag value={row.availability} />
-                                  <PriceCellMobile
-                                    showPrice={row.showPrice}
-                                    netPrice={row.netPrice}
-                                    currency={row.priceCurrency}
-                                    onInquiry={() => openInquiry(row.productId)}
-                                  />
-                                </div>
                                 {tiles.length > 0 && (
                                   <div className="mt-1.5 pl-5 grid grid-cols-3 gap-x-2">
                                     {tiles.map((t) => (
@@ -642,6 +633,15 @@ const SharedOffer = () => {
                                     ))}
                                   </div>
                                 )}
+                                <div className="mt-1.5 pl-5 flex items-center justify-end gap-2 text-xs text-gray-700">
+                                  <StatusTag value={row.availability} />
+                                  <PriceCellMobile
+                                    showPrice={row.showPrice}
+                                    netPrice={row.netPrice}
+                                    currency={row.priceCurrency}
+                                    onInquiry={() => openInquiry(row.productId)}
+                                  />
+                                </div>
                               </article>
                             );
 
