@@ -586,17 +586,6 @@ const SharedOffer = () => {
                         <div className="divide-y divide-gray-200 bg-white border border-t-0 border-gray-200 rounded-b-md">
                           {group.rows.map((row) => {
                             const tileKeys = ['minHeight', 'liftHeight', 'battery'] as const;
-                            const inlineParams = [
-                              row.productionYear ? String(row.productionYear) : null,
-                              row.workingHours ? `${row.workingHours} mth` : null,
-                              ...COMMON_PARAM_KEYS.filter(
-                                (k) => !common[k] && !(tileKeys as readonly string[]).includes(k)
-                              ).map((k) => {
-                                const v = String(row[k] ?? '').trim();
-                                return v && v !== '—' ? v : null;
-                              }),
-                            ].filter(Boolean) as string[];
-
                             const tiles = [
                               { key: 'minHeight', Icon: MoveVertical, label: 'Wys. konstr.' },
                               { key: 'liftHeight', Icon: ArrowUpFromLine, label: 'Podnoszenie' },
