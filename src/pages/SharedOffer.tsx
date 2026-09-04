@@ -25,6 +25,8 @@ import SharedOfferFilters, {
 } from '@/components/shared-offer/SharedOfferFilters';
 import PriceInquiryModal from '@/components/products/PriceInquiryModal';
 import SpecIconTile from '@/components/shared-offer/SpecIconTile';
+import OfferPhotoBrowser from '@/components/shared-offer/OfferPhotoBrowser';
+
 
 import ProductStickyBar from '@/components/products/ProductStickyBar';
 import type { Product } from '@/types';
