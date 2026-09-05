@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Phone, Mail } from 'lucide-react';
 import { ExportRow } from '@/utils/exportListModel';
+import { COMPANY_PHONE_TEL } from '@/lib/contact';
+import PriceInquiryModal from '@/components/products/PriceInquiryModal';
 import OfferPhotoCard from './OfferPhotoCard';
 
 interface Props {
