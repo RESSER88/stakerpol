@@ -322,6 +322,17 @@ const SharedOffer = () => {
 
   const isLoading = link.status === 'loading' || productsLoading;
 
+  useEffect(() => {
+    const el = stickySentinelRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(
+      ([entry]) => setFilterBarPinned(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [isLoading]);
+
   if (link.status === 'denied') {
     return (
       <>
