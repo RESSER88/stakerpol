@@ -224,11 +224,16 @@ const SharedOffer = () => {
   const [inquiryProduct, setInquiryProduct] = useState<Product | null>(null);
   const [barInquiryOpen, setBarInquiryOpen] = useState(false);
   const [photoMode, setPhotoMode] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
+  /** Czujnik: pasek filtrów jest realnie przyklejony dopiero po minięciu tego punktu. */
+  const stickySentinelRef = useRef<HTMLDivElement | null>(null);
+  const [filterBarPinned, setFilterBarPinned] = useState(false);
 
   const { direction: scrollDirection, y: scrollY } = useScrollState(8);
-  /** W pobliżu początku listy pasek jest zawsze widoczny. */
-  const hideFilterBar = scrollDirection === 'down' && scrollY > STICKY_GROUP_TOP * 2 && !sheetOpen;
+  /** Ukrywanie tylko wtedy, gdy pasek jest przyklejony — inaczej nachodziłby na treść nad nim. */
+  const hideFilterBar =
+    filterBarPinned && scrollDirection === 'down' && scrollY > STICKY_GROUP_TOP * 2 && !sheetOpen;
 
 
   const { products, isLoading: productsLoading } = usePublicSupabaseProducts();
