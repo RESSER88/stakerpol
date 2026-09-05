@@ -368,49 +368,64 @@ const SharedOffer = () => {
     <>
       <NoIndexHead />
       <div className="min-h-screen bg-gray-50">
-        {/* Nagłówek */}
+        {/* Nagłówek — zwarty */}
         <header className="bg-stakerpol-navy text-white">
-          <div className="container-custom px-4 md:px-8 py-6 md:py-8">
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5">
-              <div>
-                <h1 className="text-xl md:text-2xl font-bold">{COMPANY.name}</h1>
-                <p className="text-sm text-white/80 mt-1">{COMPANY.tagline}</p>
-                <p className="text-sm text-white/70 mt-3">
-                  {COMPANY.person} · {COMPANY.address}
-                </p>
-                <p className="text-sm text-white/70">
-                  {COMPANY.email} · {COMPANY.site}
-                </p>
-              </div>
+          <div className="container-custom px-4 md:px-8 py-3 md:py-5">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-5">
+              <button
+                type="button"
+                onClick={() => setDetailsOpen((v) => !v)}
+                aria-expanded={detailsOpen}
+                className="text-left inline-flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange rounded-sm"
+              >
+                <h1 className="text-lg md:text-xl font-bold">{COMPANY.name}</h1>
+                <Info className="h-4 w-4 text-white/70 shrink-0" />
+              </button>
               <a
                 href={WAREHOUSE.mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-start gap-2 bg-white/10 hover:bg-white/20 transition-colors rounded-md px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 transition-colors rounded-md px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
               >
-                <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
-                <span className="text-sm">
-                  <span className="block font-semibold">{WAREHOUSE.label}</span>
-                  <span className="block text-white/80">{WAREHOUSE.address}</span>
-                </span>
+                <MapPin className="h-4 w-4 shrink-0" />
+                <span className="font-semibold truncate">{WAREHOUSE.label}</span>
+                <ChevronRight className="h-4 w-4 ml-auto shrink-0 text-white/70" />
               </a>
             </div>
+            {detailsOpen && (
+              <div className="mt-2 text-xs text-white/80 space-y-0.5">
+                <p>{COMPANY.tagline}</p>
+                <p>
+                  {COMPANY.person} · {COMPANY.address}
+                </p>
+                <p>
+                  {COMPANY.email} · {COMPANY.site}
+                </p>
+                <p>{WAREHOUSE.address}</p>
+                <p>
+                  Dane pobrane {formatDateTime(fetchedAt)}. Lista jest odczytywana na żywo, więc
+                  jej zawartość może różnić się od wcześniej przesłanego pliku.
+                </p>
+              </div>
+            )}
           </div>
         </header>
 
-        <main className="container-custom px-4 md:px-8 py-6 md:py-10">
-          {/* Meta informacje */}
-          <div className="text-sm text-gray-700 mb-6 space-y-1">
-            {link.status === 'ok' && (
-              <p>
-                Link aktywny do <strong>{formatDate(link.expiresAt)}</strong>
-              </p>
-            )}
-            <p>
-              Dane pobrane {formatDateTime(fetchedAt)}. Lista jest odczytywana na żywo, więc jej
-              zawartość może różnić się od wcześniej przesłanego pliku.
-            </p>
-          </div>
+        <main className="container-custom px-4 md:px-8 py-4 md:py-8">
+          {/* Status danych — jedna linijka */}
+          <button
+            type="button"
+            onClick={() => setDetailsOpen((v) => !v)}
+            aria-expanded={detailsOpen}
+            className="mb-3 inline-flex items-center gap-2 text-xs text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange rounded-sm"
+          >
+            <span className="h-2 w-2 rounded-full bg-green-500 shrink-0" aria-hidden="true" />
+            <span>
+              Dane na żywo
+              {link.status === 'ok' && <> · ważne do {formatDate(link.expiresAt)}</>}
+            </span>
+            <Info className="h-3.5 w-3.5 text-gray-500" />
+          </button>
 
           {isLoading ? (
             <div className="flex items-center gap-3 text-gray-700 py-16 justify-center">
@@ -432,6 +447,9 @@ const SharedOffer = () => {
                   </button>
                 </div>
               )}
+
+              {/* Punkt odniesienia — pasek uznajemy za przyklejony dopiero po jego minięciu */}
+              <div ref={stickySentinelRef} aria-hidden="true" className="md:hidden h-px" />
 
               {/* Filtry — pasek mobilny poza wrapperem, aby przyklejenie działało w całym obszarze listy */}
               <div
