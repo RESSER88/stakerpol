@@ -738,8 +738,15 @@ const SharedOffer = () => {
                     })}
                   </div>
 
-
+                  {/* Adnotacja prawna — na końcu listy tekstowej */}
+                  <p className="mt-8 pt-4 border-t border-gray-200 text-[12px] leading-relaxed text-gray-500 pb-[calc(72px+env(safe-area-inset-bottom))] md:pb-0">
+                    Prezentowana oferta ma charakter poglądowy. Dostępność towaru oraz podana cena
+                    są gwarantowane wyłącznie po bezpośrednim kontakcie ze Sprzedającym i
+                    indywidualnym potwierdzeniu warunków. Zgłoszenie lub rezerwacja bez takiego
+                    potwierdzenia nie stanowi zobowiązania cenowego ani magazynowego.
+                  </p>
                 </>
+
               )}
             </>
           )}
