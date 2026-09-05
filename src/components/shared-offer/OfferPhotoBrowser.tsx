@@ -65,7 +65,7 @@ const OfferPhotoBrowser = ({ rows, imageById, onClose }: Props) => {
       <div
         ref={scrollerRef}
         onScroll={handleScroll}
-        className="h-full overflow-y-auto snap-y snap-mandatory overscroll-contain"
+        className="h-full overflow-y-auto snap-y snap-mandatory overscroll-contain pb-[calc(64px+env(safe-area-inset-bottom))]"
       >
         {rows.map((row, i) => (
           <OfferPhotoCard
@@ -76,6 +76,31 @@ const OfferPhotoBrowser = ({ rows, imageById, onClose }: Props) => {
           />
         ))}
       </div>
+
+      {/* Stały pasek Zadzwoń / Zapytaj — widoczny na każdej karcie, nad treścią overlayu */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-border-line shadow-[0_-4px_16px_-8px_rgba(0,0,0,0.15)] px-3 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))]">
+        <div className="grid grid-cols-2 gap-2">
+          <a
+            href={`tel:${COMPANY_PHONE_TEL}`}
+            className="flex items-center justify-center gap-2 rounded-[4px] font-bold text-white bg-orange-cta min-h-[48px] text-sm active:scale-[0.97] active:brightness-95 transition-transform"
+          >
+            <Phone size={16} />
+            Zadzwoń
+          </a>
+          <button
+            type="button"
+            onClick={() => setInquiryOpen(true)}
+            className="flex items-center justify-center gap-2 rounded-[4px] font-bold text-white bg-ink min-h-[48px] text-sm active:scale-[0.97] active:brightness-95 transition-transform"
+          >
+            <Mail size={16} />
+            Zapytaj
+          </button>
+        </div>
+      </div>
+
+      {inquiryOpen && (
+        <PriceInquiryModal isOpen onClose={() => setInquiryOpen(false)} />
+      )}
     </div>
   );
 };
