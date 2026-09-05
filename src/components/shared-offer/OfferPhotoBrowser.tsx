@@ -18,6 +18,7 @@ interface Props {
  */
 const OfferPhotoBrowser = ({ rows, imageById, onClose }: Props) => {
   const [current, setCurrent] = useState(1);
+  const [inquiryOpen, setInquiryOpen] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
