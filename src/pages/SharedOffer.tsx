@@ -215,6 +215,20 @@ const displayMobilePrice = (showPrice: boolean, netPrice: number, currency: stri
   return `${new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }).format(netPrice)} ${label}`;
 };
 
+const displayMobileMetric = (value: string) => {
+  const normalized = String(value || '').trim();
+  if (!normalized || normalized === '—' || normalized === '-') return null;
+  return normalized
+    .replace('.', ',')
+    .replace(/(\d)(kg|m|Ah)\b/i, '$1 $2');
+};
+
+const availableUnitsLabel = (count: number) => {
+  if (count === 1) return '1 dostępna sztuka';
+  if (count >= 2 && count <= 4) return `${count} dostępne sztuki`;
+  return `${count} dostępnych sztuk`;
+};
+
 
 const SharedOffer = () => {
   const { token } = useParams<{ token: string }>();
@@ -720,7 +734,7 @@ const SharedOffer = () => {
                         >
                           <h2 className="text-base font-bold text-stakerpol-navy">{group.label}</h2>
                           <p className="mt-0.5 text-xs text-gray-500">
-                            {availableInGroup} {availableInGroup === 1 ? 'dostępna sztuka' : 'dostępne sztuki'}
+                            {availableUnitsLabel(availableInGroup)}
                           </p>
                         </div>
                         <div className="divide-y divide-gray-200 border-y border-gray-200 bg-white">
@@ -746,10 +760,10 @@ const SharedOffer = () => {
                                   <h3 className="truncate text-sm font-bold text-stakerpol-navy">{row.model}</h3>
                                   <p className="mt-1 truncate text-xs text-gray-600">{detailLine.join(' · ')}</p>
                                   <p className="mt-2 text-xs font-medium text-gray-700">
-                                    {[row.mastLiftingCapacity, row.liftHeight].filter((v) => v && v !== '—').join(' · ') || '—'}
+                                    {[displayMobileMetric(row.mastLiftingCapacity), displayMobileMetric(row.liftHeight)].filter(Boolean).join(' · ') || '—'}
                                   </p>
                                   <p className="mt-1 text-xs text-gray-600">
-                                    {[row.minHeight, row.battery].filter((v) => v && v !== '—').join(' · ') || '—'}
+                                    {[displayMobileMetric(row.minHeight), displayMobileMetric(row.battery)].filter(Boolean).join(' · ') || '—'}
                                   </p>
                                   <div className="mt-2 flex flex-wrap items-end justify-between gap-2">
                                     <StatusTag value={row.availability} />

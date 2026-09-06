@@ -42,6 +42,14 @@ const displayPrice = (row: ExportRow) => {
   return `${new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }).format(row.netPrice)} ${currency}`;
 };
 
+const displayMetric = (value: string) => {
+  const normalized = dash(value);
+  if (normalized === '—') return normalized;
+  return normalized
+    .replace('.', ',')
+    .replace(/(\d)(kg|m|Ah)\b/i, '$1 $2');
+};
+
 /** Szkic zamówienia — dokładnie ta sama treść co w dotychczasowym trybie zdjęciowym. */
 export const buildOrderMailto = (row: ExportRow) => {
   const title = `${row.model} ${row.serialNumber}`.trim();
@@ -218,10 +226,13 @@ const OfferPhotoListCard = ({ row, images = [], eager, onActivate }: Props) => {
 
       <div className="px-4 pb-4 pt-5 md:px-3 md:py-3">
         <div className="flex items-start justify-between gap-4">
-          <h3 className="min-w-0 text-lg font-bold leading-tight text-stakerpol-navy md:text-sm">
-            {row.model}
-          </h3>
-          <div className="shrink-0 text-right">
+          <div className="flex min-w-0 items-center gap-2">
+            <h3 className="min-w-0 text-lg font-bold leading-tight text-stakerpol-navy md:text-sm md:truncate">
+              {row.model}
+            </h3>
+            <span className="hidden h-1 w-8 shrink-0 rounded-full bg-stakerpol-orange md:block" />
+          </div>
+          <div className="shrink-0 text-right md:hidden">
             <p className="text-lg font-bold leading-tight text-stakerpol-navy md:text-base">
               {displayPrice(row)}
             </p>
@@ -239,10 +250,10 @@ const OfferPhotoListCard = ({ row, images = [], eager, onActivate }: Props) => {
         </p>
 
         <div className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 border-y border-gray-200 py-4 sm:grid-cols-4 md:mt-2 md:gap-x-2 md:gap-y-2 md:border-0 md:py-0">
-          <Spec Icon={Package} label="Udźwig" value={dash(row.mastLiftingCapacity)} />
-          <Spec Icon={MoveVertical} label="Wys. konstr." value={dash(row.minHeight)} />
-          <Spec Icon={ArrowUpFromLine} label="Podnoszenie" value={dash(row.liftHeight)} />
-          <Spec Icon={BatteryCharging} label="Bateria" value={dash(row.battery)} />
+          <Spec Icon={Package} label="Udźwig" value={displayMetric(row.mastLiftingCapacity)} />
+          <Spec Icon={MoveVertical} label="Wys. konstr." value={displayMetric(row.minHeight)} />
+          <Spec Icon={ArrowUpFromLine} label="Podnoszenie" value={displayMetric(row.liftHeight)} />
+          <Spec Icon={BatteryCharging} label="Bateria" value={displayMetric(row.battery)} />
         </div>
 
         <div className="mt-4 flex items-center justify-between gap-2">
@@ -254,6 +265,9 @@ const OfferPhotoListCard = ({ row, images = [], eager, onActivate }: Props) => {
           >
             Karta produktu →
           </a>
+          <span className="hidden whitespace-nowrap text-base font-bold text-stakerpol-navy md:inline">
+            {row.showPrice ? `${formatPrice(row.netPrice)} ${row.priceCurrency}` : 'Cena na zapytanie'}
+          </span>
         </div>
 
         <div className="mt-5 grid grid-cols-[0.8fr_1.2fr] gap-2 md:mt-3 md:grid-cols-2">
