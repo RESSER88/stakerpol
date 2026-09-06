@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowDown, ArrowUp, ArrowUpFromLine, BatteryCharging, ChevronRight, Image as ImageIcon, Info, LayoutGrid, List as ListIcon, MapPin, MoveVertical, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpFromLine, BatteryCharging, ChevronRight, Image as ImageIcon, Info, LayoutGrid, List as ListIcon, Mail, MapPin, MoveVertical, Package, Phone, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePublicSupabaseProducts } from '@/hooks/usePublicSupabaseProducts';
 import {
@@ -24,20 +24,18 @@ import SharedOfferFilters, {
   viewerFiltersToCriteria,
 } from '@/components/shared-offer/SharedOfferFilters';
 import PriceInquiryModal from '@/components/products/PriceInquiryModal';
-import SpecIconTile from '@/components/shared-offer/SpecIconTile';
-import OfferPhotoListCard from '@/components/shared-offer/OfferPhotoListCard';
+import OfferPhotoListCard, { buildOrderMailto } from '@/components/shared-offer/OfferPhotoListCard';
 
 
-import ProductStickyBar from '@/components/products/ProductStickyBar';
 import type { Product } from '@/types';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { COMPANY_PHONE_TEL } from '@/lib/contact';
 import { logger } from '@/utils/logger';
 import { ROUTES } from '@/config/routes';
 import { useScrollState } from '@/hooks/useScrollDirection';
 import {
   getGroupCommonParams,
-  COMMON_PARAM_KEYS,
-  COMMON_PARAM_LABELS,
 } from '@/utils/sharedOffer/groupCommonParams';
 import {
   SortKey,
@@ -211,31 +209,25 @@ const PriceCell = ({
     </button>
   );
 
-/** Mobile: skrócony komunikat ceny, odsyłacz do formularza zapytania. */
-const PriceCellMobile = ({
-  showPrice,
-  netPrice,
-  currency,
-  onInquiry,
-}: {
-  showPrice: boolean;
-  netPrice: number;
-  currency: string;
-  onInquiry: () => void;
-}) =>
-  showPrice ? (
-    <span className="font-semibold text-stakerpol-navy whitespace-nowrap">
-      {formatPrice(netPrice)} {currency}
-    </span>
-  ) : (
-    <button
-      type="button"
-      onClick={onInquiry}
-      className="whitespace-nowrap text-stakerpol-navy underline font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
-    >
-      Cena na zapytanie
-    </button>
-  );
+const displayMobilePrice = (showPrice: boolean, netPrice: number, currency: string) => {
+  if (!showPrice) return 'Cena na zapytanie';
+  const label = currency === 'PLN' ? 'zł' : currency;
+  return `${new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }).format(netPrice)} ${label}`;
+};
+
+const displayMobileMetric = (value: string) => {
+  const normalized = String(value || '').trim();
+  if (!normalized || normalized === '—' || normalized === '-') return null;
+  return normalized
+    .replace('.', ',')
+    .replace(/(\d)(kg|m|Ah)\b/i, '$1 $2');
+};
+
+const availableUnitsLabel = (count: number) => {
+  if (count === 1) return '1 dostępna sztuka';
+  if (count >= 2 && count <= 4) return `${count} dostępne sztuki`;
+  return `${count} dostępnych sztuk`;
+};
 
 
 const SharedOffer = () => {
@@ -246,8 +238,10 @@ const SharedOffer = () => {
   const [fetchedAt] = useState(() => new Date());
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT);
   const [inquiryProduct, setInquiryProduct] = useState<Product | null>(null);
-  const [barInquiryOpen, setBarInquiryOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'list' | 'photo'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'photo'>(() =>
+    typeof window !== 'undefined' && window.innerWidth < 768 ? 'photo' : 'list'
+  );
+  const [activeOrderProductId, setActiveOrderProductId] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   /** Czujnik: pasek filtrów jest realnie przyklejony dopiero po minięciu tego punktu. */
@@ -332,6 +326,11 @@ const SharedOffer = () => {
     [sortedGroups]
   );
 
+  const activeOrderRow = useMemo(
+    () => photoRows.find((row) => row.productId === activeOrderProductId) ?? photoRows[0],
+    [activeOrderProductId, photoRows]
+  );
+
   /** productId -> wszystkie zdjęcia produktu (galeria trybu zdjęć). */
   const imageById = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -356,6 +355,24 @@ const SharedOffer = () => {
     io.observe(el);
     return () => io.disconnect();
   }, [isLoading]);
+
+  useEffect(() => {
+    if (viewMode !== 'photo' || typeof IntersectionObserver === 'undefined') return;
+    const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-offer-product-id]'));
+    if (!cards.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntries = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        const id = (visibleEntries[0]?.target as HTMLElement | undefined)?.dataset.offerProductId;
+        if (id) setActiveOrderProductId(id);
+      },
+      { threshold: [0.3, 0.55, 0.8], rootMargin: '-20% 0px -35% 0px' }
+    );
+    cards.forEach((card) => observer.observe(card));
+    return () => observer.disconnect();
+  }, [viewMode, photoRows]);
 
   if (link.status === 'denied') {
     return (
@@ -546,12 +563,15 @@ const SharedOffer = () => {
                 </div>
               ) : (
                 <>
-                  <div className="mb-4 flex flex-wrap items-center gap-3">
-                    <p className="text-sm text-gray-700">{model.summary}</p>
+                   <div className="mb-4 flex flex-wrap items-center gap-3">
+                     <p className="text-sm text-gray-700">
+                       <span className="md:hidden">{model.total} maszyn · {model.availableCount} dostępne</span>
+                       <span className="hidden md:inline">{model.summary}</span>
+                     </p>
                     <div
                       role="group"
                       aria-label="Tryb prezentacji listy"
-                      className="ml-auto inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white p-1"
+                       className="ml-auto inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white p-1"
                     >
                       <button
                         type="button"
@@ -559,13 +579,14 @@ const SharedOffer = () => {
                         aria-pressed={viewMode === 'photo'}
                         onClick={() => setViewMode('photo')}
                         className={cn(
-                          'inline-flex h-9 w-9 items-center justify-center rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange',
+                           'inline-flex h-9 items-center justify-center gap-1.5 rounded px-2.5 text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange md:w-9 md:px-0',
                           viewMode === 'photo'
                             ? 'bg-stakerpol-navy text-white'
                             : 'text-stakerpol-navy'
                         )}
                       >
                         <LayoutGrid className="h-4 w-4" />
+                         <span className="md:hidden">Zdjęcia</span>
                       </button>
                       <button
                         type="button"
@@ -573,13 +594,14 @@ const SharedOffer = () => {
                         aria-pressed={viewMode === 'list'}
                         onClick={() => setViewMode('list')}
                         className={cn(
-                          'inline-flex h-9 w-9 items-center justify-center rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange',
+                           'inline-flex h-9 items-center justify-center gap-1.5 rounded px-2.5 text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange md:w-9 md:px-0',
                           viewMode === 'list'
                             ? 'bg-stakerpol-navy text-white'
                             : 'text-stakerpol-navy'
                         )}
                       >
                         <ListIcon className="h-4 w-4" />
+                         <span className="md:hidden">Lista</span>
                       </button>
                     </div>
                   </div>
@@ -593,6 +615,7 @@ const SharedOffer = () => {
                           row={row}
                           images={imageById.get(row.productId) ?? []}
                           eager={i < 2}
+                           onActivate={() => setActiveOrderProductId(row.productId)}
                         />
                       ))}
                     </div>
@@ -696,95 +719,64 @@ const SharedOffer = () => {
                     ))}
                   </div>
 
-                  {/* Mobile: niskie wiersze scalone z nagłówkiem grupy */}
+                  {/* Mobile: lekka lista handlowa pogrupowana według modeli */}
                   <div className={cn('md:hidden space-y-6 pb-[calc(72px+env(safe-area-inset-bottom))]', viewMode === 'photo' && 'hidden')}>
                     {sortedGroups.map((group) => {
-                      const common = group.common;
-                      const commonKeys = COMMON_PARAM_KEYS.filter((k) => common[k]);
+                      const availableInGroup = group.rows.filter((row) => row.availability === 'Dostępny').length;
                       return (
                       <section
                         key={group.key}
                         aria-labelledby={`grpm-${group.key}`}
                       >
-                        <h2
+                        <div
                           id={`grpm-${group.key}`}
-                          className="sticky z-20 bg-stakerpol-navy text-white px-3 py-2 rounded-t-md"
-                          style={{ top: hideFilterBar ? 0 : STICKY_GROUP_TOP }}
+                          className="mb-2 border-b border-gray-200 pb-2"
                         >
-                          <span className="block text-sm font-bold">
-                            {group.label} · {group.rows.length}
-                          </span>
-                          {commonKeys.length > 0 && (
-                            <span className="block mt-1 text-[11px] font-medium text-white/85">
-                              {commonKeys
-                                .map((k) => `${COMMON_PARAM_LABELS[k]}: ${common[k]}`)
-                                .join(' · ')}
-                            </span>
-                          )}
-                        </h2>
-                        <div className="divide-y divide-gray-200 bg-white border border-t-0 border-gray-200 rounded-b-md">
+                          <h2 className="text-base font-bold text-stakerpol-navy">{group.label}</h2>
+                          <p className="mt-0.5 text-xs text-gray-500">
+                            {availableUnitsLabel(availableInGroup)}
+                          </p>
+                        </div>
+                        <div className="divide-y divide-gray-200 border-y border-gray-200 bg-white">
                           {group.rows.map((row) => {
-                            const tileKeys = ['minHeight', 'liftHeight', 'battery'] as const;
-                            const tiles = [
-                              { key: 'minHeight', Icon: MoveVertical, label: 'Wys. konstr.' },
-                              { key: 'liftHeight', Icon: ArrowUpFromLine, label: 'Podnoszenie' },
-                              { key: 'battery', Icon: BatteryCharging, label: 'Bateria' },
-                            ].filter((t) => !common[t.key as (typeof tileKeys)[number]]);
-
-                            const mainLine = [
+                            const detailLine = [
                               row.productionYear ? String(row.productionYear) : null,
                               row.serialNumber ? row.serialNumber : null,
                               row.workingHours ? `${row.workingHours} mth` : null,
-                              ...COMMON_PARAM_KEYS.filter(
-                                (k) => !common[k] && !(tileKeys as readonly string[]).includes(k)
-                              ).map((k) => {
-                                const v = String(row[k] ?? '').trim();
-                                return v && v !== '—' ? v : null;
-                              }),
                             ].filter(Boolean) as string[];
 
                             return (
-                              <article key={row.productId} className="px-3 py-2">
-                                <div className="flex items-center justify-between gap-2 text-sm text-stakerpol-navy">
-                                  <span className="flex min-w-0 items-center gap-2">
-                                    <Thumb src={imageById.get(row.productId)?.[0]} className="h-12 w-12" />
-                                    <p className="min-w-0">
-                                      <span className="font-bold">{row.index}.</span>{' '}
-                                      <span>{mainLine.join(' · ')}</span>
-                                    </p>
-                                  </span>
-                                  <a
-                                    href={row.productUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label="Karta produktu"
-                                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-stakerpol-navy/10 text-stakerpol-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
-                                  >
-                                    <ChevronRight className="h-4 w-4" />
-                                  </a>
-                                </div>
-                                {tiles.length > 0 && (
-                                  <div className="mt-1.5 pl-5 grid grid-cols-3 gap-x-2">
-                                    {tiles.map((t) => (
-                                      <SpecIconTile
-                                        key={t.key}
-                                        Icon={t.Icon}
-                                        label={t.label}
-                                        value={row[t.key as (typeof tileKeys)[number]]}
-                                      />
-                                    ))}
+                              <a
+                                key={row.productId}
+                                href={row.productUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label={`Karta produktu ${row.model}, ${detailLine.join(', ')}`}
+                                onPointerDown={() => setActiveOrderProductId(row.productId)}
+                                className="grid grid-cols-[72px_1fr_auto] gap-3 py-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+                              >
+                                <Thumb src={imageById.get(row.productId)?.[0]} className="h-[72px] w-[72px] self-start" />
+                                <div className="min-w-0">
+                                  <h3 className="truncate text-sm font-bold text-stakerpol-navy">{row.model}</h3>
+                                  <p className="mt-1 truncate text-xs text-gray-600">{detailLine.join(' · ')}</p>
+                                  <p className="mt-2 text-xs font-medium text-gray-700">
+                                    {[displayMobileMetric(row.mastLiftingCapacity), displayMobileMetric(row.liftHeight)].filter(Boolean).join(' · ') || '—'}
+                                  </p>
+                                  <p className="mt-1 text-xs text-gray-600">
+                                    {[displayMobileMetric(row.minHeight), displayMobileMetric(row.battery)].filter(Boolean).join(' · ') || '—'}
+                                  </p>
+                                  <div className="mt-2 flex flex-wrap items-end justify-between gap-2">
+                                    <StatusTag value={row.availability} />
+                                    <span className="text-right">
+                                      <span className="block text-sm font-bold text-stakerpol-navy">
+                                        {displayMobilePrice(row.showPrice, row.netPrice, row.priceCurrency)}
+                                      </span>
+                                      {row.showPrice && <span className="block text-[10px] text-gray-500">netto</span>}
+                                    </span>
                                   </div>
-                                )}
-                                <div className="mt-1.5 pl-5 flex items-center justify-end gap-2 text-xs text-gray-700">
-                                  <StatusTag value={row.availability} />
-                                  <PriceCellMobile
-                                    showPrice={row.showPrice}
-                                    netPrice={row.netPrice}
-                                    currency={row.priceCurrency}
-                                    onInquiry={() => openInquiry(row.productId)}
-                                  />
                                 </div>
-                              </article>
+                                <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-stakerpol-navy" aria-hidden="true" />
+                              </a>
                             );
 
                           })}
@@ -795,7 +787,7 @@ const SharedOffer = () => {
                   </div>
 
                   {/* Adnotacja prawna — na końcu listy tekstowej */}
-                  <p className="mt-8 pt-4 border-t border-gray-200 text-[12px] leading-relaxed text-gray-500 pb-[calc(72px+env(safe-area-inset-bottom))] md:pb-0">
+                   <p className={cn('mt-8 pt-4 border-t border-gray-200 text-[12px] leading-relaxed text-gray-500 pb-[calc(72px+env(safe-area-inset-bottom))] md:pb-0', viewMode === 'photo' && 'hidden')}>
                     Prezentowana oferta ma charakter poglądowy. Dostępność towaru oraz podana cena
                     są gwarantowane wyłącznie po bezpośrednim kontakcie ze Sprzedającym i
                     indywidualnym potwierdzeniu warunków. Zgłoszenie lub rezerwacja bez takiego
@@ -816,12 +808,22 @@ const SharedOffer = () => {
           />
         )}
 
-        {barInquiryOpen && (
-          <PriceInquiryModal isOpen onClose={() => setBarInquiryOpen(false)} />
-        )}
-
-        {/* Pasek kontaktowy — ten sam komponent co na podstronie produktu */}
-        <ProductStickyBar variant="fixed" onInquiryClick={() => setBarInquiryOpen(true)} />
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white px-3 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_-8px_rgba(0,0,0,0.15)] md:hidden">
+          <div className="grid grid-cols-[0.8fr_1.2fr] gap-2">
+            <Button asChild variant="outline" className="min-h-[48px] border-stakerpol-navy text-stakerpol-navy">
+              <a href={`tel:${COMPANY_PHONE_TEL}`}>
+                <Phone aria-hidden="true" />
+                Zadzwoń
+              </a>
+            </Button>
+            <Button asChild className="min-h-[48px] bg-stakerpol-orange font-bold text-white hover:bg-stakerpol-orange/90">
+              <a href={activeOrderRow ? buildOrderMailto(activeOrderRow) : `mailto:${COMPANY.email}`}>
+                <Mail aria-hidden="true" />
+                Zamawiam
+              </a>
+            </Button>
+          </div>
+        </div>
 
         <FloatingContactBubble />
       </div>
