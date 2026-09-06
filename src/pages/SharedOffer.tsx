@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowDown, ArrowUp, ArrowUpFromLine, BatteryCharging, ChevronRight, ExternalLink, Images, Info, MapPin, MoveVertical, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpFromLine, BatteryCharging, ChevronRight, Image as ImageIcon, Info, LayoutGrid, List as ListIcon, MapPin, MoveVertical, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePublicSupabaseProducts } from '@/hooks/usePublicSupabaseProducts';
 import {
@@ -25,7 +25,7 @@ import SharedOfferFilters, {
 } from '@/components/shared-offer/SharedOfferFilters';
 import PriceInquiryModal from '@/components/products/PriceInquiryModal';
 import SpecIconTile from '@/components/shared-offer/SpecIconTile';
-import OfferPhotoBrowser from '@/components/shared-offer/OfferPhotoBrowser';
+import OfferPhotoListCard from '@/components/shared-offer/OfferPhotoListCard';
 
 
 import ProductStickyBar from '@/components/products/ProductStickyBar';
@@ -148,6 +148,30 @@ const NoIndexHead = () => (
   </Helmet>
 );
 
+/** Miniatura pierwszego zdjęcia produktu w widoku listy. */
+const Thumb = ({ src, className }: { src?: string; className?: string }) =>
+  src ? (
+    <img
+      src={src}
+      alt=""
+      aria-hidden="true"
+      loading="lazy"
+      decoding="async"
+      className={cn('shrink-0 rounded-md object-cover bg-gray-100', className)}
+      draggable={false}
+    />
+  ) : (
+    <span
+      aria-hidden="true"
+      className={cn(
+        'shrink-0 rounded-md bg-gray-100 inline-flex items-center justify-center text-gray-300',
+        className
+      )}
+    >
+      <ImageIcon className="h-4 w-4" />
+    </span>
+  );
+
 const StatusTag = ({ value }: { value: string }) => {
   const tone =
     value === 'Sprzedany'
@@ -223,7 +247,7 @@ const SharedOffer = () => {
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT);
   const [inquiryProduct, setInquiryProduct] = useState<Product | null>(null);
   const [barInquiryOpen, setBarInquiryOpen] = useState(false);
-  const [photoMode, setPhotoMode] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'photo'>('list');
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   /** Czujnik: pasek filtrów jest realnie przyklejony dopiero po minięciu tego punktu. */
@@ -434,20 +458,6 @@ const SharedOffer = () => {
             </div>
           ) : (
             <>
-              {/* Główna akcja — własny rząd, NIE przyklejony przy przewijaniu */}
-              {photoRows.length > 0 && (
-                <div className="md:hidden mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setPhotoMode(true)}
-                    className="w-full inline-flex items-center justify-center gap-2 h-12 px-4 rounded-md bg-stakerpol-orange text-white text-base font-bold shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-navy"
-                  >
-                    <Images className="h-5 w-5" />
-                    Przeglądaj ze zdjęciami
-                  </button>
-                </div>
-              )}
-
               {/* Punkt odniesienia — pasek uznajemy za przyklejony dopiero po jego minięciu */}
               <div ref={stickySentinelRef} aria-hidden="true" className="md:hidden h-px" />
 
@@ -538,19 +548,58 @@ const SharedOffer = () => {
                 <>
                   <div className="mb-4 flex flex-wrap items-center gap-3">
                     <p className="text-sm text-gray-700">{model.summary}</p>
-                    <button
-                      type="button"
-                      onClick={() => setPhotoMode(true)}
-                      className="hidden md:inline-flex items-center gap-2 h-10 px-4 rounded-md bg-stakerpol-orange text-white text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-navy"
+                    <div
+                      role="group"
+                      aria-label="Tryb prezentacji listy"
+                      className="ml-auto inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white p-1"
                     >
-                      <Images className="h-4 w-4" />
-                      Przeglądaj ze zdjęciami
-                    </button>
+                      <button
+                        type="button"
+                        aria-label="Widok zdjęciowy"
+                        aria-pressed={viewMode === 'photo'}
+                        onClick={() => setViewMode('photo')}
+                        className={cn(
+                          'inline-flex h-9 w-9 items-center justify-center rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange',
+                          viewMode === 'photo'
+                            ? 'bg-stakerpol-navy text-white'
+                            : 'text-stakerpol-navy'
+                        )}
+                      >
+                        <LayoutGrid className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Widok listy"
+                        aria-pressed={viewMode === 'list'}
+                        onClick={() => setViewMode('list')}
+                        className={cn(
+                          'inline-flex h-9 w-9 items-center justify-center rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange',
+                          viewMode === 'list'
+                            ? 'bg-stakerpol-navy text-white'
+                            : 'text-stakerpol-navy'
+                        )}
+                      >
+                        <ListIcon className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
 
 
+                  {viewMode === 'photo' && (
+                    <div className="space-y-6 pb-[calc(72px+env(safe-area-inset-bottom))] md:pb-0 md:grid md:grid-cols-2 md:gap-6 md:space-y-0">
+                      {photoRows.map((row, i) => (
+                        <OfferPhotoListCard
+                          key={row.productId}
+                          row={row}
+                          images={imageById.get(row.productId) ?? []}
+                          eager={i < 2}
+                        />
+                      ))}
+                    </div>
+                  )}
+
                   {/* Desktop: tabela */}
-                  <div className="hidden md:block space-y-8">
+                  <div className={cn('md:block space-y-8', viewMode === 'photo' ? 'hidden md:hidden' : 'hidden')}>
                     {sortedGroups.map((group) => (
                       <section key={group.key} aria-labelledby={`grp-${group.key}`}>
                         <h2
@@ -586,7 +635,10 @@ const SharedOffer = () => {
                                 <tr key={row.productId} className="border-t border-gray-200">
                                   <td className="px-3 py-2 text-center text-gray-700">{row.index}</td>
                                   <th scope="row" className="px-3 py-2 text-left font-semibold text-stakerpol-navy">
-                                    {row.model}
+                                    <span className="inline-flex items-center gap-2">
+                                      <Thumb src={imageById.get(row.productId)?.[0]} className="h-11 w-11" />
+                                      {row.model}
+                                    </span>
                                   </th>
                                   <td className="px-3 py-2 text-center">{row.serialNumber}</td>
                                   <td className="px-3 py-2 text-center">{row.productionYear}</td>
@@ -628,10 +680,11 @@ const SharedOffer = () => {
                                       href={row.productUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1 text-stakerpol-navy underline focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+                                      aria-label="Karta produktu"
+                                      title="Karta produktu"
+                                      className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-stakerpol-navy/10 text-stakerpol-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
                                     >
-                                      Karta produktu
-                                      <ExternalLink className="h-3.5 w-3.5" />
+                                      <ChevronRight className="h-4 w-4" />
                                     </a>
                                   </td>
                                 </tr>
@@ -644,7 +697,7 @@ const SharedOffer = () => {
                   </div>
 
                   {/* Mobile: niskie wiersze scalone z nagłówkiem grupy */}
-                  <div className="md:hidden space-y-6 pb-[calc(72px+env(safe-area-inset-bottom))]">
+                  <div className={cn('md:hidden space-y-6 pb-[calc(72px+env(safe-area-inset-bottom))]', viewMode === 'photo' && 'hidden')}>
                     {sortedGroups.map((group) => {
                       const common = group.common;
                       const commonKeys = COMMON_PARAM_KEYS.filter((k) => common[k]);
@@ -693,18 +746,21 @@ const SharedOffer = () => {
                             return (
                               <article key={row.productId} className="px-3 py-2">
                                 <div className="flex items-center justify-between gap-2 text-sm text-stakerpol-navy">
-                                  <p className="min-w-0">
-                                    <span className="font-bold">{row.index}.</span>{' '}
-                                    <span>{mainLine.join(' · ')}</span>
-                                  </p>
+                                  <span className="flex min-w-0 items-center gap-2">
+                                    <Thumb src={imageById.get(row.productId)?.[0]} className="h-12 w-12" />
+                                    <p className="min-w-0">
+                                      <span className="font-bold">{row.index}.</span>{' '}
+                                      <span>{mainLine.join(' · ')}</span>
+                                    </p>
+                                  </span>
                                   <a
                                     href={row.productUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex shrink-0 items-center gap-1 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+                                    aria-label="Karta produktu"
+                                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-stakerpol-navy/10 text-stakerpol-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
                                   >
-                                    Zdjęcia
-                                    <ExternalLink className="h-3 w-3" />
+                                    <ChevronRight className="h-4 w-4" />
                                   </a>
                                 </div>
                                 {tiles.length > 0 && (
@@ -759,15 +815,6 @@ const SharedOffer = () => {
             product={inquiryProduct}
           />
         )}
-
-        {photoMode && photoRows.length > 0 && (
-          <OfferPhotoBrowser
-            rows={photoRows}
-            imageById={imageById}
-            onClose={() => setPhotoMode(false)}
-          />
-        )}
-
 
         {barInquiryOpen && (
           <PriceInquiryModal isOpen onClose={() => setBarInquiryOpen(false)} />
