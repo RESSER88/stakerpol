@@ -24,7 +24,6 @@ import SharedOfferFilters, {
   viewerFiltersToCriteria,
 } from '@/components/shared-offer/SharedOfferFilters';
 import PriceInquiryModal from '@/components/products/PriceInquiryModal';
-import SpecIconTile from '@/components/shared-offer/SpecIconTile';
 import OfferPhotoListCard, { buildOrderMailto } from '@/components/shared-offer/OfferPhotoListCard';
 
 
@@ -37,8 +36,6 @@ import { ROUTES } from '@/config/routes';
 import { useScrollState } from '@/hooks/useScrollDirection';
 import {
   getGroupCommonParams,
-  COMMON_PARAM_KEYS,
-  COMMON_PARAM_LABELS,
 } from '@/utils/sharedOffer/groupCommonParams';
 import {
   SortKey,
@@ -212,32 +209,6 @@ const PriceCell = ({
     </button>
   );
 
-/** Mobile: skrócony komunikat ceny, odsyłacz do formularza zapytania. */
-const PriceCellMobile = ({
-  showPrice,
-  netPrice,
-  currency,
-  onInquiry,
-}: {
-  showPrice: boolean;
-  netPrice: number;
-  currency: string;
-  onInquiry: () => void;
-}) =>
-  showPrice ? (
-    <span className="font-semibold text-stakerpol-navy whitespace-nowrap">
-      {formatPrice(netPrice)} {currency}
-    </span>
-  ) : (
-    <button
-      type="button"
-      onClick={onInquiry}
-      className="whitespace-nowrap text-stakerpol-navy underline font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
-    >
-      Cena na zapytanie
-    </button>
-  );
-
 const displayMobilePrice = (showPrice: boolean, netPrice: number, currency: string) => {
   if (!showPrice) return 'Cena na zapytanie';
   const label = currency === 'PLN' ? 'zł' : currency;
@@ -253,7 +224,6 @@ const SharedOffer = () => {
   const [fetchedAt] = useState(() => new Date());
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT);
   const [inquiryProduct, setInquiryProduct] = useState<Product | null>(null);
-  const [barInquiryOpen, setBarInquiryOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'photo'>(() =>
     typeof window !== 'undefined' && window.innerWidth < 768 ? 'photo' : 'list'
   );

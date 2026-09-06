@@ -257,13 +257,13 @@ const OfferPhotoListCard = ({ row, images = [], eager, onActivate }: Props) => {
         </div>
 
         <div className="mt-5 grid grid-cols-[0.8fr_1.2fr] gap-2 md:mt-3 md:grid-cols-2">
-          <Button asChild variant="outline" className="min-h-[48px] border-stakerpol-navy text-stakerpol-navy">
+          <Button asChild variant="outline" className="min-h-[48px] border-stakerpol-navy text-stakerpol-navy md:order-2">
             <a href={`tel:${COMPANY_PHONE_TEL}`}>
               <Phone aria-hidden="true" />
               Zadzwoń
             </a>
           </Button>
-          <Button asChild className="min-h-[48px] bg-stakerpol-orange font-bold text-white hover:bg-stakerpol-orange/90">
+          <Button asChild className="min-h-[48px] bg-stakerpol-orange font-bold text-white hover:bg-stakerpol-orange/90 md:order-1">
             <a href={buildOrderMailto(row)}>
               <Mail aria-hidden="true" />
               Zamawiam ten model
