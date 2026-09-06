@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ArrowUpFromLine,
   BatteryCharging,
@@ -13,6 +13,7 @@ import type { LucideIcon } from 'lucide-react';
 import { COMPANY, ExportRow, formatPrice } from '@/utils/exportListModel';
 import { COMPANY_PHONE_TEL } from '@/lib/contact';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface Props {
   row: ExportRow;
@@ -20,6 +21,7 @@ interface Props {
   images?: string[];
   /** Pierwsze karty ładujemy natychmiast, pozostałe leniwie. */
   eager?: boolean;
+  onActivate?: () => void;
 }
 
 const dash = (v: unknown) => {
@@ -33,6 +35,12 @@ const statusTone = (v: string) =>
     : v === 'Zarezerwowany'
     ? 'bg-amber-100 text-amber-900'
     : 'bg-emerald-100 text-emerald-900';
+
+const displayPrice = (row: ExportRow) => {
+  if (!row.showPrice) return 'Cena na zapytanie';
+  const currency = row.priceCurrency === 'PLN' ? 'zł' : row.priceCurrency;
+  return `${new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }).format(row.netPrice)} ${currency}`;
+};
 
 /** Szkic zamówienia — dokładnie ta sama treść co w dotychczasowym trybie zdjęciowym. */
 export const buildOrderMailto = (row: ExportRow) => {
@@ -77,10 +85,10 @@ export const buildOrderMailto = (row: ExportRow) => {
 const Spec = ({ Icon, label, value }: { Icon: LucideIcon; label: string; value: string }) => {
   const empty = value === '—';
   return (
-    <div className="flex items-center gap-1.5 min-w-0">
+    <div className="flex items-start gap-2 min-w-0 py-1">
       <Icon
         aria-hidden="true"
-        className={cn('h-4 w-4 shrink-0', empty ? 'text-gray-300' : 'text-stakerpol-navy')}
+        className={cn('mt-0.5 h-4 w-4 shrink-0', empty ? 'text-gray-300' : 'text-stakerpol-navy')}
       />
       <span className="min-w-0">
         <span className="block text-[9px] uppercase tracking-wide font-semibold leading-none text-gray-600">
@@ -88,7 +96,7 @@ const Spec = ({ Icon, label, value }: { Icon: LucideIcon; label: string; value: 
         </span>
         <span
           className={cn(
-            'block text-xs font-semibold leading-tight truncate',
+            'mt-1 block text-sm font-semibold leading-tight truncate',
             empty ? 'text-gray-400' : 'text-stakerpol-navy'
           )}
         >
@@ -103,35 +111,61 @@ const Spec = ({ Icon, label, value }: { Icon: LucideIcon; label: string; value: 
  * Duża karta produktu w normalnym przepływie strony (tryb „widok zdjęciowy”).
  * Strzałki przełączają wyłącznie zdjęcia tego samego produktu.
  */
-const OfferPhotoListCard = ({ row, images = [], eager }: Props) => {
+const OfferPhotoListCard = ({ row, images = [], eager, onActivate }: Props) => {
   const [idx, setIdx] = useState(0);
+  const railRef = useRef<HTMLDivElement | null>(null);
   const count = images.length;
-  const src = count > 0 ? images[Math.min(idx, count - 1)] : undefined;
-  const step = (delta: number) => setIdx((i) => (count === 0 ? 0 : (i + delta + count) % count));
+  const current = Math.min(idx, Math.max(0, count - 1));
+  const step = (delta: number) => {
+    if (count === 0) return;
+    const next = (current + delta + count) % count;
+    setIdx(next);
+    const rail = railRef.current;
+    if (rail) rail.scrollTo({ left: rail.clientWidth * next, behavior: 'smooth' });
+  };
+
+  const syncIndex = () => {
+    const rail = railRef.current;
+    if (!rail || rail.clientWidth === 0) return;
+    setIdx(Math.min(count - 1, Math.max(0, Math.round(rail.scrollLeft / rail.clientWidth))));
+  };
 
   return (
-    <article className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-      <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
-        {src ? (
-          <>
-            <img
-              src={src}
-              alt=""
-              aria-hidden="true"
-              loading={eager ? 'eager' : 'lazy'}
-              decoding="async"
-              className="absolute inset-0 h-full w-full object-cover blur-xl scale-110 opacity-60"
-              draggable={false}
-            />
-            <img
-              src={src}
-              alt={`${row.model} ${row.serialNumber} — zdjęcie ${Math.min(idx, count - 1) + 1}`.trim()}
-              loading={eager ? 'eager' : 'lazy'}
-              decoding="async"
-              className="relative h-full w-full object-contain"
-              draggable={false}
-            />
-          </>
+    <article
+      data-offer-product-id={row.productId}
+      className="overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm md:rounded-lg"
+      onPointerDown={onActivate}
+      onFocusCapture={onActivate}
+    >
+      <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+        {count > 0 ? (
+          <div
+            ref={railRef}
+            onScroll={syncIndex}
+            className="flex h-full w-full snap-x snap-mandatory overflow-x-auto no-scrollbar touch-pan-x"
+          >
+            {images.map((src, imageIndex) => (
+              <div key={`${src}-${imageIndex}`} className="relative h-full w-full shrink-0 snap-center overflow-hidden">
+                <img
+                  src={src}
+                  alt=""
+                  aria-hidden="true"
+                  loading={eager && imageIndex === 0 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  className="absolute inset-0 h-full w-full scale-110 object-cover opacity-50 blur-xl"
+                  draggable={false}
+                />
+                <img
+                  src={src}
+                  alt={`${row.model} ${row.serialNumber} — zdjęcie ${imageIndex + 1}`.trim()}
+                  loading={eager && imageIndex === 0 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  className="relative h-full w-full object-contain"
+                  draggable={false}
+                />
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <span className="text-sm text-gray-400">Brak zdjęcia</span>
@@ -149,7 +183,7 @@ const OfferPhotoListCard = ({ row, images = [], eager }: Props) => {
 
         {count > 0 && (
           <span className="absolute right-3 top-3 z-10 rounded-full bg-stakerpol-navy/85 px-2.5 py-0.5 text-[11px] font-semibold text-white">
-            {Math.min(idx, count - 1) + 1}/{count}
+            {current + 1}/{count}
           </span>
         )}
 
@@ -182,12 +216,19 @@ const OfferPhotoListCard = ({ row, images = [], eager }: Props) => {
         )}
       </div>
 
-      <div className="px-3 py-3">
-        <div className="flex items-baseline gap-2">
-          <h3 className="text-sm font-bold text-stakerpol-navy truncate">{row.model}</h3>
-          <span className="h-1 w-8 bg-stakerpol-orange rounded-full shrink-0" />
+      <div className="px-4 pb-4 pt-5 md:px-3 md:py-3">
+        <div className="flex items-start justify-between gap-4">
+          <h3 className="min-w-0 text-lg font-bold leading-tight text-stakerpol-navy md:text-sm">
+            {row.model}
+          </h3>
+          <div className="shrink-0 text-right">
+            <p className="text-lg font-bold leading-tight text-stakerpol-navy md:text-base">
+              {displayPrice(row)}
+            </p>
+            {row.showPrice && <p className="mt-1 text-[11px] text-gray-500">Cena netto</p>}
+          </div>
         </div>
-        <p className="mt-1 text-xs text-gray-700">
+        <p className="mt-2 text-sm text-gray-600 md:text-xs">
           {[
             row.productionYear ? String(row.productionYear) : null,
             row.serialNumber || null,
@@ -197,42 +238,37 @@ const OfferPhotoListCard = ({ row, images = [], eager }: Props) => {
             .join(' · ')}
         </p>
 
-        <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-x-2 gap-y-2">
+        <div className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 border-y border-gray-200 py-4 sm:grid-cols-4 md:mt-2 md:gap-x-2 md:gap-y-2 md:border-0 md:py-0">
           <Spec Icon={Package} label="Udźwig" value={dash(row.mastLiftingCapacity)} />
           <Spec Icon={MoveVertical} label="Wys. konstr." value={dash(row.minHeight)} />
           <Spec Icon={ArrowUpFromLine} label="Podnoszenie" value={dash(row.liftHeight)} />
           <Spec Icon={BatteryCharging} label="Bateria" value={dash(row.battery)} />
         </div>
 
-        <div className="mt-3 flex items-center justify-between gap-2">
+        <div className="mt-4 flex items-center justify-between gap-2">
           <a
             href={row.productUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs font-semibold text-stakerpol-navy underline underline-offset-2 shrink-0"
+            className="text-sm font-semibold text-stakerpol-navy underline decoration-gray-300 underline-offset-4"
           >
             Karta produktu →
           </a>
-          <span className="text-base font-bold text-stakerpol-navy whitespace-nowrap">
-            {row.showPrice ? `${formatPrice(row.netPrice)} ${row.priceCurrency}` : 'Cena na zapytanie'}
-          </span>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <a
-            href={buildOrderMailto(row)}
-            className="inline-flex items-center justify-center gap-2 rounded-[4px] bg-stakerpol-orange min-h-[48px] px-3 text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-navy"
-          >
-            <Mail className="h-4 w-4" aria-hidden="true" />
-            Zamawiam
-          </a>
-          <a
-            href={`tel:${COMPANY_PHONE_TEL}`}
-            className="inline-flex items-center justify-center gap-2 rounded-[4px] bg-ink min-h-[48px] px-3 text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
-          >
-            <Phone className="h-4 w-4" aria-hidden="true" />
-            Zadzwoń
-          </a>
+        <div className="mt-5 grid grid-cols-[0.8fr_1.2fr] gap-2 md:mt-3 md:grid-cols-2">
+          <Button asChild variant="outline" className="min-h-[48px] border-stakerpol-navy text-stakerpol-navy">
+            <a href={`tel:${COMPANY_PHONE_TEL}`}>
+              <Phone aria-hidden="true" />
+              Zadzwoń
+            </a>
+          </Button>
+          <Button asChild className="min-h-[48px] bg-stakerpol-orange font-bold text-white hover:bg-stakerpol-orange/90">
+            <a href={buildOrderMailto(row)}>
+              <Mail aria-hidden="true" />
+              Zamawiam ten model
+            </a>
+          </Button>
         </div>
       </div>
     </article>
