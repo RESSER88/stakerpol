@@ -222,9 +222,14 @@ const displayMobilePrice = (showPrice: boolean, netPrice: number, currency: stri
 const displayMobileMetric = (value: string) => {
   const normalized = String(value || '').trim();
   if (!normalized || normalized === '—' || normalized === '-') return null;
-  return normalized
+  const spaced = normalized
     .replace('.', ',')
     .replace(/(\d)(kg|m|Ah)\b/i, '$1 $2');
+  const unitMatch = spaced.match(/^(\d+)\s*(kg|Ah)$/i);
+  if (unitMatch) {
+    return `${new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }).format(Number(unitMatch[1]))} ${unitMatch[2]}`;
+  }
+  return spaced;
 };
 
 const availableUnitsLabel = (count: number) => {
@@ -245,7 +250,7 @@ const MobileListSpec = ({
   <div className="flex min-w-0 items-start gap-1.5">
     <Icon aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-stakerpol-navy/60" />
     <span className="min-w-0 leading-tight">
-      <span className="block text-[9px] font-medium text-gray-500">{label}</span>
+      <span className="block truncate text-[8px] font-medium text-gray-500 min-[390px]:text-[9px]">{label}</span>
       <span className="mt-0.5 block whitespace-nowrap text-[11px] font-semibold text-stakerpol-navy min-[390px]:text-xs">
         {value || '—'}
       </span>
@@ -806,42 +811,14 @@ const SharedOffer = () => {
 
                             return (
                               <article key={row.productId} className="py-3">
-                                <div className="flex min-w-0 items-start gap-2">
-                                  <a
-                                    href={row.productUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    onPointerDown={() => setActiveOrderProductId(row.productId)}
-                                    className="min-w-0 flex-1 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
-                                  >
-                                    <h3 className="truncate text-[17px] font-bold leading-tight text-stakerpol-navy">
-                                      {productName}
-                                    </h3>
-                                    {description && (
-                                      <p className="mt-0.5 line-clamp-2 text-[11px] leading-[1.35] text-gray-600">
-                                        {description}
-                                      </p>
-                                    )}
-                                  </a>
-                                  <Button
-                                    type="button"
-                                    size="icon"
-                                    onClick={() => setOrderProductId(row.productId)}
-                                    aria-label={`Zamawiam ${row.model}${row.serialNumber ? ` nr ${row.serialNumber}` : ''}`}
-                                    className="h-10 w-10 shrink-0 rounded-full bg-stakerpol-orange text-white hover:bg-stakerpol-orange/90 focus-visible:ring-stakerpol-navy"
-                                  >
-                                    <ShoppingCart className="h-4 w-4" aria-hidden="true" />
-                                  </Button>
-                                </div>
-
-                                <div className="mt-2 grid grid-cols-[88px_minmax(0,1fr)] gap-2.5">
+                                <div className="grid min-w-0 grid-cols-[86px_minmax(0,1fr)_76px] gap-2.5 min-[390px]:grid-cols-[90px_minmax(0,1fr)_82px]">
                                   <a
                                     href={row.productUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     tabIndex={-1}
                                     aria-hidden="true"
-                                    className="relative h-[88px] w-[88px] overflow-hidden rounded-md bg-gray-100"
+                                    className="relative h-[86px] w-[86px] overflow-hidden rounded-md bg-gray-100 min-[390px]:h-[90px] min-[390px]:w-[90px]"
                                   >
                                     <Thumb src={images[0]} className="h-full w-full object-contain" />
                                     {images.length > 1 && (
@@ -858,25 +835,55 @@ const SharedOffer = () => {
                                       rel="noopener noreferrer"
                                       aria-label={`Karta produktu ${productName}`}
                                       onPointerDown={() => setActiveOrderProductId(row.productId)}
-                                      className="grid grid-cols-2 gap-x-2 gap-y-2 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+                                      className="block rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+                                    >
+                                      <h3 className="truncate text-[17px] font-bold leading-tight text-stakerpol-navy min-[390px]:text-lg">
+                                        {productName}
+                                      </h3>
+                                      {description && (
+                                        <p className="mt-0.5 line-clamp-2 text-[11px] leading-[1.25] text-gray-600">
+                                          {description}
+                                        </p>
+                                      )}
+                                    </a>
+
+                                    <a
+                                      href={row.productUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      aria-label={`Parametry ${productName}`}
+                                      onPointerDown={() => setActiveOrderProductId(row.productId)}
+                                      className="mt-1.5 grid grid-cols-2 gap-x-1.5 gap-y-1.5 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange min-[390px]:gap-x-2"
                                     >
                                       <MobileListSpec Icon={Calendar} label="Rok" value={row.productionYear || '—'} />
                                       <MobileListSpec Icon={Clock} label="Motogodziny" value={formatMobileHours(row.workingHours)} />
                                       <MobileListSpec Icon={Package} label="Udźwig" value={displayMobileMetric(row.mastLiftingCapacity) || '—'} />
-                                      <MobileListSpec Icon={ArrowUpFromLine} label="Wys. podnoszenia" value={displayMobileMetric(row.liftHeight) || '—'} />
-                                      <MobileListSpec Icon={MoveVertical} label="Wys. konstrukcyjna" value={displayMobileMetric(row.minHeight) || '—'} />
+                                      <MobileListSpec Icon={ArrowUpFromLine} label="Podnoszenie" value={displayMobileMetric(row.liftHeight) || '—'} />
+                                      <MobileListSpec Icon={MoveVertical} label="Konstrukcyjna" value={displayMobileMetric(row.minHeight) || '—'} />
                                       <MobileListSpec Icon={BatteryCharging} label="Bateria" value={displayMobileMetric(row.battery) || '—'} />
                                     </a>
 
-                                    <div className="mt-2 flex min-w-0 items-end justify-between gap-2 border-t border-gray-100 pt-1.5">
+                                    <div className="mt-1.5">
                                       <MobileAvailability value={row.availability} />
-                                      <span className="shrink-0 text-right">
-                                        <span className={cn('block font-bold leading-none text-stakerpol-navy', row.showPrice ? 'text-base' : 'max-w-[110px] text-xs leading-tight')}>
-                                          {displayMobilePrice(row.showPrice, row.netPrice, row.priceCurrency)}
-                                        </span>
-                                        {row.showPrice && <span className="mt-0.5 block text-[9px] leading-none text-gray-500">netto</span>}
-                                      </span>
                                     </div>
+                                  </div>
+
+                                  <div className="flex min-w-0 flex-col items-end justify-between gap-2">
+                                    <Button
+                                      type="button"
+                                      size="icon"
+                                      onClick={() => setOrderProductId(row.productId)}
+                                      aria-label={`Zamawiam ${row.model}${row.serialNumber ? ` nr ${row.serialNumber}` : ''}`}
+                                      className="h-10 w-10 shrink-0 rounded-full bg-stakerpol-orange text-white hover:bg-stakerpol-orange/90 focus-visible:ring-stakerpol-navy"
+                                    >
+                                      <ShoppingCart className="h-4 w-4" aria-hidden="true" />
+                                    </Button>
+                                    <span className="shrink-0 text-right">
+                                      <span className={cn('block font-bold leading-tight text-stakerpol-navy', row.showPrice ? 'text-[15px] min-[390px]:text-base' : 'max-w-[76px] text-[10px] leading-tight min-[390px]:max-w-[82px]')}>
+                                        {displayMobilePrice(row.showPrice, row.netPrice, row.priceCurrency)}
+                                      </span>
+                                      {row.showPrice && <span className="mt-0.5 block text-[9px] leading-none text-gray-500">netto</span>}
+                                    </span>
                                   </div>
                                 </div>
                               </article>
