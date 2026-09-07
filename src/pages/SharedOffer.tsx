@@ -830,7 +830,7 @@ const SharedOffer = () => {
                                     aria-label={`Zamawiam ${row.model}${row.serialNumber ? ` nr ${row.serialNumber}` : ''}`}
                                     className="h-10 w-10 shrink-0 rounded-full bg-stakerpol-orange text-white hover:bg-stakerpol-orange/90 focus-visible:ring-stakerpol-navy"
                                   >
-                                    <ShoppingCart className="h-4.5 w-4.5" aria-hidden="true" />
+                                    <ShoppingCart className="h-4 w-4" aria-hidden="true" />
                                   </Button>
                                 </div>
 
