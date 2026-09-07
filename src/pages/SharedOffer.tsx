@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowDown, ArrowUp, ArrowUpFromLine, BatteryCharging, ChevronRight, Image as ImageIcon, Info, LayoutGrid, List as ListIcon, Mail, MapPin, MoveVertical, Package, Phone, ShoppingCart, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpFromLine, BatteryCharging, Calendar, ChevronRight, Clock, Image as ImageIcon, Info, LayoutGrid, List as ListIcon, Mail, MapPin, MoveVertical, Package, Phone, ShoppingCart, SlidersHorizontal, Loader2 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePublicSupabaseProducts } from '@/hooks/usePublicSupabaseProducts';
 import {
@@ -230,6 +231,51 @@ const availableUnitsLabel = (count: number) => {
   if (count === 1) return '1 dostępna sztuka';
   if (count >= 2 && count <= 4) return `${count} dostępne sztuki`;
   return `${count} dostępnych sztuk`;
+};
+
+const MobileListSpec = ({
+  Icon,
+  label,
+  value,
+}: {
+  Icon: LucideIcon;
+  label: string;
+  value?: string | null;
+}) => (
+  <div className="flex min-w-0 items-start gap-1.5">
+    <Icon aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-stakerpol-navy/60" />
+    <span className="min-w-0 leading-tight">
+      <span className="block text-[9px] font-medium text-gray-500">{label}</span>
+      <span className="mt-0.5 block whitespace-nowrap text-[11px] font-semibold text-stakerpol-navy min-[390px]:text-xs">
+        {value || '—'}
+      </span>
+    </span>
+  </div>
+);
+
+const MobileAvailability = ({ value }: { value: string }) => {
+  const dotTone =
+    value === 'Dostępny'
+      ? 'bg-green-500'
+      : value === 'Zarezerwowany'
+      ? 'bg-amber-500'
+      : 'bg-gray-400';
+
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5 text-[10px] font-medium text-gray-600">
+      <span aria-hidden="true" className={cn('h-1.5 w-1.5 shrink-0 rounded-full', dotTone)} />
+      <span className="truncate">{value}</span>
+    </span>
+  );
+};
+
+const formatMobileHours = (value: string | number) => {
+  const numeric = Number(value);
+  if (Number.isFinite(numeric) && numeric > 0) {
+    return `${new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }).format(numeric)} mth`;
+  }
+  const text = String(value || '').trim();
+  return text ? `${text} mth` : '—';
 };
 
 
@@ -749,63 +795,92 @@ const SharedOffer = () => {
                         </div>
                         <div className="divide-y divide-gray-200 border-y border-gray-200 bg-white">
                           {group.rows.map((row) => {
-                            const detailLine = [
-                              row.productionYear ? String(row.productionYear) : null,
-                              row.serialNumber ? row.serialNumber : null,
-                              row.workingHours ? `${row.workingHours} mth` : null,
-                            ].filter(Boolean) as string[];
+                            const product = productById.get(row.productId);
+                            const description =
+                              product?.shortDescription?.trim() ||
+                              product?.shortMarketingDescription?.trim() ||
+                              product?.aboutDescription?.trim() ||
+                              '';
+                            const images = imageById.get(row.productId) ?? [];
+                            const productName = product?.model?.trim() || row.model;
 
                             return (
-                              <div key={row.productId} className="grid grid-cols-[72px_1fr_auto] gap-3 py-4">
-                                <a
-                                  href={row.productUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  tabIndex={-1}
-                                  aria-hidden="true"
-                                  className="contents"
-                                >
-                                  <Thumb src={imageById.get(row.productId)?.[0]} className="h-[72px] w-[72px] self-start" />
-                                </a>
-                                <div className="min-w-0">
+                              <article key={row.productId} className="py-3">
+                                <div className="flex min-w-0 items-start gap-2">
                                   <a
                                     href={row.productUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    aria-label={`Karta produktu ${row.model}, ${detailLine.join(', ')}`}
                                     onPointerDown={() => setActiveOrderProductId(row.productId)}
-                                    className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+                                    className="min-w-0 flex-1 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
                                   >
-                                    <h3 className="truncate text-sm font-bold text-stakerpol-navy">{row.model}</h3>
-                                    <p className="mt-1 truncate text-xs text-gray-600">{detailLine.join(' · ')}</p>
-                                    <p className="mt-2 text-xs font-medium text-gray-700">
-                                      {[displayMobileMetric(row.mastLiftingCapacity), displayMobileMetric(row.liftHeight)].filter(Boolean).join(' · ') || '—'}
-                                    </p>
-                                    <p className="mt-1 text-xs text-gray-600">
-                                      {[displayMobileMetric(row.minHeight), displayMobileMetric(row.battery)].filter(Boolean).join(' · ') || '—'}
-                                    </p>
+                                    <h3 className="truncate text-[17px] font-bold leading-tight text-stakerpol-navy">
+                                      {productName}
+                                    </h3>
+                                    {description && (
+                                      <p className="mt-0.5 line-clamp-2 text-[11px] leading-[1.35] text-gray-600">
+                                        {description}
+                                      </p>
+                                    )}
                                   </a>
-                                  <div className="mt-2 flex flex-wrap items-end justify-between gap-2">
-                                    <StatusTag value={row.availability} />
-                                    <span className="ml-auto text-right">
-                                      <span className="block text-sm font-bold text-stakerpol-navy">
-                                        {displayMobilePrice(row.showPrice, row.netPrice, row.priceCurrency)}
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    onClick={() => setOrderProductId(row.productId)}
+                                    aria-label={`Zamawiam ${row.model}${row.serialNumber ? ` nr ${row.serialNumber}` : ''}`}
+                                    className="h-10 w-10 shrink-0 rounded-full bg-stakerpol-orange text-white hover:bg-stakerpol-orange/90 focus-visible:ring-stakerpol-navy"
+                                  >
+                                    <ShoppingCart className="h-4.5 w-4.5" aria-hidden="true" />
+                                  </Button>
+                                </div>
+
+                                <div className="mt-2 grid grid-cols-[88px_minmax(0,1fr)] gap-2.5">
+                                  <a
+                                    href={row.productUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    tabIndex={-1}
+                                    aria-hidden="true"
+                                    className="relative h-[88px] w-[88px] overflow-hidden rounded-md bg-gray-100"
+                                  >
+                                    <Thumb src={images[0]} className="h-full w-full object-contain" />
+                                    {images.length > 1 && (
+                                      <span className="absolute bottom-1 left-1 rounded bg-stakerpol-navy/85 px-1.5 py-0.5 text-[8px] font-semibold text-white">
+                                        {images.length} zdjęć
                                       </span>
-                                      {row.showPrice && <span className="block text-[10px] text-gray-500">netto</span>}
-                                    </span>
+                                    )}
+                                  </a>
+
+                                  <div className="min-w-0">
+                                    <a
+                                      href={row.productUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      aria-label={`Karta produktu ${productName}`}
+                                      onPointerDown={() => setActiveOrderProductId(row.productId)}
+                                      className="grid grid-cols-2 gap-x-2 gap-y-2 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+                                    >
+                                      <MobileListSpec Icon={Calendar} label="Rok" value={row.productionYear || '—'} />
+                                      <MobileListSpec Icon={Clock} label="Motogodziny" value={formatMobileHours(row.workingHours)} />
+                                      <MobileListSpec Icon={Package} label="Udźwig" value={displayMobileMetric(row.mastLiftingCapacity) || '—'} />
+                                      <MobileListSpec Icon={ArrowUpFromLine} label="Wys. podnoszenia" value={displayMobileMetric(row.liftHeight) || '—'} />
+                                      <MobileListSpec Icon={MoveVertical} label="Wys. konstrukcyjna" value={displayMobileMetric(row.minHeight) || '—'} />
+                                      <MobileListSpec Icon={BatteryCharging} label="Bateria" value={displayMobileMetric(row.battery) || '—'} />
+                                    </a>
+
+                                    <div className="mt-2 flex min-w-0 items-end justify-between gap-2 border-t border-gray-100 pt-1.5">
+                                      <MobileAvailability value={row.availability} />
+                                      <span className="shrink-0 text-right">
+                                        <span className={cn('block font-bold leading-none text-stakerpol-navy', row.showPrice ? 'text-base' : 'max-w-[110px] text-xs leading-tight')}>
+                                          {displayMobilePrice(row.showPrice, row.netPrice, row.priceCurrency)}
+                                        </span>
+                                        {row.showPrice && <span className="mt-0.5 block text-[9px] leading-none text-gray-500">netto</span>}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
-                                <button
-                                  type="button"
-                                  onClick={() => setOrderProductId(row.productId)}
-                                  aria-label={`Zamawiam ${row.model}${row.serialNumber ? ` nr ${row.serialNumber}` : ''}`}
-                                  className="mt-0.5 inline-flex h-12 w-12 shrink-0 items-center justify-center self-start rounded-full bg-stakerpol-orange text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-navy"
-                                >
-                                  <ShoppingCart className="h-5 w-5" aria-hidden="true" />
-                                </button>
-                              </div>
+                              </article>
                             );
-
                           })}
                         </div>
                       </section>
