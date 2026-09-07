@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowDown, ArrowUp, ArrowUpFromLine, BatteryCharging, ChevronRight, Image as ImageIcon, Info, LayoutGrid, List as ListIcon, Mail, MapPin, MoveVertical, Package, Phone, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpFromLine, BatteryCharging, ChevronRight, Image as ImageIcon, Info, LayoutGrid, List as ListIcon, Mail, MapPin, MoveVertical, Package, Phone, ShoppingCart, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePublicSupabaseProducts } from '@/hooks/usePublicSupabaseProducts';
 import {
@@ -24,7 +24,8 @@ import SharedOfferFilters, {
   viewerFiltersToCriteria,
 } from '@/components/shared-offer/SharedOfferFilters';
 import PriceInquiryModal from '@/components/products/PriceInquiryModal';
-import OfferPhotoListCard, { buildOrderMailto } from '@/components/shared-offer/OfferPhotoListCard';
+import OfferPhotoListCard from '@/components/shared-offer/OfferPhotoListCard';
+import OfferOrderSheet from '@/components/shared-offer/OfferOrderSheet';
 
 
 import type { Product } from '@/types';
@@ -170,7 +171,9 @@ const Thumb = ({ src, className }: { src?: string; className?: string }) =>
     </span>
   );
 
+/** Status pokazujemy tylko wtedy, gdy wymaga uwagi klienta. */
 const StatusTag = ({ value }: { value: string }) => {
+  if (value === 'Dostępny') return null;
   const tone =
     value === 'Sprzedany'
       ? 'bg-gray-200 text-gray-700'
@@ -242,6 +245,7 @@ const SharedOffer = () => {
     typeof window !== 'undefined' && window.innerWidth < 768 ? 'photo' : 'list'
   );
   const [activeOrderProductId, setActiveOrderProductId] = useState<string | null>(null);
+  const [orderProductId, setOrderProductId] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   /** Czujnik: pasek filtrów jest realnie przyklejony dopiero po minięciu tego punktu. */
@@ -324,6 +328,11 @@ const SharedOffer = () => {
   const photoRows = useMemo(
     () => sortedGroups.flatMap((g) => g.rows),
     [sortedGroups]
+  );
+
+  const orderRow = useMemo(
+    () => photoRows.find((row) => row.productId === orderProductId) ?? null,
+    [orderProductId, photoRows]
   );
 
   const activeOrderRow = useMemo(
@@ -616,6 +625,7 @@ const SharedOffer = () => {
                           images={imageById.get(row.productId) ?? []}
                           eager={i < 2}
                            onActivate={() => setActiveOrderProductId(row.productId)}
+                          onOrder={() => setOrderProductId(row.productId)}
                         />
                       ))}
                     </div>
@@ -746,28 +756,38 @@ const SharedOffer = () => {
                             ].filter(Boolean) as string[];
 
                             return (
-                              <a
-                                key={row.productId}
-                                href={row.productUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label={`Karta produktu ${row.model}, ${detailLine.join(', ')}`}
-                                onPointerDown={() => setActiveOrderProductId(row.productId)}
-                                className="grid grid-cols-[72px_1fr_auto] gap-3 py-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
-                              >
-                                <Thumb src={imageById.get(row.productId)?.[0]} className="h-[72px] w-[72px] self-start" />
+                              <div key={row.productId} className="grid grid-cols-[72px_1fr_auto] gap-3 py-4">
+                                <a
+                                  href={row.productUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  tabIndex={-1}
+                                  aria-hidden="true"
+                                  className="contents"
+                                >
+                                  <Thumb src={imageById.get(row.productId)?.[0]} className="h-[72px] w-[72px] self-start" />
+                                </a>
                                 <div className="min-w-0">
-                                  <h3 className="truncate text-sm font-bold text-stakerpol-navy">{row.model}</h3>
-                                  <p className="mt-1 truncate text-xs text-gray-600">{detailLine.join(' · ')}</p>
-                                  <p className="mt-2 text-xs font-medium text-gray-700">
-                                    {[displayMobileMetric(row.mastLiftingCapacity), displayMobileMetric(row.liftHeight)].filter(Boolean).join(' · ') || '—'}
-                                  </p>
-                                  <p className="mt-1 text-xs text-gray-600">
-                                    {[displayMobileMetric(row.minHeight), displayMobileMetric(row.battery)].filter(Boolean).join(' · ') || '—'}
-                                  </p>
+                                  <a
+                                    href={row.productUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label={`Karta produktu ${row.model}, ${detailLine.join(', ')}`}
+                                    onPointerDown={() => setActiveOrderProductId(row.productId)}
+                                    className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+                                  >
+                                    <h3 className="truncate text-sm font-bold text-stakerpol-navy">{row.model}</h3>
+                                    <p className="mt-1 truncate text-xs text-gray-600">{detailLine.join(' · ')}</p>
+                                    <p className="mt-2 text-xs font-medium text-gray-700">
+                                      {[displayMobileMetric(row.mastLiftingCapacity), displayMobileMetric(row.liftHeight)].filter(Boolean).join(' · ') || '—'}
+                                    </p>
+                                    <p className="mt-1 text-xs text-gray-600">
+                                      {[displayMobileMetric(row.minHeight), displayMobileMetric(row.battery)].filter(Boolean).join(' · ') || '—'}
+                                    </p>
+                                  </a>
                                   <div className="mt-2 flex flex-wrap items-end justify-between gap-2">
                                     <StatusTag value={row.availability} />
-                                    <span className="text-right">
+                                    <span className="ml-auto text-right">
                                       <span className="block text-sm font-bold text-stakerpol-navy">
                                         {displayMobilePrice(row.showPrice, row.netPrice, row.priceCurrency)}
                                       </span>
@@ -775,8 +795,15 @@ const SharedOffer = () => {
                                     </span>
                                   </div>
                                 </div>
-                                <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-stakerpol-navy" aria-hidden="true" />
-                              </a>
+                                <button
+                                  type="button"
+                                  onClick={() => setOrderProductId(row.productId)}
+                                  aria-label={`Zamawiam ${row.model}${row.serialNumber ? ` nr ${row.serialNumber}` : ''}`}
+                                  className="mt-0.5 inline-flex h-12 w-12 shrink-0 items-center justify-center self-start rounded-full bg-stakerpol-orange text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-navy"
+                                >
+                                  <ShoppingCart className="h-5 w-5" aria-hidden="true" />
+                                </button>
+                              </div>
                             );
 
                           })}
@@ -809,21 +836,31 @@ const SharedOffer = () => {
         )}
 
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white px-3 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_-8px_rgba(0,0,0,0.15)] md:hidden">
-          <div className="grid grid-cols-[0.8fr_1.2fr] gap-2">
+          <div className={cn('grid gap-2', viewMode === 'photo' ? 'grid-cols-[0.8fr_1.2fr]' : 'grid-cols-1')}>
             <Button asChild variant="outline" className="min-h-[48px] border-stakerpol-navy text-stakerpol-navy">
               <a href={`tel:${COMPANY_PHONE_TEL}`}>
                 <Phone aria-hidden="true" />
                 Zadzwoń
               </a>
             </Button>
-            <Button asChild className="min-h-[48px] bg-stakerpol-orange font-bold text-white hover:bg-stakerpol-orange/90">
-              <a href={activeOrderRow ? buildOrderMailto(activeOrderRow) : `mailto:${COMPANY.email}`}>
-                <Mail aria-hidden="true" />
+            {viewMode === 'photo' && (
+              <Button
+                type="button"
+                onClick={() => activeOrderRow && setOrderProductId(activeOrderRow.productId)}
+                className="min-h-[48px] bg-stakerpol-orange font-bold text-white hover:bg-stakerpol-orange/90"
+              >
+                <ShoppingCart aria-hidden="true" />
                 Zamawiam
-              </a>
-            </Button>
+              </Button>
+            )}
           </div>
         </div>
+
+        <OfferOrderSheet
+          row={orderRow}
+          image={orderRow ? imageById.get(orderRow.productId)?.[0] : undefined}
+          onClose={() => setOrderProductId(null)}
+        />
 
         <FloatingContactBubble />
       </div>
