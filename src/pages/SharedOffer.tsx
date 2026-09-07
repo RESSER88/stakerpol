@@ -820,14 +820,14 @@ const SharedOffer = () => {
                                     rel="noopener noreferrer"
                                     aria-label={`Parametry ${productName}`}
                                     onPointerDown={() => setActiveOrderProductId(row.productId)}
-                                    className="col-span-3 mt-2 min-w-0 rounded-sm text-[10px] leading-[1.4] text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange min-[390px]:text-[11px]"
+                                    className="col-span-3 mt-2 min-w-0 rounded-sm text-[9px] leading-[1.4] text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange min-[390px]:text-[10px]"
                                   >
-                                    <span className="grid min-w-0 grid-cols-[0.85fr_0.9fr_1.15fr] items-center gap-x-1.5">
+                                    <span className="grid min-w-0 grid-cols-[0.7fr_0.8fr_1.05fr] items-center gap-x-1.5">
                                       <span className="min-w-0 truncate">Rok <strong className="font-semibold text-stakerpol-navy">{row.productionYear || '—'}</strong></span>
                                       <span className="min-w-0 truncate border-l border-gray-200 pl-1.5">MTH <strong className="font-semibold text-stakerpol-navy">{formatMobileHours(row.workingHours).replace(/\s*mth$/i, '')}</strong></span>
                                       <span className="min-w-0 truncate border-l border-gray-200 pl-1.5">Bateria <strong className="font-semibold text-stakerpol-navy">{displayMobileMetric(row.battery) || '—'}</strong></span>
                                     </span>
-                                    <span className="mt-0.5 grid min-w-0 grid-cols-[0.9fr_1.05fr_1.35fr] items-center gap-x-1.5">
+                                    <span className="mt-0.5 grid min-w-0 grid-cols-[0.8fr_1.25fr_1.45fr] items-center gap-x-1.5">
                                       <span className="min-w-0 truncate">Udźwig <strong className="font-semibold text-stakerpol-navy">{displayMobileMetric(row.mastLiftingCapacity) || '—'}</strong></span>
                                       <span className="min-w-0 truncate border-l border-gray-200 pl-1.5">Podnoszenie <strong className="font-semibold text-stakerpol-navy">{displayMobileMetric(row.liftHeight) || '—'}</strong></span>
                                       <span className="min-w-0 truncate border-l border-gray-200 pl-1.5">Konstrukcyjna <strong className="font-semibold text-stakerpol-navy">{displayMobileMetric(row.minHeight) || '—'}</strong></span>
