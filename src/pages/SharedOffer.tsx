@@ -756,28 +756,38 @@ const SharedOffer = () => {
                             ].filter(Boolean) as string[];
 
                             return (
-                              <a
-                                key={row.productId}
-                                href={row.productUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label={`Karta produktu ${row.model}, ${detailLine.join(', ')}`}
-                                onPointerDown={() => setActiveOrderProductId(row.productId)}
-                                className="grid grid-cols-[72px_1fr_auto] gap-3 py-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
-                              >
-                                <Thumb src={imageById.get(row.productId)?.[0]} className="h-[72px] w-[72px] self-start" />
+                              <div key={row.productId} className="grid grid-cols-[72px_1fr_auto] gap-3 py-4">
+                                <a
+                                  href={row.productUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  tabIndex={-1}
+                                  aria-hidden="true"
+                                  className="contents"
+                                >
+                                  <Thumb src={imageById.get(row.productId)?.[0]} className="h-[72px] w-[72px] self-start" />
+                                </a>
                                 <div className="min-w-0">
-                                  <h3 className="truncate text-sm font-bold text-stakerpol-navy">{row.model}</h3>
-                                  <p className="mt-1 truncate text-xs text-gray-600">{detailLine.join(' · ')}</p>
-                                  <p className="mt-2 text-xs font-medium text-gray-700">
-                                    {[displayMobileMetric(row.mastLiftingCapacity), displayMobileMetric(row.liftHeight)].filter(Boolean).join(' · ') || '—'}
-                                  </p>
-                                  <p className="mt-1 text-xs text-gray-600">
-                                    {[displayMobileMetric(row.minHeight), displayMobileMetric(row.battery)].filter(Boolean).join(' · ') || '—'}
-                                  </p>
+                                  <a
+                                    href={row.productUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label={`Karta produktu ${row.model}, ${detailLine.join(', ')}`}
+                                    onPointerDown={() => setActiveOrderProductId(row.productId)}
+                                    className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+                                  >
+                                    <h3 className="truncate text-sm font-bold text-stakerpol-navy">{row.model}</h3>
+                                    <p className="mt-1 truncate text-xs text-gray-600">{detailLine.join(' · ')}</p>
+                                    <p className="mt-2 text-xs font-medium text-gray-700">
+                                      {[displayMobileMetric(row.mastLiftingCapacity), displayMobileMetric(row.liftHeight)].filter(Boolean).join(' · ') || '—'}
+                                    </p>
+                                    <p className="mt-1 text-xs text-gray-600">
+                                      {[displayMobileMetric(row.minHeight), displayMobileMetric(row.battery)].filter(Boolean).join(' · ') || '—'}
+                                    </p>
+                                  </a>
                                   <div className="mt-2 flex flex-wrap items-end justify-between gap-2">
                                     <StatusTag value={row.availability} />
-                                    <span className="text-right">
+                                    <span className="ml-auto text-right">
                                       <span className="block text-sm font-bold text-stakerpol-navy">
                                         {displayMobilePrice(row.showPrice, row.netPrice, row.priceCurrency)}
                                       </span>
@@ -785,8 +795,15 @@ const SharedOffer = () => {
                                     </span>
                                   </div>
                                 </div>
-                                <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-stakerpol-navy" aria-hidden="true" />
-                              </a>
+                                <button
+                                  type="button"
+                                  onClick={() => setOrderProductId(row.productId)}
+                                  aria-label={`Zamawiam ${row.model}${row.serialNumber ? ` nr ${row.serialNumber}` : ''}`}
+                                  className="mt-0.5 inline-flex h-12 w-12 shrink-0 items-center justify-center self-start rounded-full bg-stakerpol-orange text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-navy"
+                                >
+                                  <ShoppingCart className="h-5 w-5" aria-hidden="true" />
+                                </button>
+                              </div>
                             );
 
                           })}
