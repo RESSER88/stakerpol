@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowDown, ArrowUp, ArrowUpFromLine, BatteryCharging, ChevronRight, Image as ImageIcon, Info, LayoutGrid, List as ListIcon, Mail, MapPin, MoveVertical, Package, Phone, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpFromLine, BatteryCharging, ChevronRight, Image as ImageIcon, Info, LayoutGrid, List as ListIcon, Mail, MapPin, MoveVertical, Package, Phone, ShoppingCart, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePublicSupabaseProducts } from '@/hooks/usePublicSupabaseProducts';
 import {
@@ -24,7 +24,8 @@ import SharedOfferFilters, {
   viewerFiltersToCriteria,
 } from '@/components/shared-offer/SharedOfferFilters';
 import PriceInquiryModal from '@/components/products/PriceInquiryModal';
-import OfferPhotoListCard, { buildOrderMailto } from '@/components/shared-offer/OfferPhotoListCard';
+import OfferPhotoListCard from '@/components/shared-offer/OfferPhotoListCard';
+import OfferOrderSheet from '@/components/shared-offer/OfferOrderSheet';
 
 
 import type { Product } from '@/types';
@@ -170,7 +171,9 @@ const Thumb = ({ src, className }: { src?: string; className?: string }) =>
     </span>
   );
 
+/** Status pokazujemy tylko wtedy, gdy wymaga uwagi klienta. */
 const StatusTag = ({ value }: { value: string }) => {
+  if (value === 'Dostępny') return null;
   const tone =
     value === 'Sprzedany'
       ? 'bg-gray-200 text-gray-700'
@@ -242,6 +245,7 @@ const SharedOffer = () => {
     typeof window !== 'undefined' && window.innerWidth < 768 ? 'photo' : 'list'
   );
   const [activeOrderProductId, setActiveOrderProductId] = useState<string | null>(null);
+  const [orderProductId, setOrderProductId] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   /** Czujnik: pasek filtrów jest realnie przyklejony dopiero po minięciu tego punktu. */
@@ -324,6 +328,11 @@ const SharedOffer = () => {
   const photoRows = useMemo(
     () => sortedGroups.flatMap((g) => g.rows),
     [sortedGroups]
+  );
+
+  const orderRow = useMemo(
+    () => photoRows.find((row) => row.productId === orderProductId) ?? null,
+    [orderProductId, photoRows]
   );
 
   const activeOrderRow = useMemo(
@@ -616,6 +625,7 @@ const SharedOffer = () => {
                           images={imageById.get(row.productId) ?? []}
                           eager={i < 2}
                            onActivate={() => setActiveOrderProductId(row.productId)}
+                          onOrder={() => setOrderProductId(row.productId)}
                         />
                       ))}
                     </div>
