@@ -820,25 +820,21 @@ const SharedOffer = () => {
                                     rel="noopener noreferrer"
                                     aria-label={`Parametry ${productName}`}
                                     onPointerDown={() => setActiveOrderProductId(row.productId)}
-                                    className="col-span-2 col-start-2 mt-1 min-w-0 rounded-sm text-[9px] leading-[1.35] text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange min-[390px]:text-[10px]"
+                                    className="col-span-3 mt-2 min-w-0 rounded-sm text-[10px] leading-[1.4] text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange min-[390px]:text-[11px]"
                                   >
-                                    <span className="block whitespace-nowrap">
-                                      Rok <strong className="font-semibold text-stakerpol-navy">{row.productionYear || '—'}</strong>
-                                      <span className="mx-1 text-gray-300">|</span>
-                                      MTH <strong className="font-semibold text-stakerpol-navy">{formatMobileHours(row.workingHours).replace(/\s*mth$/i, '')}</strong>
-                                      <span className="mx-1 text-gray-300">|</span>
-                                      Bateria <strong className="font-semibold text-stakerpol-navy">{displayMobileMetric(row.battery) || '—'}</strong>
+                                    <span className="grid min-w-0 grid-cols-[0.85fr_0.9fr_1.15fr] items-center gap-x-1.5">
+                                      <span className="min-w-0 truncate">Rok <strong className="font-semibold text-stakerpol-navy">{row.productionYear || '—'}</strong></span>
+                                      <span className="min-w-0 truncate border-l border-gray-200 pl-1.5">MTH <strong className="font-semibold text-stakerpol-navy">{formatMobileHours(row.workingHours).replace(/\s*mth$/i, '')}</strong></span>
+                                      <span className="min-w-0 truncate border-l border-gray-200 pl-1.5">Bateria <strong className="font-semibold text-stakerpol-navy">{displayMobileMetric(row.battery) || '—'}</strong></span>
                                     </span>
-                                    <span className="mt-1 block whitespace-nowrap">
-                                      Udźwig <strong className="font-semibold text-stakerpol-navy">{displayMobileMetric(row.mastLiftingCapacity) || '—'}</strong>
-                                      <span className="mx-1 text-gray-300">|</span>
-                                      Podnoszenie <strong className="font-semibold text-stakerpol-navy">{displayMobileMetric(row.liftHeight) || '—'}</strong>
-                                      <span className="mx-1 text-gray-300">|</span>
-                                      Konstrukcyjna <strong className="font-semibold text-stakerpol-navy">{displayMobileMetric(row.minHeight) || '—'}</strong>
+                                    <span className="mt-0.5 grid min-w-0 grid-cols-[0.9fr_1.05fr_1.35fr] items-center gap-x-1.5">
+                                      <span className="min-w-0 truncate">Udźwig <strong className="font-semibold text-stakerpol-navy">{displayMobileMetric(row.mastLiftingCapacity) || '—'}</strong></span>
+                                      <span className="min-w-0 truncate border-l border-gray-200 pl-1.5">Podnoszenie <strong className="font-semibold text-stakerpol-navy">{displayMobileMetric(row.liftHeight) || '—'}</strong></span>
+                                      <span className="min-w-0 truncate border-l border-gray-200 pl-1.5">Konstrukcyjna <strong className="font-semibold text-stakerpol-navy">{displayMobileMetric(row.minHeight) || '—'}</strong></span>
                                     </span>
                                   </a>
 
-                                  <span className="col-span-2 col-start-2 mt-1.5 shrink-0 text-right">
+                                  <span className="col-span-3 mt-1.5 shrink-0 text-right">
                                     <span className={cn('block font-bold leading-tight text-stakerpol-navy', row.showPrice ? 'text-base' : 'text-[11px]')}>
                                       {displayMobilePrice(row.showPrice, row.netPrice, row.priceCurrency)}
                                     </span>
