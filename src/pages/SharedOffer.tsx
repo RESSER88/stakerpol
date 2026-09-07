@@ -819,21 +819,31 @@ const SharedOffer = () => {
         )}
 
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white px-3 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_-8px_rgba(0,0,0,0.15)] md:hidden">
-          <div className="grid grid-cols-[0.8fr_1.2fr] gap-2">
+          <div className={cn('grid gap-2', viewMode === 'photo' ? 'grid-cols-[0.8fr_1.2fr]' : 'grid-cols-1')}>
             <Button asChild variant="outline" className="min-h-[48px] border-stakerpol-navy text-stakerpol-navy">
               <a href={`tel:${COMPANY_PHONE_TEL}`}>
                 <Phone aria-hidden="true" />
                 Zadzwoń
               </a>
             </Button>
-            <Button asChild className="min-h-[48px] bg-stakerpol-orange font-bold text-white hover:bg-stakerpol-orange/90">
-              <a href={activeOrderRow ? buildOrderMailto(activeOrderRow) : `mailto:${COMPANY.email}`}>
-                <Mail aria-hidden="true" />
+            {viewMode === 'photo' && (
+              <Button
+                type="button"
+                onClick={() => activeOrderRow && setOrderProductId(activeOrderRow.productId)}
+                className="min-h-[48px] bg-stakerpol-orange font-bold text-white hover:bg-stakerpol-orange/90"
+              >
+                <ShoppingCart aria-hidden="true" />
                 Zamawiam
-              </a>
-            </Button>
+              </Button>
+            )}
           </div>
         </div>
+
+        <OfferOrderSheet
+          row={orderRow}
+          image={orderRow ? imageById.get(orderRow.productId)?.[0] : undefined}
+          onClose={() => setOrderProductId(null)}
+        />
 
         <FloatingContactBubble />
       </div>
