@@ -4,13 +4,13 @@ import {
   BatteryCharging,
   ChevronLeft,
   ChevronRight,
-  Mail,
   MoveVertical,
   Package,
   Phone,
+  ShoppingCart,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { COMPANY, ExportRow, formatPrice } from '@/utils/exportListModel';
+import { ExportRow, formatPrice } from '@/utils/exportListModel';
 import { COMPANY_PHONE_TEL } from '@/lib/contact';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ interface Props {
   /** Pierwsze karty ładujemy natychmiast, pozostałe leniwie. */
   eager?: boolean;
   onActivate?: () => void;
+  onOrder?: () => void;
 }
 
 const dash = (v: unknown) => {
@@ -48,46 +49,6 @@ const displayMetric = (value: string) => {
   return normalized
     .replace('.', ',')
     .replace(/(\d)(kg|m|Ah)\b/i, '$1 $2');
-};
-
-/** Szkic zamówienia — dokładnie ta sama treść co w dotychczasowym trybie zdjęciowym. */
-export const buildOrderMailto = (row: ExportRow) => {
-  const title = `${row.model} ${row.serialNumber}`.trim();
-  const subject = `Zamówienie - ${title}`;
-  const price = row.showPrice
-    ? `${formatPrice(row.netPrice)} ${row.priceCurrency} netto`
-    : 'cena na zapytanie';
-  const body = [
-    'Dzień dobry,',
-    '',
-    'chcę zamówić poniższy wózek widłowy:',
-    '',
-    `Model: ${row.model}`,
-    `Rok produkcji: ${dash(row.productionYear)}`,
-    `Nr seryjny: ${dash(row.serialNumber)}`,
-    `Motogodziny: ${row.workingHours ? `${row.workingHours} mth` : '—'}`,
-    `Wys. konstrukcyjna: ${dash(row.minHeight)}`,
-    `Podnoszenie: ${dash(row.liftHeight)}`,
-    `Bateria: ${dash(row.battery)}`,
-    `Cena: ${price}`,
-    `Karta produktu: ${row.productUrl}`,
-    '',
-    'DANE DO FAKTURY',
-    'Nazwa firmy / imię i nazwisko: ',
-    'NIP: ',
-    'Adres: ',
-    '',
-    'ADRES WYSYŁKI',
-    'Adres dostawy: ',
-    '',
-    'OSOBA KONTAKTOWA',
-    'Imię i nazwisko: ',
-    'Telefon: ',
-    'E-mail: ',
-    '',
-    'Uwagi: ',
-  ].join('\r\n');
-  return `mailto:${COMPANY.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 };
 
 const Spec = ({ Icon, label, value }: { Icon: LucideIcon; label: string; value: string }) => {
@@ -119,7 +80,7 @@ const Spec = ({ Icon, label, value }: { Icon: LucideIcon; label: string; value: 
  * Duża karta produktu w normalnym przepływie strony (tryb „widok zdjęciowy”).
  * Strzałki przełączają wyłącznie zdjęcia tego samego produktu.
  */
-const OfferPhotoListCard = ({ row, images = [], eager, onActivate }: Props) => {
+const OfferPhotoListCard = ({ row, images = [], eager, onActivate, onOrder }: Props) => {
   const [idx, setIdx] = useState(0);
   const railRef = useRef<HTMLDivElement | null>(null);
   const count = images.length;
@@ -150,7 +111,7 @@ const OfferPhotoListCard = ({ row, images = [], eager, onActivate }: Props) => {
           <div
             ref={railRef}
             onScroll={syncIndex}
-            className="flex h-full w-full snap-x snap-mandatory overflow-x-auto no-scrollbar touch-pan-x"
+            className="flex h-full w-full snap-x snap-mandatory overflow-x-auto no-scrollbar"
           >
             {images.map((src, imageIndex) => (
               <div key={`${src}-${imageIndex}`} className="relative h-full w-full shrink-0 snap-center overflow-hidden">
@@ -180,14 +141,16 @@ const OfferPhotoListCard = ({ row, images = [], eager, onActivate }: Props) => {
           </div>
         )}
 
-        <span
-          className={cn(
-            'absolute left-3 top-3 z-10 inline-block px-2 py-0.5 rounded text-[11px] font-semibold',
-            statusTone(row.availability)
-          )}
-        >
-          {row.availability}
-        </span>
+        {row.availability !== 'Dostępny' && (
+          <span
+            className={cn(
+              'absolute left-3 top-3 z-10 inline-block px-2 py-0.5 rounded text-[11px] font-semibold',
+              statusTone(row.availability)
+            )}
+          >
+            {row.availability}
+          </span>
+        )}
 
         {count > 0 && (
           <span className="absolute right-3 top-3 z-10 rounded-full bg-stakerpol-navy/85 px-2.5 py-0.5 text-[11px] font-semibold text-white">
@@ -277,11 +240,13 @@ const OfferPhotoListCard = ({ row, images = [], eager, onActivate }: Props) => {
               Zadzwoń
             </a>
           </Button>
-          <Button asChild className="min-h-[48px] bg-stakerpol-orange font-bold text-white hover:bg-stakerpol-orange/90 md:order-1">
-            <a href={buildOrderMailto(row)}>
-              <Mail aria-hidden="true" />
-              Zamawiam ten model
-            </a>
+          <Button
+            type="button"
+            onClick={onOrder}
+            className="min-h-[48px] bg-stakerpol-orange font-bold text-white hover:bg-stakerpol-orange/90 md:order-1"
+          >
+            <ShoppingCart aria-hidden="true" />
+            Zamawiam
           </Button>
         </div>
       </div>
