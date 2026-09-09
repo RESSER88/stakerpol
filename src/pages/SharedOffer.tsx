@@ -51,6 +51,26 @@ import {
 /** Wysokość przyklejonego paska filtrów — offset nagłówka grupy (mobile). */
 const STICKY_GROUP_TOP = 60;
 
+/**
+ * Kolumny tabeli desktopowej. Osobno od EXPORT_COLUMNS (PDF/XLSX/JPG),
+ * bo tu waluta jest w komórce ceny, a ostatnia kolumna to akcje.
+ */
+const DESKTOP_COLUMNS: { header: string; key: string; align: 'left' | 'center' | 'right' }[] = [
+  { header: 'Nr', key: 'index', align: 'center' },
+  { header: 'Model', key: 'model', align: 'left' },
+  { header: 'Nr seryjny', key: 'serialNumber', align: 'center' },
+  { header: 'Rok', key: 'productionYear', align: 'center' },
+  { header: 'Godziny [mth]', key: 'workingHours', align: 'center' },
+  { header: 'Udźwig', key: 'mastLiftingCapacity', align: 'center' },
+  { header: 'Podnoszenie', key: 'liftHeight', align: 'center' },
+  { header: 'Wys. konstr.', key: 'minHeight', align: 'center' },
+  { header: 'Maszt', key: 'mast', align: 'center' },
+  { header: 'Bateria', key: 'battery', align: 'center' },
+  { header: 'Cena netto', key: 'netPrice', align: 'right' },
+  { header: '', key: 'actions', align: 'right' },
+];
+
+
 const SortControl = ({
   value,
   onChange,
