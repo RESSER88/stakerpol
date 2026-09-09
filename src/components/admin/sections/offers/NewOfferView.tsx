@@ -98,31 +98,18 @@ const NewOfferView = ({ products, onCreated, prefill }: Props) => {
           _token: candidate,
           _filters: JSON.parse(JSON.stringify(criteria)),
           _nazwa: nazwaValue,
-          _telefon: telefon.trim(),
+          _telefon: telefon.trim() || undefined,
           _email: email.trim() || undefined,
           _tygodnie: weeks,
           _notatka: notatka.trim() || undefined,
           _kanal: kanal ?? undefined,
+          _firma: firmaValue || undefined,
+          _kanal_detail: kanal === CHANNEL_OTHER ? skad.trim() || undefined : undefined,
         });
         if (!error) {
           token = candidate;
           const row = Array.isArray(data) ? data[0] : data;
           kontaktNowy = row?.kontakt_nowy ?? true;
-          // Firma nie jest parametrem create_offer — sygnatura funkcji zostaje
-          // nietknięta, nazwę firmy dopisujemy osobnym UPDATE-em na kontakcie.
-          if (firmaValue && row?.contact_id) {
-            const { error: firmaError } = await supabase
-              .from('contacts')
-              .update({ firma: firmaValue })
-              .eq('id', row.contact_id);
-            if (firmaError) {
-              toast({
-                title: 'Oferta utworzona, firma niezapisana',
-                description: firmaError.message,
-                variant: 'destructive',
-              });
-            }
-          }
           lastError = null;
           break;
         }
@@ -143,6 +130,11 @@ const NewOfferView = ({ products, onCreated, prefill }: Props) => {
         throw lastError;
       }
 
+      // Zapytanie, z którego wyszła oferta, zamykamy jako obsłużone.
+      if (leadId) {
+        await supabase.from('leads').update({ status: 'handled' }).eq('id', leadId);
+      }
+
       setLastUrl(buildUrl(token));
       setNazwa('');
       setFirma('');
@@ -150,13 +142,15 @@ const NewOfferView = ({ products, onCreated, prefill }: Props) => {
       setEmail('');
       setNotatka('');
       setKanal(null);
+      setSkad('');
       setWeeks(2);
+      setLeadId(null);
 
       toast({
         title: '✓ Oferta utworzona',
         description: kontaktNowy
           ? `Nowy kontakt · ${matchedCount} ${matchedCount === 1 ? 'pozycja' : 'pozycji'}`
-          : 'Oferta trafiła do istniejącego kontaktu o tym numerze telefonu.',
+          : 'Oferta trafiła do istniejącego kontaktu.',
       });
       onCreated();
     } catch {
