@@ -9,20 +9,17 @@ import {
   DEFAULT_EXPORT_CRITERIA,
 } from '@/utils/exportFilterCriteria';
 import { buildToken, buildUrl, MAX_TOKEN_ATTEMPTS } from '@/utils/offerToken';
+import { CHANNEL_OTHER, OFFER_CHANNEL_OPTIONS } from './offerChannels';
+import { OfferPrefill } from './types';
 
 interface Props {
   products: Product[];
   onCreated: () => void;
+  /** Dane przeniesione z zapytania — filtrów nie ustawiamy automatycznie. */
+  prefill?: OfferPrefill | null;
 }
 
 const WEEK_OPTIONS = [1, 2, 3, 4] as const;
-
-const CHANNEL_OPTIONS: { value: string; label: string }[] = [
-  { value: 'email', label: 'E-mail' },
-  { value: 'whatsapp', label: 'WhatsApp' },
-  { value: 'sms', label: 'SMS' },
-  { value: 'telefon', label: 'Telefon' },
-];
 
 const Label = ({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) => (
   <label
@@ -36,7 +33,7 @@ const Label = ({ children, htmlFor }: { children: React.ReactNode; htmlFor?: str
 const inputClass =
   'w-full bg-transparent border-b border-editorial-line py-2 text-sm text-editorial-ink placeholder:text-editorial-muted/60 focus:outline-none focus:border-editorial-ink';
 
-const NewOfferView = ({ products, onCreated }: Props) => {
+const NewOfferView = ({ products, onCreated, prefill }: Props) => {
   const { toast } = useToast();
   const [filtered, setFiltered] = useState<Product[]>(products);
   const [criteria, setCriteria] = useState<ExportFilterCriteria>(DEFAULT_EXPORT_CRITERIA);
@@ -47,7 +44,9 @@ const NewOfferView = ({ products, onCreated }: Props) => {
   const [email, setEmail] = useState('');
   const [notatka, setNotatka] = useState('');
   const [kanal, setKanal] = useState<string | null>(null);
+  const [skad, setSkad] = useState('');
   const [weeks, setWeeks] = useState<number>(2);
+  const [leadId, setLeadId] = useState<string | null>(null);
 
   const [saving, setSaving] = useState(false);
   const [lastUrl, setLastUrl] = useState<string | null>(null);
@@ -56,13 +55,23 @@ const NewOfferView = ({ products, onCreated }: Props) => {
     setFiltered(products);
   }, [products]);
 
+  // Prefill z zapytania: tylko dane klienta i notatka. Filtry wybiera admin.
+  useEffect(() => {
+    if (!prefill) return;
+    setNazwa(prefill.nazwa ?? '');
+    setTelefon(prefill.telefon ?? '');
+    setEmail(prefill.email ?? '');
+    setNotatka(prefill.notatka ?? '');
+    setLeadId(prefill.leadId ?? null);
+  }, [prefill]);
+
   const handleFilterChange = useCallback((list: Product[], next: ExportFilterCriteria) => {
     setFiltered(list);
     setCriteria(next);
   }, []);
 
   const matchedCount = filtered.length;
-  const canSubmit = matchedCount > 0 && nazwa.trim().length > 0 && telefon.trim().length > 0;
+  const canSubmit = matchedCount > 0 && nazwa.trim().length > 0;
 
   const copy = async (url: string) => {
     try {
