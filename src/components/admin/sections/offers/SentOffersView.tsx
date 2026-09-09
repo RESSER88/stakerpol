@@ -303,6 +303,14 @@ const SentOffersView = ({ reloadKey }: Props) => {
                 >
                   <Copy className="h-3.5 w-3.5" />
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setEditTarget(row)}
+                  aria-label="Edytuj ofertę"
+                  className="p-2 border border-editorial-line hover:border-editorial-ink"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
                 {active && (
                   <button
                     type="button"
@@ -325,6 +333,12 @@ const SentOffersView = ({ reloadKey }: Props) => {
         contactId={openContactId}
         onClose={() => setOpenContactId(null)}
         onChanged={() => void load()}
+      />
+
+      <OfferEditDialog
+        offer={editTarget}
+        onClose={() => setEditTarget(null)}
+        onSaved={() => void load()}
       />
 
 
