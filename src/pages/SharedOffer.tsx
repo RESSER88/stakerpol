@@ -10,7 +10,7 @@ import {
 } from '@/utils/exportFilterCriteria';
 import {
   buildExportRows,
-  EXPORT_COLUMNS,
+  
   COMPANY,
   WAREHOUSE,
   formatPrice,
