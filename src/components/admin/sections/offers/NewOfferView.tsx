@@ -153,10 +153,14 @@ const NewOfferView = ({ products, onCreated, prefill }: Props) => {
           : 'Oferta trafiła do istniejącego kontaktu.',
       });
       onCreated();
-    } catch {
+    } catch (err) {
+      const detail =
+        (err as { message?: string; details?: string } | null)?.message ??
+        (err as { details?: string } | null)?.details ??
+        'Nie udało się utworzyć oferty';
       toast({
         title: 'Błąd zapisu',
-        description: 'Nie udało się utworzyć oferty',
+        description: detail,
         variant: 'destructive',
       });
     } finally {
