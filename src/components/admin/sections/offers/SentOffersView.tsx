@@ -144,6 +144,7 @@ const SentOffersView = ({ reloadKey }: Props) => {
   const [revokeTarget, setRevokeTarget] = useState<OfferRow | null>(null);
   const [revoking, setRevoking] = useState(false);
   const [openContactId, setOpenContactId] = useState<string | null>(null);
+  const [editTarget, setEditTarget] = useState<OfferRow | null>(null);
 
 
   const load = useCallback(async () => {
@@ -151,7 +152,7 @@ const SentOffersView = ({ reloadKey }: Props) => {
     const { data, error } = await supabase
       .from('shared_lists')
       .select(
-        'id, token, label, created_at, expires_at, revoked_at, archived_at, last_viewed_at, view_count, contact_id, contacts(osoba, firma, telefon, email, termin_followup, krok)'
+        'id, token, label, note, channel, channel_detail, created_at, expires_at, revoked_at, archived_at, last_viewed_at, view_count, contact_id, contacts(osoba, firma, telefon, email, termin_followup, krok)'
       )
       .order('created_at', { ascending: false });
     if (error) {
