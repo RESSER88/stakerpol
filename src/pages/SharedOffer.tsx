@@ -659,7 +659,7 @@ const SharedOffer = () => {
                           <table className="w-full text-sm">
                             <thead>
                               <tr className="bg-gray-100 text-gray-800">
-                                {EXPORT_COLUMNS.map((c) => (
+                                {EXPORT_COLUMNS.filter((c) => c.key !== 'availability').map((c) => (
                                   <th
                                     key={c.key}
                                     scope="col"
@@ -684,7 +684,12 @@ const SharedOffer = () => {
                                   <th scope="row" className="px-3 py-2 text-left font-semibold text-stakerpol-navy">
                                     <span className="inline-flex items-center gap-2">
                                       <Thumb src={imageById.get(row.productId)?.[0]} className="h-11 w-11" />
-                                      {row.model}
+                                      <span className="inline-flex flex-col items-start gap-1">
+                                        {row.model}
+                                        {row.availability !== 'Dostępny' && (
+                                          <StatusTag value={row.availability} />
+                                        )}
+                                      </span>
                                     </span>
                                   </th>
                                   <td className="px-3 py-2 text-center">{row.serialNumber}</td>
@@ -709,10 +714,6 @@ const SharedOffer = () => {
                                       <BatteryCharging aria-hidden="true" className="h-3.5 w-3.5 text-stakerpol-navy" />
                                       {row.battery || '—'}
                                     </span>
-                                  </td>
-
-                                  <td className="px-3 py-2 text-center">
-                                    <StatusTag value={row.availability} />
                                   </td>
                                   <td className="px-3 py-2 text-right" colSpan={2}>
                                     <PriceCell
