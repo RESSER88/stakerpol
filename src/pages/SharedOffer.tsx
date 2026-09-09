@@ -645,26 +645,34 @@ const SharedOffer = () => {
                     </div>
                   )}
 
-                  {/* Desktop: tabela */}
-                  <div className={cn('md:block space-y-8', viewMode === 'photo' ? 'hidden md:hidden' : 'hidden')}>
-                    {sortedGroups.map((group) => (
+                  {/* Desktop: tabela handlowa */}
+                  <div className={cn('md:block space-y-10', viewMode === 'photo' ? 'hidden md:hidden' : 'hidden')}>
+                    {sortedGroups.map((group) => {
+                      const availableInGroup = group.rows.filter((row) => row.availability === 'Dostępny').length;
+                      return (
                       <section key={group.key} aria-labelledby={`grp-${group.key}`}>
-                        <h2
-                          id={`grp-${group.key}`}
-                          className="sticky top-0 z-10 bg-stakerpol-navy text-white text-sm font-bold px-4 py-2 rounded-t-md"
-                        >
-                          {group.label} · {group.rows.length}
-                        </h2>
-                        <div className="overflow-x-auto bg-white border border-gray-200 border-t-0 rounded-b-md">
-                          <table className="w-full text-sm">
+                        <div className="flex items-baseline justify-between gap-4 border-b-2 border-stakerpol-navy pb-2">
+                          <h2
+                            id={`grp-${group.key}`}
+                            className="text-lg font-bold tracking-tight text-stakerpol-navy"
+                          >
+                            {group.label}
+                          </h2>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500">
+                            {group.rows.length} {group.rows.length === 1 ? 'pozycja' : 'pozycji'} ·{' '}
+                            {availableUnitsLabel(availableInGroup)}
+                          </p>
+                        </div>
+                        <div className="overflow-x-auto border border-t-0 border-gray-200 bg-white">
+                          <table className="w-full text-sm tabular-nums">
                             <thead>
-                              <tr className="bg-gray-100 text-gray-800">
-                                {EXPORT_COLUMNS.filter((c) => c.key !== 'availability').map((c) => (
+                              <tr className="border-b border-gray-200 bg-gray-50 text-gray-500">
+                                {DESKTOP_COLUMNS.map((c) => (
                                   <th
                                     key={c.key}
                                     scope="col"
                                     className={cn(
-                                      'px-3 py-2 font-semibold whitespace-nowrap',
+                                      'px-3 py-2.5 text-[10px] font-semibold uppercase tracking-[0.1em] whitespace-nowrap',
                                       c.align === 'right'
                                         ? 'text-right'
                                         : c.align === 'center'
@@ -679,43 +687,62 @@ const SharedOffer = () => {
                             </thead>
                             <tbody>
                               {group.rows.map((row) => (
-                                <tr key={row.productId} className="border-t border-gray-200">
-                                  <td className="px-3 py-2 text-center text-gray-700">{row.index}</td>
-                                  <th scope="row" className="px-3 py-2 text-left font-semibold text-stakerpol-navy">
-                                    <span className="inline-flex items-center gap-2">
-                                      <Thumb src={imageById.get(row.productId)?.[0]} className="h-11 w-11" />
+                                <tr
+                                  key={row.productId}
+                                  className="border-t border-gray-100 transition-colors even:bg-gray-50/60 hover:bg-stakerpol-navy/[0.04]"
+                                >
+                                  <td className="px-3 py-3 text-center text-xs text-gray-400">{row.index}</td>
+                                  <th scope="row" className="px-3 py-3 text-left font-semibold text-stakerpol-navy">
+                                    <span className="inline-flex items-center gap-3">
+                                      <a
+                                        href={row.productUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        tabIndex={-1}
+                                        aria-hidden="true"
+                                        className="relative h-12 w-12 shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-100"
+                                      >
+                                        <Thumb src={imageById.get(row.productId)?.[0]} className="h-full w-full object-contain" />
+                                      </a>
                                       <span className="inline-flex flex-col items-start gap-1">
-                                        {row.model}
+                                        <a
+                                          href={row.productUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="rounded-sm hover:text-stakerpol-orange focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+                                        >
+                                          {row.model}
+                                        </a>
                                         {row.availability !== 'Dostępny' && (
                                           <StatusTag value={row.availability} />
                                         )}
                                       </span>
                                     </span>
                                   </th>
-                                  <td className="px-3 py-2 text-center">{row.serialNumber}</td>
-                                  <td className="px-3 py-2 text-center">{row.productionYear}</td>
-                                  <td className="px-3 py-2 text-center">{row.workingHours}</td>
-                                  <td className="px-3 py-2 text-center">{row.mastLiftingCapacity}</td>
-                                  <td className="px-3 py-2 text-center">
+                                  <td className="px-3 py-3 text-center text-gray-700">{row.serialNumber || '—'}</td>
+                                  <td className="px-3 py-3 text-center text-gray-700">{row.productionYear || '—'}</td>
+                                  <td className="px-3 py-3 text-center text-gray-700">{row.workingHours || '—'}</td>
+                                  <td className="px-3 py-3 text-center text-gray-700">{row.mastLiftingCapacity || '—'}</td>
+                                  <td className="px-3 py-3 text-center text-gray-700">
                                     <span className="inline-flex items-center gap-1 whitespace-nowrap">
-                                      <ArrowUpFromLine aria-hidden="true" className="h-3.5 w-3.5 text-stakerpol-navy" />
+                                      <ArrowUpFromLine aria-hidden="true" className="h-3.5 w-3.5 text-stakerpol-navy/60" />
                                       {row.liftHeight || '—'}
                                     </span>
                                   </td>
-                                  <td className="px-3 py-2 text-center">
+                                  <td className="px-3 py-3 text-center text-gray-700">
                                     <span className="inline-flex items-center gap-1 whitespace-nowrap">
-                                      <MoveVertical aria-hidden="true" className="h-3.5 w-3.5 text-stakerpol-navy" />
+                                      <MoveVertical aria-hidden="true" className="h-3.5 w-3.5 text-stakerpol-navy/60" />
                                       {row.minHeight || '—'}
                                     </span>
                                   </td>
-                                  <td className="px-3 py-2 text-center">{row.mast}</td>
-                                  <td className="px-3 py-2 text-center">
+                                  <td className="px-3 py-3 text-center text-gray-700">{row.mast}</td>
+                                  <td className="px-3 py-3 text-center text-gray-700">
                                     <span className="inline-flex items-center gap-1 whitespace-nowrap">
-                                      <BatteryCharging aria-hidden="true" className="h-3.5 w-3.5 text-stakerpol-navy" />
+                                      <BatteryCharging aria-hidden="true" className="h-3.5 w-3.5 text-stakerpol-navy/60" />
                                       {row.battery || '—'}
                                     </span>
                                   </td>
-                                  <td className="px-3 py-2 text-right" colSpan={2}>
+                                  <td className="px-3 py-3 text-right whitespace-nowrap">
                                     <PriceCell
                                       showPrice={row.showPrice}
                                       netPrice={row.netPrice}
@@ -723,17 +750,27 @@ const SharedOffer = () => {
                                       onInquiry={() => openInquiry(row.productId)}
                                     />
                                   </td>
-                                  <td className="px-3 py-2 text-center">
-                                    <a
-                                      href={row.productUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      aria-label="Karta produktu"
-                                      title="Karta produktu"
-                                      className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-stakerpol-navy/10 text-stakerpol-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
-                                    >
-                                      <ChevronRight className="h-4 w-4" />
-                                    </a>
+                                  <td className="px-3 py-3">
+                                    <span className="flex items-center justify-end gap-2">
+                                      <Button
+                                        type="button"
+                                        onClick={() => setOrderProductId(row.productId)}
+                                        className="h-9 bg-stakerpol-orange px-3 text-xs font-bold text-white hover:bg-stakerpol-orange/90 focus-visible:ring-stakerpol-navy"
+                                      >
+                                        <ShoppingCart className="h-3.5 w-3.5" aria-hidden="true" />
+                                        Zamawiam
+                                      </Button>
+                                      <a
+                                        href={row.productUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label={`Karta produktu ${row.model}`}
+                                        title="Karta produktu"
+                                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-stakerpol-navy transition-colors hover:border-stakerpol-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-stakerpol-orange"
+                                      >
+                                        <ChevronRight className="h-4 w-4" />
+                                      </a>
+                                    </span>
                                   </td>
                                 </tr>
                               ))}
@@ -741,8 +778,10 @@ const SharedOffer = () => {
                           </table>
                         </div>
                       </section>
-                    ))}
+                      );
+                    })}
                   </div>
+
 
                   {/* Mobile: lekka lista handlowa pogrupowana według modeli */}
                   <div className={cn('md:hidden space-y-6 pb-[calc(72px+env(safe-area-inset-bottom))]', viewMode === 'photo' && 'hidden')}>
