@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Phone, Mail, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Check, Package, Trash2, BadgeCheck, UserPlus } from 'lucide-react';
+import { Phone, Mail, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Check, Package, Trash2, BadgeCheck, FilePlus2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { leadSourceLabel } from './leadSources';
 import InquiryStats from './InquiryStats';
+import { OfferPrefill } from './offers/types';
 
 
 interface Lead {
@@ -31,6 +32,7 @@ type TabValue = StatusFilter | 'stats';
 
 interface Props {
   initialFilter?: StatusFilter;
+  onGenerateOffer?: (prefill: OfferPrefill) => void;
 }
 
 const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
