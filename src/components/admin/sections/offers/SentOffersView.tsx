@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Copy, Loader2, Ban, Search } from 'lucide-react';
+import { Copy, Loader2, Ban, Search, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { buildUrl } from '@/utils/offerToken';
@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import ContactCard from '../contacts/ContactCard';
+import OfferEditDialog from './OfferEditDialog';
 
 
 interface Props {
@@ -26,6 +27,9 @@ interface OfferRow {
   id: string;
   token: string;
   label: string | null;
+  note: string | null;
+  channel: string | null;
+  channel_detail: string | null;
   created_at: string;
   expires_at: string;
   revoked_at: string | null;
