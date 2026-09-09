@@ -361,11 +361,11 @@ const InquiriesSection = ({ initialFilter = 'new', onGenerateOffer }: Props) => 
                   </button>
                   <button
                     disabled={isUpdating}
-                    onClick={() => importToContacts(lead)}
+                    onClick={() => generateOffer(lead)}
                     className="px-3 h-8 inline-flex items-center gap-1.5 border border-editorial-line text-editorial-muted text-[11px] font-bold tracking-[0.15em] uppercase hover:border-editorial-ink hover:text-editorial-ink transition-colors disabled:opacity-50"
                   >
-                    <UserPlus className="h-3 w-3" />
-                    Wciągnij do kontaktów
+                    <FilePlus2 className="h-3 w-3" />
+                    Wygeneruj ofertę
                   </button>
                   {isHandled && (
 
