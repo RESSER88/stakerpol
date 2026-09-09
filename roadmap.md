@@ -5,3 +5,5 @@
 - [x] Oferty: telefon i e-mail opcjonalne przy tworzeniu
 - [x] Oferty: edycja istniejącej oferty w „Wysłane” (OfferEditDialog)
 - [x] Kanał = źródło klienta (Facebook, YouTube, Instagram, Allegro, OLX, Google, ChatGPT, Powracający, Inne + „Skąd?”)
+- [ ] Naprawa zapisu nowej oferty: usunąć stare przeciążenie `create_offer`, pokazywać treść błędu
+- [ ] Desktopowa wersja `/oferta/:token` — profesjonalny, spójny wygląd tabeli
