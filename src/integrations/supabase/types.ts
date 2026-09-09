@@ -784,6 +784,7 @@ export type Database = {
         Row: {
           archived_at: string | null
           channel: string | null
+          channel_detail: string | null
           contact_id: string | null
           created_at: string
           created_by: string
@@ -803,6 +804,7 @@ export type Database = {
         Insert: {
           archived_at?: string | null
           channel?: string | null
+          channel_detail?: string | null
           contact_id?: string | null
           created_at?: string
           created_by: string
@@ -822,6 +824,7 @@ export type Database = {
         Update: {
           archived_at?: string | null
           channel?: string | null
+          channel_detail?: string | null
           contact_id?: string | null
           created_at?: string
           created_by?: string
@@ -1105,25 +1108,47 @@ export type Database = {
       bytea_to_text: { Args: { data: string }; Returns: string }
       cleanup_expired_shared_lists: { Args: never; Returns: number }
       cleanup_old_handled_leads: { Args: never; Returns: number }
-      create_offer: {
-        Args: {
-          _email?: string
-          _filters: Json
-          _kanal?: string
-          _nazwa: string
-          _notatka?: string
-          _renewed_from?: string
-          _telefon: string
-          _token: string
-          _tygodnie?: number
-        }
-        Returns: {
-          contact_id: string
-          kontakt_nowy: boolean
-          shared_list_id: string
-          token: string
-        }[]
-      }
+      create_offer:
+        | {
+            Args: {
+              _email?: string
+              _filters: Json
+              _kanal?: string
+              _nazwa: string
+              _notatka?: string
+              _renewed_from?: string
+              _telefon: string
+              _token: string
+              _tygodnie?: number
+            }
+            Returns: {
+              contact_id: string
+              kontakt_nowy: boolean
+              shared_list_id: string
+              token: string
+            }[]
+          }
+        | {
+            Args: {
+              _email?: string
+              _filters: Json
+              _firma?: string
+              _kanal?: string
+              _kanal_detail?: string
+              _nazwa: string
+              _notatka?: string
+              _renewed_from?: string
+              _telefon: string
+              _token: string
+              _tygodnie?: number
+            }
+            Returns: {
+              contact_id: string
+              kontakt_nowy: boolean
+              shared_list_id: string
+              token: string
+            }[]
+          }
       generate_product_slug: {
         Args: { product_name: string; serial_number?: string }
         Returns: string

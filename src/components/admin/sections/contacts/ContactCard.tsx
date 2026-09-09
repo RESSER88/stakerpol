@@ -44,6 +44,8 @@ interface OfferRow {
   view_count: number;
   last_viewed_at: string | null;
   renewed_from: string | null;
+  channel: string | null;
+  channel_detail: string | null;
 }
 
 interface ActivityRow {
@@ -129,7 +131,7 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
       supabase
         .from('shared_lists')
         .select(
-          'id, token, label, filters, created_at, expires_at, revoked_at, archived_at, view_count, last_viewed_at, renewed_from'
+          'id, token, label, filters, created_at, expires_at, revoked_at, archived_at, view_count, last_viewed_at, renewed_from, channel, channel_detail'
         )
         .eq('contact_id', contactId)
         .order('created_at', { ascending: false }),
@@ -246,10 +248,13 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
           _token: candidate,
           _filters: JSON.parse(JSON.stringify(offer.filters ?? {})),
           _nazwa: nazwa,
-          _telefon: contact.telefon ?? '',
+          _telefon: contact.telefon ?? undefined,
           _email: contact.email ?? undefined,
           _tygodnie: 2,
           _renewed_from: offer.id,
+          _firma: contact.firma ?? undefined,
+          _kanal: offer.channel ?? undefined,
+          _kanal_detail: offer.channel_detail ?? undefined,
         });
         if (!error) {
           token = candidate;

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Phone, Mail, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Check, Package, Trash2, BadgeCheck, UserPlus } from 'lucide-react';
+import { Phone, Mail, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Check, Package, Trash2, BadgeCheck, FilePlus2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { leadSourceLabel } from './leadSources';
 import InquiryStats from './InquiryStats';
+import { OfferPrefill } from './offers/types';
 
 
 interface Lead {
@@ -31,9 +32,10 @@ type TabValue = StatusFilter | 'stats';
 
 interface Props {
   initialFilter?: StatusFilter;
+  onGenerateOffer?: (prefill: OfferPrefill) => void;
 }
 
-const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
+const InquiriesSection = ({ initialFilter = 'new', onGenerateOffer }: Props) => {
   const { toast } = useToast();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,36 +129,25 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
     setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, sold_at: nextSoldAt } : l)));
   };
 
-  // Wciągnięcie zgłoszenia do kartoteki — RPC jest idempotentne po lead_id.
-  const importToContacts = async (lead: Lead) => {
-    setUpdating((prev) => new Set(prev).add(lead.id));
-    const { data, error } = await supabase.rpc('import_lead_to_contact', { _lead_id: lead.id });
-    setUpdating((prev) => {
-      const n = new Set(prev);
-      n.delete(lead.id);
-      return n;
-    });
-
-    if (error) {
-      toast({ title: 'Błąd', description: error.message, variant: 'destructive' });
-      return;
-    }
-    const result = Array.isArray(data) ? data[0] : data;
-    if (!result?.contact_id) {
-      toast({ title: 'Błąd', description: 'Brak odpowiedzi z bazy', variant: 'destructive' });
-      return;
-    }
-    const { data: contact } = await supabase
-      .from('contacts')
-      .select('osoba, firma')
-      .eq('id', result.contact_id)
-      .maybeSingle();
-    const label = contact?.osoba || contact?.firma || 'kontakt';
-    toast({
-      title: result.kontakt_nowy ? '✓ Nowy kontakt założony' : '✓ Dopięto do istniejącego',
-      description: label,
+  // Dane z zapytania przenosimy do formularza nowej oferty — bez przepisywania.
+  const generateOffer = (lead: Lead) => {
+    if (!onGenerateOffer) return;
+    const notatka = [
+      lead.product_model ? `Dotyczy: ${lead.product_model}` : null,
+      lead.message?.trim() || null,
+    ]
+      .filter(Boolean)
+      .join('\n');
+    onGenerateOffer({
+      leadId: lead.id,
+      nazwa: lead.name ?? '',
+      telefon: lead.phone ?? '',
+      email: lead.email ?? '',
+      notatka,
     });
   };
+
+
 
 
   const deleteLead = async (lead: Lead) => {
@@ -370,11 +361,11 @@ const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
                   </button>
                   <button
                     disabled={isUpdating}
-                    onClick={() => importToContacts(lead)}
+                    onClick={() => generateOffer(lead)}
                     className="px-3 h-8 inline-flex items-center gap-1.5 border border-editorial-line text-editorial-muted text-[11px] font-bold tracking-[0.15em] uppercase hover:border-editorial-ink hover:text-editorial-ink transition-colors disabled:opacity-50"
                   >
-                    <UserPlus className="h-3 w-3" />
-                    Wciągnij do kontaktów
+                    <FilePlus2 className="h-3 w-3" />
+                    Wygeneruj ofertę
                   </button>
                   {isHandled && (
 

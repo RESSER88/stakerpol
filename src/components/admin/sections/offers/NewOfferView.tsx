@@ -9,20 +9,17 @@ import {
   DEFAULT_EXPORT_CRITERIA,
 } from '@/utils/exportFilterCriteria';
 import { buildToken, buildUrl, MAX_TOKEN_ATTEMPTS } from '@/utils/offerToken';
+import { CHANNEL_OTHER, OFFER_CHANNEL_OPTIONS } from './offerChannels';
+import { OfferPrefill } from './types';
 
 interface Props {
   products: Product[];
   onCreated: () => void;
+  /** Dane przeniesione z zapytania — filtrów nie ustawiamy automatycznie. */
+  prefill?: OfferPrefill | null;
 }
 
 const WEEK_OPTIONS = [1, 2, 3, 4] as const;
-
-const CHANNEL_OPTIONS: { value: string; label: string }[] = [
-  { value: 'email', label: 'E-mail' },
-  { value: 'whatsapp', label: 'WhatsApp' },
-  { value: 'sms', label: 'SMS' },
-  { value: 'telefon', label: 'Telefon' },
-];
 
 const Label = ({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) => (
   <label
@@ -36,7 +33,7 @@ const Label = ({ children, htmlFor }: { children: React.ReactNode; htmlFor?: str
 const inputClass =
   'w-full bg-transparent border-b border-editorial-line py-2 text-sm text-editorial-ink placeholder:text-editorial-muted/60 focus:outline-none focus:border-editorial-ink';
 
-const NewOfferView = ({ products, onCreated }: Props) => {
+const NewOfferView = ({ products, onCreated, prefill }: Props) => {
   const { toast } = useToast();
   const [filtered, setFiltered] = useState<Product[]>(products);
   const [criteria, setCriteria] = useState<ExportFilterCriteria>(DEFAULT_EXPORT_CRITERIA);
@@ -47,7 +44,9 @@ const NewOfferView = ({ products, onCreated }: Props) => {
   const [email, setEmail] = useState('');
   const [notatka, setNotatka] = useState('');
   const [kanal, setKanal] = useState<string | null>(null);
+  const [skad, setSkad] = useState('');
   const [weeks, setWeeks] = useState<number>(2);
+  const [leadId, setLeadId] = useState<string | null>(null);
 
   const [saving, setSaving] = useState(false);
   const [lastUrl, setLastUrl] = useState<string | null>(null);
@@ -56,13 +55,23 @@ const NewOfferView = ({ products, onCreated }: Props) => {
     setFiltered(products);
   }, [products]);
 
+  // Prefill z zapytania: tylko dane klienta i notatka. Filtry wybiera admin.
+  useEffect(() => {
+    if (!prefill) return;
+    setNazwa(prefill.nazwa ?? '');
+    setTelefon(prefill.telefon ?? '');
+    setEmail(prefill.email ?? '');
+    setNotatka(prefill.notatka ?? '');
+    setLeadId(prefill.leadId ?? null);
+  }, [prefill]);
+
   const handleFilterChange = useCallback((list: Product[], next: ExportFilterCriteria) => {
     setFiltered(list);
     setCriteria(next);
   }, []);
 
   const matchedCount = filtered.length;
-  const canSubmit = matchedCount > 0 && nazwa.trim().length > 0 && telefon.trim().length > 0;
+  const canSubmit = matchedCount > 0 && nazwa.trim().length > 0;
 
   const copy = async (url: string) => {
     try {
@@ -89,31 +98,18 @@ const NewOfferView = ({ products, onCreated }: Props) => {
           _token: candidate,
           _filters: JSON.parse(JSON.stringify(criteria)),
           _nazwa: nazwaValue,
-          _telefon: telefon.trim(),
+          _telefon: telefon.trim() || undefined,
           _email: email.trim() || undefined,
           _tygodnie: weeks,
           _notatka: notatka.trim() || undefined,
           _kanal: kanal ?? undefined,
+          _firma: firmaValue || undefined,
+          _kanal_detail: kanal === CHANNEL_OTHER ? skad.trim() || undefined : undefined,
         });
         if (!error) {
           token = candidate;
           const row = Array.isArray(data) ? data[0] : data;
           kontaktNowy = row?.kontakt_nowy ?? true;
-          // Firma nie jest parametrem create_offer — sygnatura funkcji zostaje
-          // nietknięta, nazwę firmy dopisujemy osobnym UPDATE-em na kontakcie.
-          if (firmaValue && row?.contact_id) {
-            const { error: firmaError } = await supabase
-              .from('contacts')
-              .update({ firma: firmaValue })
-              .eq('id', row.contact_id);
-            if (firmaError) {
-              toast({
-                title: 'Oferta utworzona, firma niezapisana',
-                description: firmaError.message,
-                variant: 'destructive',
-              });
-            }
-          }
           lastError = null;
           break;
         }
@@ -134,6 +130,11 @@ const NewOfferView = ({ products, onCreated }: Props) => {
         throw lastError;
       }
 
+      // Zapytanie, z którego wyszła oferta, zamykamy jako obsłużone.
+      if (leadId) {
+        await supabase.from('leads').update({ status: 'handled' }).eq('id', leadId);
+      }
+
       setLastUrl(buildUrl(token));
       setNazwa('');
       setFirma('');
@@ -141,13 +142,15 @@ const NewOfferView = ({ products, onCreated }: Props) => {
       setEmail('');
       setNotatka('');
       setKanal(null);
+      setSkad('');
       setWeeks(2);
+      setLeadId(null);
 
       toast({
         title: '✓ Oferta utworzona',
         description: kontaktNowy
           ? `Nowy kontakt · ${matchedCount} ${matchedCount === 1 ? 'pozycja' : 'pozycji'}`
-          : 'Oferta trafiła do istniejącego kontaktu o tym numerze telefonu.',
+          : 'Oferta trafiła do istniejącego kontaktu.',
       });
       onCreated();
     } catch {
@@ -193,7 +196,7 @@ const NewOfferView = ({ products, onCreated }: Props) => {
         </div>
 
         <div>
-          <Label htmlFor="offer-telefon">Telefon *</Label>
+          <Label htmlFor="offer-telefon">Telefon (opcjonalnie)</Label>
           <input
             id="offer-telefon"
             value={telefon}
@@ -227,9 +230,9 @@ const NewOfferView = ({ products, onCreated }: Props) => {
         </div>
 
         <div>
-          <Label>Kanał (opcjonalnie)</Label>
+          <Label>Kanał — skąd pochodzi klient (opcjonalnie)</Label>
           <div className="flex flex-wrap gap-2">
-            {CHANNEL_OPTIONS.map((c) => (
+            {OFFER_CHANNEL_OPTIONS.map((c) => (
               <button
                 key={c.value}
                 type="button"
@@ -244,6 +247,18 @@ const NewOfferView = ({ products, onCreated }: Props) => {
               </button>
             ))}
           </div>
+          {kanal === CHANNEL_OTHER && (
+            <div className="mt-3">
+              <Label htmlFor="offer-skad">Skąd?</Label>
+              <input
+                id="offer-skad"
+                value={skad}
+                onChange={(e) => setSkad(e.target.value.slice(0, 120))}
+                placeholder="np. Polecenie, Baner, Targi"
+                className={inputClass}
+              />
+            </div>
+          )}
         </div>
 
         <div>

@@ -3,6 +3,7 @@ import { Product } from '@/types';
 import InquiriesSection from './InquiriesSection';
 import NewOfferView from './offers/NewOfferView';
 import SentOffersView from './offers/SentOffersView';
+import { OfferPrefill } from './offers/types';
 
 interface Props {
   products: Product[];
@@ -20,6 +21,12 @@ const TABS: { id: OffersView; label: string }[] = [
 const OffersSection = ({ products, initialView = 'new' }: Props) => {
   const [view, setView] = useState<OffersView>(initialView);
   const [sentReloadKey, setSentReloadKey] = useState(0);
+  const [prefill, setPrefill] = useState<OfferPrefill | null>(null);
+
+  const handleGenerateFromLead = (next: OfferPrefill) => {
+    setPrefill(next);
+    setView('new');
+  };
 
   return (
     <div>
@@ -43,14 +50,16 @@ const OffersSection = ({ products, initialView = 'new' }: Props) => {
       {view === 'new' && (
         <NewOfferView
           products={products}
+          prefill={prefill}
           onCreated={() => {
+            setPrefill(null);
             setSentReloadKey((k) => k + 1);
             setView('sent');
           }}
         />
       )}
       {view === 'sent' && <SentOffersView reloadKey={sentReloadKey} />}
-      {view === 'inquiries' && <InquiriesSection />}
+      {view === 'inquiries' && <InquiriesSection onGenerateOffer={handleGenerateFromLead} />}
     </div>
   );
 };

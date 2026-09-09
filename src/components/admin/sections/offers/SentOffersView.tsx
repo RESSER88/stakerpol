@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Copy, Loader2, Ban, Search } from 'lucide-react';
+import { Copy, Loader2, Ban, Search, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { buildUrl } from '@/utils/offerToken';
@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import ContactCard from '../contacts/ContactCard';
+import OfferEditDialog from './OfferEditDialog';
 
 
 interface Props {
@@ -26,6 +27,9 @@ interface OfferRow {
   id: string;
   token: string;
   label: string | null;
+  note: string | null;
+  channel: string | null;
+  channel_detail: string | null;
   created_at: string;
   expires_at: string;
   revoked_at: string | null;
@@ -140,6 +144,7 @@ const SentOffersView = ({ reloadKey }: Props) => {
   const [revokeTarget, setRevokeTarget] = useState<OfferRow | null>(null);
   const [revoking, setRevoking] = useState(false);
   const [openContactId, setOpenContactId] = useState<string | null>(null);
+  const [editTarget, setEditTarget] = useState<OfferRow | null>(null);
 
 
   const load = useCallback(async () => {
@@ -147,7 +152,7 @@ const SentOffersView = ({ reloadKey }: Props) => {
     const { data, error } = await supabase
       .from('shared_lists')
       .select(
-        'id, token, label, created_at, expires_at, revoked_at, archived_at, last_viewed_at, view_count, contact_id, contacts(osoba, firma, telefon, email, termin_followup, krok)'
+        'id, token, label, note, channel, channel_detail, created_at, expires_at, revoked_at, archived_at, last_viewed_at, view_count, contact_id, contacts(osoba, firma, telefon, email, termin_followup, krok)'
       )
       .order('created_at', { ascending: false });
     if (error) {
@@ -298,6 +303,14 @@ const SentOffersView = ({ reloadKey }: Props) => {
                 >
                   <Copy className="h-3.5 w-3.5" />
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setEditTarget(row)}
+                  aria-label="Edytuj ofertę"
+                  className="p-2 border border-editorial-line hover:border-editorial-ink"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
                 {active && (
                   <button
                     type="button"
@@ -320,6 +333,12 @@ const SentOffersView = ({ reloadKey }: Props) => {
         contactId={openContactId}
         onClose={() => setOpenContactId(null)}
         onChanged={() => void load()}
+      />
+
+      <OfferEditDialog
+        offer={editTarget}
+        onClose={() => setEditTarget(null)}
+        onSaved={() => void load()}
       />
 
 
