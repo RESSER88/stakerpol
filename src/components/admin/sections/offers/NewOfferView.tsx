@@ -196,7 +196,7 @@ const NewOfferView = ({ products, onCreated, prefill }: Props) => {
         </div>
 
         <div>
-          <Label htmlFor="offer-telefon">Telefon *</Label>
+          <Label htmlFor="offer-telefon">Telefon (opcjonalnie)</Label>
           <input
             id="offer-telefon"
             value={telefon}
@@ -230,9 +230,9 @@ const NewOfferView = ({ products, onCreated, prefill }: Props) => {
         </div>
 
         <div>
-          <Label>Kanał (opcjonalnie)</Label>
+          <Label>Kanał — skąd pochodzi klient (opcjonalnie)</Label>
           <div className="flex flex-wrap gap-2">
-            {CHANNEL_OPTIONS.map((c) => (
+            {OFFER_CHANNEL_OPTIONS.map((c) => (
               <button
                 key={c.value}
                 type="button"
@@ -247,6 +247,18 @@ const NewOfferView = ({ products, onCreated, prefill }: Props) => {
               </button>
             ))}
           </div>
+          {kanal === CHANNEL_OTHER && (
+            <div className="mt-3">
+              <Label htmlFor="offer-skad">Skąd?</Label>
+              <input
+                id="offer-skad"
+                value={skad}
+                onChange={(e) => setSkad(e.target.value.slice(0, 120))}
+                placeholder="np. Polecenie, Baner, Targi"
+                className={inputClass}
+              />
+            </div>
+          )}
         </div>
 
         <div>
