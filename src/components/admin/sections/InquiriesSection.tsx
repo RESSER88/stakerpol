@@ -35,7 +35,7 @@ interface Props {
   onGenerateOffer?: (prefill: OfferPrefill) => void;
 }
 
-const InquiriesSection = ({ initialFilter = 'new' }: Props) => {
+const InquiriesSection = ({ initialFilter = 'new', onGenerateOffer }: Props) => {
   const { toast } = useToast();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
