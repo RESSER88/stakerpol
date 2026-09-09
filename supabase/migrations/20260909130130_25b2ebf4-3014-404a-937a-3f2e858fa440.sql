@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.create_offer(text, jsonb, text, text, text, integer, text, text, uuid);
