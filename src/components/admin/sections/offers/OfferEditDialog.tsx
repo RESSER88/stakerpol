@@ -81,8 +81,7 @@ const OfferEditDialog = ({ offer, onClose, onSaved }: Props) => {
         note: notatka.trim() || null,
         channel: kanal,
         channel_detail: channelDetail,
-        sent_at: kanal ? offer ? undefined : undefined : undefined,
-      } as never)
+      })
       .eq('id', offer.id);
 
     if (listError) {
