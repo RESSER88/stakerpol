@@ -60,7 +60,7 @@ const AdminSidebar = ({ active, onChange, onSignOut, isDark, onToggleTheme }: Pr
               >
                 {item.label}
               </span>
-              {item.id === 'offers' && newLeadsCount > 0 && (
+              {item.id === 'inquiries' && newLeadsCount > 0 && (
                 <span
                   className="ml-auto flex items-center gap-1.5 text-[10px] font-bold tracking-[0.1em] text-editorial-accent"
                   aria-label={`Nieobsłużone zapytania: ${newLeadsCount}`}

@@ -14,6 +14,8 @@ import DashboardSection from '@/components/admin/sections/DashboardSection';
 import ExportSection from '@/components/admin/sections/ExportSection';
 import OffersSection from '@/components/admin/sections/OffersSection';
 import ContactsSection from '@/components/admin/sections/ContactsSection';
+import InquiriesSection from '@/components/admin/sections/InquiriesSection';
+import { OfferPrefill } from '@/components/admin/sections/offers/types';
 
 import PermissionDenied from '@/components/ui/PermissionDenied';
 import { Product } from '@/types';
@@ -23,7 +25,8 @@ const Admin = () => {
   const { products, addProduct, updateProduct, deleteProduct, addProductAsync, updateProductAsync } = useSupabaseProducts() as any;
 
   const [activeSection, setActiveSection] = useState<AdminSection>('start');
-  const [offersView, setOffersView] = useState<'new' | 'sent' | 'inquiries'>('new');
+  const [offersView, setOffersView] = useState<'new' | 'sent'>('new');
+  const [offerPrefill, setOfferPrefill] = useState<OfferPrefill | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [productImages, setProductImages] = useState<string[]>([]);
@@ -113,6 +116,12 @@ const Admin = () => {
     }
   };
 
+  const handleGenerateOfferFromInquiry = (prefill: OfferPrefill) => {
+    setOfferPrefill(prefill);
+    setOffersView('new');
+    setActiveSection('offers');
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-admin-bg">
@@ -155,7 +164,7 @@ const Admin = () => {
             productCount={products.length}
             products={products}
             onNavigate={setActiveSection}
-            onOpenInquiries={() => { setOffersView('inquiries'); setActiveSection('offers'); }}
+            onOpenInquiries={() => setActiveSection('inquiries')}
             onAddProduct={() => { setActiveSection('products'); handleAdd(); }}
             onEditProduct={(p) => { setActiveSection('products'); handleEdit(p); }}
           />
@@ -181,8 +190,17 @@ const Admin = () => {
             onNavigate={setActiveSection}
           />
         );
+      case 'inquiries':
+        return <InquiriesSection onGenerateOffer={handleGenerateOfferFromInquiry} />;
       case 'offers':
-        return <OffersSection key={offersView} products={products} initialView={offersView} />;
+        return (
+          <OffersSection
+            products={products}
+            initialView={offersView}
+            prefill={offerPrefill}
+            onPrefillCleared={() => setOfferPrefill(null)}
+          />
+        );
       case 'export':
         return <ExportSection products={products} />;
       case 'contacts':

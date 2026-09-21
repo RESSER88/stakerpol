@@ -35,7 +35,7 @@ const AdminLayout = ({ active, onChange, onSignOut, children }: Props) => {
         onToggleTheme={toggleTheme}
       />
       <div className="lg:ml-[240px] min-h-screen flex flex-col">
-        <main className="flex-1 px-5 py-8 lg:px-12 lg:py-12 pb-20 lg:pb-12">
+        <main className="flex-1 px-5 py-8 lg:px-12 lg:py-12 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-12">
           {children}
         </main>
       </div>

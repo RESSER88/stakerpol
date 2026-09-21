@@ -9,21 +9,21 @@ interface Props {
 }
 
 const AdminBottomNav = ({ active, onChange }: Props) => {
-  const items = adminSections.slice(0, 4);
+  const items = adminSections.slice(0, 5);
   const { count: newLeadsCount } = useNewLeadsCount();
 
   return (
-    <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-editorial-bg border-t border-editorial-ink h-12 grid grid-cols-4 z-50">
+    <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-editorial-bg border-t border-editorial-ink min-h-12 h-[calc(3rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] grid grid-cols-5 z-50">
       {items.map((item, i) => {
         const isActive = active === item.id;
         return (
           <button
             key={item.id}
             onClick={() => onChange(item.id)}
-            className="relative flex flex-col items-center justify-center gap-0.5 transition-colors"
+            className="relative min-w-0 flex flex-col items-center justify-center gap-0.5 transition-colors"
           >
-            {item.id === 'offers' && newLeadsCount > 0 && (
-              <PulseDot className="absolute top-1 right-[22%]" />
+            {item.id === 'inquiries' && newLeadsCount > 0 && (
+              <PulseDot className="absolute top-1 right-[18%]" />
             )}
             <span
               className={cn(
@@ -35,7 +35,7 @@ const AdminBottomNav = ({ active, onChange }: Props) => {
             </span>
             <span
               className={cn(
-                'font-editorial text-[10px] leading-none',
+                'font-editorial text-[10px] leading-none truncate max-w-full px-0.5',
                 isActive ? 'text-editorial-ink' : 'text-editorial-muted'
               )}
             >

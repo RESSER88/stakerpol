@@ -8,10 +8,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { adminSections, sectionNumber, sectionTitles, type AdminSection } from './types';
 
-/** Pozycje nieobecne w dolnym pasku (pierwsze cztery) trafiają do menu „więcej”. */
+/** Pozycje nieobecne w dolnym pasku (pierwsze pięć) trafiają do menu „więcej”. */
 const OVERFLOW = adminSections
   .map((item, index) => ({ item, index }))
-  .filter(({ index }) => index >= 4);
+  .filter(({ index }) => index >= 5);
 
 interface Props {
   title: string;

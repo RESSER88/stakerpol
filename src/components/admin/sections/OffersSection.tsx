@@ -1,32 +1,37 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Product } from '@/types';
-import InquiriesSection from './InquiriesSection';
 import NewOfferView from './offers/NewOfferView';
 import SentOffersView from './offers/SentOffersView';
 import { OfferPrefill } from './offers/types';
 
 interface Props {
   products: Product[];
-  initialView?: 'new' | 'sent' | 'inquiries';
+  initialView?: OffersView;
+  prefill?: OfferPrefill | null;
+  onPrefillCleared?: () => void;
 }
 
-type OffersView = 'new' | 'sent' | 'inquiries';
+type OffersView = 'new' | 'sent';
 
 const TABS: { id: OffersView; label: string }[] = [
   { id: 'new', label: 'Nowa' },
   { id: 'sent', label: 'Wysłane' },
-  { id: 'inquiries', label: 'Zapytania' },
 ];
 
-const OffersSection = ({ products, initialView = 'new' }: Props) => {
+const OffersSection = ({ products, initialView = 'new', prefill, onPrefillCleared }: Props) => {
   const [view, setView] = useState<OffersView>(initialView);
   const [sentReloadKey, setSentReloadKey] = useState(0);
-  const [prefill, setPrefill] = useState<OfferPrefill | null>(null);
+  const [activePrefill, setActivePrefill] = useState<OfferPrefill | null>(prefill ?? null);
 
-  const handleGenerateFromLead = (next: OfferPrefill) => {
-    setPrefill(next);
+  useEffect(() => {
+    setView(initialView);
+  }, [initialView]);
+
+  useEffect(() => {
+    if (!prefill) return;
+    setActivePrefill(prefill);
     setView('new');
-  };
+  }, [prefill]);
 
   return (
     <div>
@@ -50,16 +55,16 @@ const OffersSection = ({ products, initialView = 'new' }: Props) => {
       {view === 'new' && (
         <NewOfferView
           products={products}
-          prefill={prefill}
+          prefill={activePrefill}
           onCreated={() => {
-            setPrefill(null);
+            setActivePrefill(null);
+            onPrefillCleared?.();
             setSentReloadKey((k) => k + 1);
             setView('sent');
           }}
         />
       )}
       {view === 'sent' && <SentOffersView reloadKey={sentReloadKey} />}
-      {view === 'inquiries' && <InquiriesSection onGenerateOffer={handleGenerateFromLead} />}
     </div>
   );
 };
