@@ -7,4 +7,4 @@
 - [x] Kanał = źródło klienta (Facebook, YouTube, Instagram, Allegro, OLX, Google, ChatGPT, Powracający, Inne + „Skąd?”)
 - [x] Naprawa zapisu nowej oferty: usunięte stare przeciążenie `create_offer`, toast pokazuje treść błędu
 - [x] Desktopowa wersja `/oferta/:token` — profesjonalna tabela (nagłówki grup, zebra, ceny, „Zamawiam”)
-- [ ] Panel admina: „Zapytania” jako osobna sekcja nawigacji, bez zmiany routingu `/admin`
+- [x] Panel admina: „Zapytania” jako osobna sekcja nawigacji, bez zmiany routingu `/admin`
