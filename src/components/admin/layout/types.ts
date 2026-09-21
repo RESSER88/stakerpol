@@ -1,4 +1,4 @@
-export type AdminSection = 'start' | 'products' | 'offers' | 'export' | 'contacts' | 'seo' | 'faq';
+export type AdminSection = 'start' | 'products' | 'inquiries' | 'offers' | 'export' | 'contacts' | 'seo' | 'faq';
 
 export interface AdminSectionItem {
   id: AdminSection;
@@ -9,6 +9,7 @@ export interface AdminSectionItem {
 export const adminSections: AdminSectionItem[] = [
   { id: 'start', label: 'Start' },
   { id: 'products', label: 'Produkty' },
+  { id: 'inquiries', label: 'Zapytania' },
   { id: 'offers', label: 'Oferty' },
   { id: 'export', label: 'Eksport' },
   { id: 'contacts', label: 'Kontakty' },
@@ -21,6 +22,7 @@ export const sectionNumber = (index: number) => String(index + 1).padStart(2, '0
 export const sectionTitles: Record<AdminSection, string> = {
   start: 'Start',
   products: 'Produkty',
+  inquiries: 'Zapytania',
   offers: 'Oferty',
   export: 'Eksport',
   contacts: 'Kontakty',
