@@ -124,6 +124,7 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
       _krok: krok ?? undefined,
       _termin_followup: terminValue,
       _wyczysc_termin: clear === true,
+      _termin_note: terminNote.trim() || undefined,
       _udzwig_kg: udzwigTouched ? udzwig : undefined,
       _wysokosc_m: wysokoscTouched ? wysokosc : undefined,
     });
