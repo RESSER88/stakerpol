@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { KROK_OPTIONS } from '@/utils/contactLabels';
 
 interface Props {
   contactId: string;
@@ -10,15 +11,6 @@ interface Props {
   wysokoscStart: number | null;
   onSaved: () => void;
 }
-
-const KROK_OPTIONS: { value: string; label: string }[] = [
-  { value: 'nowy', label: 'Nowy' },
-  { value: 'oferta', label: 'Oferta' },
-  { value: 'oddzwonic', label: 'Oddzwonić' },
-  { value: 'porownuje', label: 'Porównuje' },
-  { value: 'cena', label: 'Cena' },
-  { value: 'nieaktualne', label: 'Nieaktualne' },
-];
 
 type TerminOption = { value: string; label: string; days: number | null };
 
