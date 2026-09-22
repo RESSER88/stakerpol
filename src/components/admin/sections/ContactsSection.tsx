@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { fmtDate, krokLabel } from '@/utils/contactLabels';
+import { matchesContactQuery } from '@/utils/contactSearch';
 import SectionHeader from '../editorial/SectionHeader';
 import ContactCard from './contacts/ContactCard';
+import AddContactDialog from './contacts/AddContactDialog';
 
 interface ContactRow {
   id: string;
@@ -14,16 +17,8 @@ interface ContactRow {
   zrodlo: string;
   krok: string;
   termin_followup: string | null;
+  termin_followup_note: string | null;
 }
-
-const KROK_LABELS: Record<string, string> = {
-  nowy: 'Nowy',
-  oferta: 'Oferta',
-  oddzwonic: 'Oddzwonić',
-  porownuje: 'Porównuje',
-  cena: 'Cena',
-  nieaktualne: 'Nieaktualne',
-};
 
 type SourceFilter = 'all' | 'telefon' | 'www';
 
@@ -33,9 +28,6 @@ const SOURCE_TABS: { value: SourceFilter; label: string }[] = [
   { value: 'www', label: 'WWW' },
 ];
 
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-
 const ContactsSection = () => {
   const { toast } = useToast();
   const [rows, setRows] = useState<ContactRow[]>([]);
@@ -44,12 +36,15 @@ const ContactsSection = () => {
   const [query, setQuery] = useState('');
   const [source, setSource] = useState<SourceFilter>('all');
   const [openId, setOpenId] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('contacts')
-      .select('id, osoba, firma, telefon, email, zrodlo, krok, termin_followup')
+      .select(
+        'id, osoba, firma, telefon, email, zrodlo, krok, termin_followup, termin_followup_note'
+      )
       .eq('ukryty', false)
       .order('termin_followup', { ascending: true, nullsFirst: false })
       .order('zaktualizowany', { ascending: false });
@@ -88,11 +83,9 @@ const ContactsSection = () => {
   }, [load]);
 
   const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
     return rows.filter((r) => {
       if (source !== 'all' && r.zrodlo !== source) return false;
-      if (!q) return true;
-      return [r.osoba, r.firma, r.telefon].some((v) => (v ?? '').toLowerCase().includes(q));
+      return matchesContactQuery(r, query);
     });
   }, [rows, query, source]);
 
@@ -106,12 +99,12 @@ const ContactsSection = () => {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Szukaj: osoba, firma, telefon"
+            placeholder="Szukaj: osoba, firma, telefon, e-mail"
             aria-label="Szukaj kontaktu"
             className="w-full bg-transparent py-2 text-sm text-editorial-ink placeholder:text-editorial-muted/60 focus:outline-none"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {SOURCE_TABS.map((t) => (
             <button
               key={t.value}
@@ -126,6 +119,14 @@ const ContactsSection = () => {
               {t.label}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setAddOpen(true)}
+            className="flex items-center gap-2 h-9 px-3 text-[11px] uppercase tracking-wider border border-editorial-ink bg-editorial-ink text-background"
+          >
+            <UserPlus className="h-3.5 w-3.5" />
+            Dodaj kontakt
+          </button>
         </div>
       </div>
 
@@ -150,7 +151,7 @@ const ContactsSection = () => {
                     <span className="text-[11px] text-editorial-muted">{r.firma}</span>
                   )}
                   <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-editorial-muted">
-                    {KROK_LABELS[r.krok] ?? r.krok}
+                    {krokLabel(r.krok)}
                   </span>
                 </div>
                 <div className="text-[11px] text-editorial-muted mt-1 tracking-wide">
@@ -158,6 +159,9 @@ const ContactsSection = () => {
                   {r.email ? ` · ${r.email}` : ''} · {r.zrodlo} · ostatni kontakt:{' '}
                   {lastContact[r.id] ? fmtDate(lastContact[r.id]) : 'brak'} · termin:{' '}
                   {r.termin_followup ? fmtDate(r.termin_followup) : 'brak'}
+                  {r.termin_followup && r.termin_followup_note
+                    ? ` (${r.termin_followup_note})`
+                    : ''}
                 </div>
               </button>
             </li>
@@ -166,6 +170,15 @@ const ContactsSection = () => {
       )}
 
       <ContactCard contactId={openId} onClose={() => setOpenId(null)} onChanged={() => void load()} />
+
+      <AddContactDialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onCreated={(id) => {
+          void load();
+          setOpenId(id);
+        }}
+      />
     </div>
   );
 };
