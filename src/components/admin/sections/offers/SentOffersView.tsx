@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Copy, Loader2, Ban, Search, Pencil } from 'lucide-react';
+import { Copy, Loader2, Ban, Search, Pencil, Archive, Trash2, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { buildUrl } from '@/utils/offerToken';
 import { matchesContactQuery, normalizeQuery } from '@/utils/contactSearch';
+import { fmtDate } from '@/utils/contactLabels';
+import { isOfferActive, offerState } from '@/utils/offerStatus';
 
 import {
   AlertDialog,
@@ -17,6 +19,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import ContactCard from '../contacts/ContactCard';
 import OfferEditDialog from './OfferEditDialog';
+import AssignContactDialog from './AssignContactDialog';
 
 
 interface Props {
@@ -45,14 +48,7 @@ interface OfferRow {
     termin_followup: string | null;
     krok: string | null;
   } | null;
-
-
 }
-
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-
-const DAY = 24 * 60 * 60 * 1000;
 
 /** Chip akcji: tylko gdy termin follow-upu wypada dziś lub minął. */
 const callToday = (termin: string | null | undefined): boolean => {
@@ -63,34 +59,11 @@ const callToday = (termin: string | null | undefined): boolean => {
   return due.getTime() - today.getTime() <= 0;
 };
 
-type State = { label: string; className: string };
-
-/** Stan oferty — jedyne źródło prawdy: shared_lists (expires_at, revoked_at, archived_at). */
-const stateOf = (row: OfferRow): State => {
-  const now = Date.now();
-  const muted = 'text-editorial-muted border-editorial-line';
-  if (row.archived_at) return { label: 'archiwalna', className: muted };
-  if (row.revoked_at) return { label: 'zatrzymana', className: muted };
-  const left = new Date(row.expires_at).getTime() - now;
-  if (left <= 0) return { label: 'wygasła', className: muted };
-  const days = Math.ceil(left / DAY);
-  if (days <= 3)
-    return {
-      label: days === 1 ? 'wygasa dziś' : `wygasa za ${days} dni`,
-      className: 'text-editorial-ink border-editorial-ink',
-    };
-  return { label: 'aktywna', className: 'text-editorial-accent border-editorial-accent' };
-};
-
 /** Opis otwarć — wyłącznie view_count / last_viewed_at z shared_lists. */
 const viewsText = (row: OfferRow): string =>
   row.view_count > 0
-    ? `Oglądał, ${row.view_count}×${row.last_viewed_at ? ` · ostatnio ${formatDate(row.last_viewed_at)}` : ''}`
+    ? `Oglądał, ${row.view_count}×${row.last_viewed_at ? ` · ostatnio ${fmtDate(row.last_viewed_at)}` : ''}`
     : 'Brak otwarć';
-
-
-const isActive = (row: OfferRow) =>
-  !row.archived_at && !row.revoked_at && new Date(row.expires_at).getTime() > Date.now();
 
 const newer = (a: OfferRow, b: OfferRow) =>
   new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
@@ -120,7 +93,7 @@ const groupRows = (
   }
 
   const grouped = [...byContact.values()].map((list) => {
-    const actives = list.filter(isActive).sort(newer);
+    const actives = list.filter(isOfferActive).sort(newer);
     const current = actives[0] ?? [...list].sort(newer)[0];
     const newestOffer = Math.max(...list.map((r) => ts(r.created_at)));
     const activityAt = Math.max(newestOffer, ts(lastActivity[current.contact_id ?? '']));
@@ -132,9 +105,6 @@ const groupRows = (
   );
 };
 
-
-
-
 const SentOffersView = ({ reloadKey }: Props) => {
   const { toast } = useToast();
   const [rows, setRows] = useState<OfferRow[]>([]);
@@ -143,9 +113,11 @@ const SentOffersView = ({ reloadKey }: Props) => {
   const [query, setQuery] = useState('');
   const [revokeTarget, setRevokeTarget] = useState<OfferRow | null>(null);
   const [revoking, setRevoking] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<OfferRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [openContactId, setOpenContactId] = useState<string | null>(null);
   const [editTarget, setEditTarget] = useState<OfferRow | null>(null);
-
+  const [assignTarget, setAssignTarget] = useState<OfferRow | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -199,8 +171,6 @@ const SentOffersView = ({ reloadKey }: Props) => {
     [grouped, query]
   );
 
-
-
   const copy = async (url: string) => {
     try {
       await navigator.clipboard.writeText(url);
@@ -227,6 +197,35 @@ const SentOffersView = ({ reloadKey }: Props) => {
     await load();
   };
 
+  /** Archiwizacja: oferta znika z aktywnej pracy, ale rekord i historia zostają. */
+  const handleArchive = async (row: OfferRow) => {
+    const { error } = await supabase
+      .from('shared_lists')
+      .update({ archived_at: new Date().toISOString() })
+      .eq('id', row.id);
+    if (error) {
+      toast({ title: 'Błąd', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: '✓ Oferta zarchiwizowana', description: 'Dane kontaktu i historia zostają' });
+    await load();
+  };
+
+  /** Usunięcie dotyczy wyłącznie oferty — kontakt i jego historia zostają. */
+  const handleDelete = async () => {
+    if (!deleteTarget || deleting) return;
+    setDeleting(true);
+    const { error } = await supabase.from('shared_lists').delete().eq('id', deleteTarget.id);
+    setDeleting(false);
+    if (error) {
+      toast({ title: 'Błąd', description: error.message, variant: 'destructive' });
+      return;
+    }
+    setDeleteTarget(null);
+    toast({ title: 'Oferta usunięta', description: 'Kontakt i historia rozmów pozostały' });
+    await load();
+  };
+
   if (loading) return <Loader2 className="h-4 w-4 animate-spin text-editorial-muted" />;
   if (rows.length === 0)
     return <p className="text-xs text-editorial-muted italic">Brak wysłanych ofert.</p>;
@@ -249,7 +248,7 @@ const SentOffersView = ({ reloadKey }: Props) => {
       ) : (
       <ul className="border-t border-editorial-line">
         {visible.map(({ row, extras }) => {
-          const state = stateOf(row);
+          const state = offerState(row);
           const urgent = callToday(row.contacts?.termin_followup);
           const name = row.contacts?.firma || row.contacts?.osoba || row.label || 'Bez nazwy';
 
@@ -268,7 +267,9 @@ const SentOffersView = ({ reloadKey }: Props) => {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm text-editorial-ink truncate">{name}</span>
                   <span className="text-[11px] text-editorial-muted">
-                    {row.contacts?.telefon || 'brak telefonu'}
+                    {row.contact_id
+                      ? row.contacts?.telefon || 'brak telefonu'
+                      : 'Brak przypisanego kontaktu'}
                   </span>
                 </div>
 
@@ -286,15 +287,25 @@ const SentOffersView = ({ reloadKey }: Props) => {
                 </div>
 
                 <div className="text-[11px] text-editorial-muted mt-1.5 tracking-wide">
-                  {viewsText(row)} · wysłano {formatDate(row.created_at)} · ważna do{' '}
-                  {formatDate(row.expires_at)}
+                  {viewsText(row)} · wysłano {fmtDate(row.created_at)} · ważna do{' '}
+                  {fmtDate(row.expires_at)}
                   {extras > 0
                     ? ` · +${extras} ${extras === 1 ? 'oferta' : 'ofert'} w historii`
                     : ''}
                 </div>
               </button>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                {!row.contact_id && (
+                  <button
+                    type="button"
+                    onClick={() => setAssignTarget(row)}
+                    className="flex items-center gap-1.5 px-2.5 py-2 text-[11px] uppercase tracking-wider border border-editorial-ink text-editorial-ink"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    Przypisz kontakt
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => copy(buildUrl(row.token))}
@@ -321,13 +332,30 @@ const SentOffersView = ({ reloadKey }: Props) => {
                     Zatrzymaj
                   </button>
                 )}
+                {!row.archived_at && (
+                  <button
+                    type="button"
+                    onClick={() => void handleArchive(row)}
+                    aria-label="Archiwizuj ofertę"
+                    className="p-2 border border-editorial-line text-editorial-muted hover:border-editorial-ink"
+                  >
+                    <Archive className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setDeleteTarget(row)}
+                  aria-label="Usuń ofertę"
+                  className="p-2 border border-editorial-line text-editorial-muted hover:border-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
             </li>
           );
         })}
       </ul>
       )}
-
 
       <ContactCard
         contactId={openContactId}
@@ -341,6 +369,11 @@ const SentOffersView = ({ reloadKey }: Props) => {
         onSaved={() => void load()}
       />
 
+      <AssignContactDialog
+        offer={assignTarget}
+        onClose={() => setAssignTarget(null)}
+        onAssigned={() => void load()}
+      />
 
       <AlertDialog open={!!revokeTarget} onOpenChange={(o) => !o && setRevokeTarget(null)}>
         <AlertDialogContent>
@@ -361,6 +394,31 @@ const SentOffersView = ({ reloadKey }: Props) => {
               disabled={revoking}
             >
               Zatrzymaj dostęp
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Usunąć ofertę?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Oferta {deleteTarget?.label ? `„${deleteTarget.label}” ` : ''}zostanie usunięta razem z
+              linkiem i statystykami otwarć. Kontakt i jego historia rozmów pozostaną bez zmian.
+              Jeśli chcesz tylko schować ofertę z bieżącej pracy, użyj archiwizacji.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDelete();
+              }}
+              disabled={deleting}
+            >
+              Usuń ofertę
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
