@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Copy, Link2, Loader2, Mail, Pencil, Phone } from 'lucide-react';
+import { Copy, EyeOff, Link2, Loader2, Mail, Pencil, Phone, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { buildToken, buildUrl, MAX_TOKEN_ATTEMPTS } from '@/utils/offerToken';
+import { fmtDate, fmtDateTime, krokLabel, typLabel } from '@/utils/contactLabels';
+import { offerState } from '@/utils/offerStatus';
+import { emailError, phoneError } from '@/utils/contactValidation';
 import {
   Dialog,
   DialogContent,
@@ -10,12 +13,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import CallForm from './CallForm';
 
 interface Props {
   contactId: string | null;
   onClose: () => void;
-  /** Wywoływane po zmianie danych kontaktu (zapis rozmowy, nowy link). */
+  /** Wywoływane po zmianie danych kontaktu (zapis rozmowy, nowy link, usunięcie). */
   onChanged?: () => void;
 }
 
@@ -28,6 +41,7 @@ interface ContactRow {
   zrodlo: string;
   krok: string;
   termin_followup: string | null;
+  termin_followup_note: string | null;
   udzwig_kg: number | null;
   wysokosc_m: number | null;
 }
@@ -54,50 +68,10 @@ interface ActivityRow {
   data: string;
   tresc: string | null;
   wynik: string | null;
+  shared_list_id: string | null;
 }
 
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-
-const fmtDateTime = (iso: string) =>
-  new Date(iso).toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' });
-
-const KROK_LABELS: Record<string, string> = {
-  nowy: 'Nowy',
-  oferta: 'Oferta',
-  oddzwonic: 'Oddzwonić',
-  porownuje: 'Porównuje',
-  cena: 'Cena',
-  nieaktualne: 'Nieaktualne',
-};
-
-const TYP_LABELS: Record<string, string> = {
-  telefon: 'Rozmowa',
-  formularz: 'Zgłoszenie z WWW',
-  oferta: 'Oferta',
-  sprzedaz: 'Sprzedaż',
-  cofniecie_sprzedazy: 'Cofnięcie sprzedaży',
-  ukrycie: 'Ukrycie',
-  notatka: 'Notatka',
-};
-
-type OfferState = 'aktywna' | 'wygasła' | 'zatrzymana' | 'archiwalna';
-
-const offerState = (o: OfferRow): OfferState => {
-  if (o.archived_at) return 'archiwalna';
-  if (o.revoked_at) return 'zatrzymana';
-  if (new Date(o.expires_at).getTime() < Date.now()) return 'wygasła';
-  return 'aktywna';
-};
-
-type EditableKey = 'osoba' | 'firma' | 'telefon' | 'email';
-
-const FIELDS: { key: EditableKey; label: string; placeholder: string }[] = [
-  { key: 'osoba', label: 'Osoba', placeholder: 'Imię i nazwisko' },
-  { key: 'firma', label: 'Firma', placeholder: 'Nazwa firmy' },
-  { key: 'telefon', label: 'Telefon', placeholder: 'np. +48 123 456 789' },
-  { key: 'email', label: 'E-mail', placeholder: 'adres@firma.pl' },
-];
+type EditableKey = 'osoba' | 'firma' | 'telefon' | 'email' | 'termin_followup' | 'termin_note';
 
 type Draft = Record<EditableKey, string>;
 
@@ -106,7 +80,16 @@ const toDraft = (c: ContactRow): Draft => ({
   firma: c.firma ?? '',
   telefon: c.telefon ?? '',
   email: c.email ?? '',
+  termin_followup: c.termin_followup ?? '',
+  termin_note: c.termin_followup_note ?? '',
 });
+
+const inputClass =
+  'w-full bg-transparent border-b border-editorial-line py-1.5 text-sm text-editorial-ink placeholder:text-editorial-muted/60 focus:outline-none focus:border-editorial-ink';
+
+const labelClass = 'block text-[10px] uppercase tracking-[0.2em] text-editorial-muted mb-1';
+
+const sectionTitle = 'text-[11px] font-bold uppercase tracking-[0.2em] text-editorial-muted mb-3';
 
 const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
   const { toast } = useToast();
@@ -115,9 +98,13 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
   const [activities, setActivities] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [renewing, setRenewing] = useState<string | null>(null);
-  const [draft, setDraft] = useState<Draft>({ osoba: '', firma: '', telefon: '', email: '' });
+  const [draft, setDraft] = useState<Draft>(
+    { osoba: '', firma: '', telefon: '', email: '', termin_followup: '', termin_note: '' }
+  );
   const [savingFields, setSavingFields] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     if (!contactId) return;
@@ -125,7 +112,9 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
     const [c, o, a] = await Promise.all([
       supabase
         .from('contacts')
-        .select('id, osoba, firma, telefon, email, zrodlo, krok, termin_followup, udzwig_kg, wysokosc_m')
+        .select(
+          'id, osoba, firma, telefon, email, zrodlo, krok, termin_followup, termin_followup_note, udzwig_kg, wysokosc_m'
+        )
         .eq('id', contactId)
         .maybeSingle(),
       supabase
@@ -137,7 +126,7 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
         .order('created_at', { ascending: false }),
       supabase
         .from('contact_activities')
-        .select('id, typ, data, tresc, wynik')
+        .select('id, typ, data, tresc, wynik, shared_list_id')
         .eq('contact_id', contactId)
         .order('data', { ascending: false }),
     ]);
@@ -158,16 +147,17 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
     void load();
   }, [load]);
 
-  /** Oferta bieżąca: najnowsza aktywna (jak na liście WYSŁANE). */
-  const currentOffer = useMemo(() => {
-    const actives = offers
-      .filter((o) => offerState(o) === 'aktywna')
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    return actives[0] ?? null;
-  }, [offers]);
-
-  /** Wspólna oś czasu: rozmowy/formularze + oferty historyczne i zatrzymane. */
+  /**
+   * Jedna oferta = jeden wpis w historii. Rekord z contact_activities ma
+   * pierwszeństwo; pozycję syntetyczną ze shared_lists dokładamy tylko dla
+   * ofert, które nie mają własnego wpisu (dane historyczne sprzed zmiany).
+   */
   const timeline = useMemo(() => {
+    const offerById = new Map(offers.map((o) => [o.id, o]));
+    const coveredOffers = new Set(
+      activities.map((a) => a.shared_list_id).filter(Boolean) as string[]
+    );
+
     const items: {
       key: string;
       at: string;
@@ -175,17 +165,24 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
       tresc: string | null;
       wynik: string | null;
       offer?: OfferRow;
-    }[] = activities.map((a) => ({
-      key: `a-${a.id}`,
-      at: a.data,
-      label: TYP_LABELS[a.typ] ?? a.typ,
-      tresc: a.tresc,
-      wynik: a.wynik,
-    }));
+    }[] = activities.map((a) => {
+      const offer = a.shared_list_id ? offerById.get(a.shared_list_id) : undefined;
+      return {
+        key: `a-${a.id}`,
+        at: a.data,
+        label: typLabel(a.typ),
+        tresc: a.tresc ?? (offer ? offer.label || 'Bez nazwy' : null),
+        wynik: offer
+          ? `${offerState(offer).label} · ${offer.view_count} ${
+              offer.view_count === 1 ? 'otwarcie' : 'otwarć'
+            } · do ${fmtDate(offer.expires_at)}`
+          : a.wynik,
+        offer,
+      };
+    });
 
     for (const o of offers) {
-      if (currentOffer && o.id === currentOffer.id) continue;
-      const state = offerState(o);
+      if (coveredOffers.has(o.id)) continue;
       const at = o.revoked_at ?? o.archived_at ?? o.created_at;
       const label = o.revoked_at
         ? 'Oferta zatrzymana'
@@ -197,22 +194,30 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
         at,
         label,
         tresc: o.label || 'Bez nazwy',
-        wynik: `${state} · ${o.view_count} ${o.view_count === 1 ? 'otwarcie' : 'otwarć'} · do ${fmtDate(o.expires_at)}`,
+        wynik: `${offerState(o).label} · ${o.view_count} ${
+          o.view_count === 1 ? 'otwarcie' : 'otwarć'
+        } · do ${fmtDate(o.expires_at)}`,
         offer: o,
       });
     }
 
     return items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
-  }, [activities, offers, currentOffer]);
+  }, [activities, offers]);
+
+  const telError = phoneError(draft.telefon);
+  const mailError = emailError(draft.email);
 
   const saveFields = async () => {
     if (!contact || savingFields) return;
+    if (telError || mailError) return;
     setSavingFields(true);
     const payload = {
       osoba: draft.osoba.trim() || null,
       firma: draft.firma.trim() || null,
       telefon: draft.telefon.trim() || null,
       email: draft.email.trim() || null,
+      termin_followup: draft.termin_followup || null,
+      termin_followup_note: draft.termin_note.trim() || null,
     };
     const { error } = await supabase.from('contacts').update(payload).eq('id', contact.id);
     setSavingFields(false);
@@ -279,6 +284,36 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
     }
   };
 
+  const hideContact = async () => {
+    if (!contact) return;
+    const { error } = await supabase
+      .from('contacts')
+      .update({ ukryty: true })
+      .eq('id', contact.id);
+    if (error) {
+      toast({ title: 'Błąd', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: '✓ Kontakt ukryty', description: 'Zniknął z listy, dane zostały zachowane' });
+    onChanged?.();
+    onClose();
+  };
+
+  const deleteContact = async () => {
+    if (!contact || deleting) return;
+    setDeleting(true);
+    const { error } = await supabase.from('contacts').delete().eq('id', contact.id);
+    setDeleting(false);
+    if (error) {
+      toast({ title: 'Błąd', description: error.message, variant: 'destructive' });
+      return;
+    }
+    setConfirmDelete(false);
+    toast({ title: 'Kontakt usunięty', description: 'Oferty pozostały bez przypisanego kontaktu' });
+    onChanged?.();
+    onClose();
+  };
+
   return (
     <Dialog open={!!contactId} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -287,7 +322,7 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
             {contact?.osoba || contact?.firma || 'Kontakt'}
           </DialogTitle>
           <DialogDescription className="text-[11px] uppercase tracking-wider text-editorial-muted">
-            {contact ? `${KROK_LABELS[contact.krok] ?? contact.krok} · źródło: ${contact.zrodlo}` : '—'}
+            {contact ? `${krokLabel(contact.krok)} · źródło: ${contact.zrodlo}` : '—'}
           </DialogDescription>
         </DialogHeader>
 
@@ -338,28 +373,91 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-3">
-                  {FIELDS.map((f) => (
-                    <div key={f.key}>
-                      <label
-                        htmlFor={`contact-${f.key}`}
-                        className="block text-[10px] uppercase tracking-[0.2em] text-editorial-muted mb-1"
-                      >
-                        {f.label}
+                  <div>
+                    <label htmlFor="contact-osoba" className={labelClass}>
+                      Osoba
+                    </label>
+                    <input
+                      id="contact-osoba"
+                      value={draft.osoba}
+                      onChange={(e) => setDraft((d) => ({ ...d, osoba: e.target.value }))}
+                      placeholder="Imię i nazwisko"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="contact-firma" className={labelClass}>
+                      Firma
+                    </label>
+                    <input
+                      id="contact-firma"
+                      value={draft.firma}
+                      onChange={(e) => setDraft((d) => ({ ...d, firma: e.target.value }))}
+                      placeholder="Nazwa firmy"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="contact-telefon" className={labelClass}>
+                      Telefon
+                    </label>
+                    <input
+                      id="contact-telefon"
+                      value={draft.telefon}
+                      onChange={(e) => setDraft((d) => ({ ...d, telefon: e.target.value }))}
+                      placeholder="np. +48 123 456 789"
+                      className={inputClass}
+                    />
+                    {telError && <p className="text-[11px] text-destructive mt-1">{telError}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="contact-email" className={labelClass}>
+                      E-mail
+                    </label>
+                    <input
+                      id="contact-email"
+                      value={draft.email}
+                      onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
+                      placeholder="adres@firma.pl"
+                      className={inputClass}
+                    />
+                    {mailError && <p className="text-[11px] text-destructive mt-1">{mailError}</p>}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="contact-termin" className={labelClass}>
+                        Następny kontakt
                       </label>
                       <input
-                        id={`contact-${f.key}`}
-                        value={draft[f.key] ?? ''}
-                        onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
-                        placeholder={f.placeholder}
-                        className="w-full bg-transparent border-b border-editorial-line py-1.5 text-sm text-editorial-ink placeholder:text-editorial-muted/60 focus:outline-none focus:border-editorial-ink"
+                        id="contact-termin"
+                        type="date"
+                        value={draft.termin_followup}
+                        onChange={(e) =>
+                          setDraft((d) => ({ ...d, termin_followup: e.target.value }))
+                        }
+                        className={inputClass}
                       />
                     </div>
-                  ))}
+                    <div>
+                      <label htmlFor="contact-termin-note" className={labelClass}>
+                        Powód
+                      </label>
+                      <input
+                        id="contact-termin-note"
+                        value={draft.termin_note}
+                        onChange={(e) =>
+                          setDraft((d) => ({ ...d, termin_note: e.target.value.slice(0, 160) }))
+                        }
+                        placeholder="np. potwierdzić termin"
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => void saveFields()}
-                      disabled={savingFields}
+                      disabled={savingFields || !!telError || !!mailError}
                       className="h-9 px-3 text-[11px] uppercase tracking-wider border border-editorial-ink bg-editorial-ink text-background disabled:opacity-40"
                     >
                       {savingFields ? 'Zapisuję…' : 'Zapisz'}
@@ -378,59 +476,89 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
                   </div>
                 </div>
               )}
-              <div className="text-[11px] text-editorial-muted pt-1">
-                Termin powrotu: {contact.termin_followup ? fmtDate(contact.termin_followup) : 'brak'}
-                {contact.udzwig_kg ? ` · ${contact.udzwig_kg} kg` : ''}
-                {contact.wysokosc_m ? ` · ${contact.wysokosc_m} m` : ''}
-              </div>
             </div>
 
-
             <div>
-              <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-editorial-muted mb-3">
-                Oferta bieżąca
+              <div className={sectionTitle}>Następny kontakt</div>
+              <div className="text-sm text-editorial-ink">
+                {contact.termin_followup ? fmtDate(contact.termin_followup) : 'brak terminu'}
               </div>
-              {!currentOffer ? (
-                <p className="text-xs text-editorial-muted italic">Brak aktywnej oferty.</p>
-              ) : (
-                <div className="py-3 border-t border-b border-editorial-line">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm text-editorial-ink">
-                      {currentOffer.label || 'Bez nazwy'}
-                    </span>
-                    <span className="text-[10px] uppercase tracking-wider border px-1.5 py-0.5 border-editorial-line text-editorial-muted">
-                      {offerState(currentOffer)}
-                    </span>
-                    {currentOffer.renewed_from && (
-                      <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-editorial-accent">
-                        <Link2 className="h-3 w-3" />
-                        odnowiona
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-[11px] text-editorial-muted mt-1">
-                    {currentOffer.view_count}{' '}
-                    {currentOffer.view_count === 1 ? 'otwarcie' : 'otwarć'} · do{' '}
-                    {fmtDate(currentOffer.expires_at)}
-                  </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <button
-                      type="button"
-                      onClick={() => copy(buildUrl(currentOffer.token))}
-                      aria-label="Kopiuj adres linku"
-                      className="p-2 border border-editorial-line hover:border-editorial-ink"
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+              {contact.termin_followup_note && (
+                <div className="text-[11px] text-editorial-muted mt-1">
+                  {contact.termin_followup_note}
+                </div>
+              )}
+              {(contact.udzwig_kg || contact.wysokosc_m) && (
+                <div className="text-[11px] text-editorial-muted mt-1">
+                  {contact.udzwig_kg ? `${contact.udzwig_kg} kg` : ''}
+                  {contact.udzwig_kg && contact.wysokosc_m ? ' · ' : ''}
+                  {contact.wysokosc_m ? `${contact.wysokosc_m} m` : ''}
                 </div>
               )}
             </div>
 
             <div>
-              <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-editorial-muted mb-3">
-                Historia ({timeline.length})
-              </div>
+              <div className={sectionTitle}>Oferty ({offers.length})</div>
+              {offers.length === 0 ? (
+                <p className="text-xs text-editorial-muted italic">Brak ofert.</p>
+              ) : (
+                <ul className="border-t border-editorial-line">
+                  {offers.map((o) => {
+                    const state = offerState(o);
+                    return (
+                      <li
+                        key={o.id}
+                        className="py-3 border-b border-editorial-line flex flex-wrap items-center gap-2"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm text-editorial-ink truncate">
+                              {o.label || 'Bez nazwy'}
+                            </span>
+                            <span
+                              className={`text-[10px] uppercase tracking-wider border px-1.5 py-0.5 ${state.className}`}
+                            >
+                              {state.label}
+                            </span>
+                            {o.renewed_from && (
+                              <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-editorial-accent">
+                                <Link2 className="h-3 w-3" />
+                                odnowiona
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-editorial-muted mt-0.5">
+                            {o.view_count} {o.view_count === 1 ? 'otwarcie' : 'otwarć'} · do{' '}
+                            {fmtDate(o.expires_at)}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => copy(buildUrl(o.token))}
+                            aria-label="Kopiuj adres linku"
+                            className="p-2 border border-editorial-line hover:border-editorial-ink"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void renew(o)}
+                            disabled={renewing === o.id}
+                            className="h-9 px-3 text-[11px] uppercase tracking-wider border border-editorial-line text-editorial-ink hover:border-editorial-ink disabled:opacity-40"
+                          >
+                            {renewing === o.id ? 'Tworzę…' : 'Nowy link'}
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+
+            <div>
+              <div className={sectionTitle}>Historia ({timeline.length})</div>
               {timeline.length === 0 ? (
                 <p className="text-xs text-editorial-muted italic">Brak wpisów.</p>
               ) : (
@@ -453,32 +581,11 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
                       {item.wynik && (
                         <p className="text-[11px] text-editorial-muted mt-1">{item.wynik}</p>
                       )}
-                      {item.offer && (
-                        <div className="flex items-center gap-2 mt-2">
-                          <button
-                            type="button"
-                            onClick={() => copy(buildUrl(item.offer!.token))}
-                            aria-label="Kopiuj adres linku"
-                            className="p-2 border border-editorial-line hover:border-editorial-ink"
-                          >
-                            <Copy className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void renew(item.offer!)}
-                            disabled={renewing === item.offer.id}
-                            className="h-9 px-3 text-[11px] uppercase tracking-wider border border-editorial-line text-editorial-ink hover:border-editorial-ink disabled:opacity-40"
-                          >
-                            {renewing === item.offer.id ? 'Tworzę…' : 'Nowy link'}
-                          </button>
-                        </div>
-                      )}
                     </li>
                   ))}
                 </ul>
               )}
             </div>
-
 
             <CallForm
               contactId={contact.id}
@@ -489,8 +596,55 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
                 onChanged?.();
               }}
             />
+
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-editorial-line">
+              <button
+                type="button"
+                onClick={() => void hideContact()}
+                className="flex items-center gap-1.5 h-9 px-3 text-[11px] uppercase tracking-wider border border-editorial-line text-editorial-muted hover:border-editorial-ink"
+              >
+                <EyeOff className="h-3.5 w-3.5" />
+                Ukryj kontakt
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                className="flex items-center gap-1.5 h-9 px-3 text-[11px] uppercase tracking-wider border border-editorial-line text-editorial-muted hover:border-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Usuń kontakt
+              </button>
+            </div>
           </div>
         )}
+
+        <AlertDialog open={confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(false)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Usunąć kontakt na stałe?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Kontakt {contact?.osoba || contact?.firma || ''} ma {offers.length}{' '}
+                {offers.length === 1 ? 'ofertę' : 'ofert'} i {activities.length}{' '}
+                {activities.length === 1 ? 'wpis historii' : 'wpisów historii'}. Usunięcie skasuje
+                całą historię tego kontaktu, a jego oferty zostaną bez przypisanego kontaktu (linki
+                nadal będą działać). Operacji nie da się cofnąć — jeśli chcesz tylko schować kontakt
+                z listy, użyj „Ukryj kontakt”.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Anuluj</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault();
+                  void deleteContact();
+                }}
+                disabled={deleting}
+              >
+                Usuń kontakt
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );
