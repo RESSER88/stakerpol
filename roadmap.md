@@ -20,7 +20,7 @@
 - [x] Etap 4: ContactCard — nagłówek, szybka edycja, następny kontakt, oferty i jedna historia
 - [x] Etap 4: otwieranie istniejącej edycji oferty z karty kontaktu, bez duplikacji widoku
 - [x] Etap 4: testy typów, widoków i dostępnych przepływów bez zmian bazy/RPC
-- [ ] Etap 5: podział „Wysłane” na aktywne oraz domyślnie zwinięte zakończone i archiwalne
-- [ ] Etap 5: uporządkowana karta oferty z pełnym zestawem spójnych akcji ikonowych i tooltipami
-- [ ] Etap 5: weryfikacja statusów, działań oraz układu mobile/desktop bez zmian backendu i danych
+- [x] Etap 5: podział „Wysłane” na aktywne oraz domyślnie zwinięte zakończone i archiwalne
+- [x] Etap 5: uporządkowana karta oferty z pełnym zestawem spójnych akcji ikonowych i tooltipami
+- [x] Etap 5: weryfikacja statusów, działań oraz układu mobile/desktop bez zmian backendu i danych
 - [x] Etap 4: stosować pełne ścieżki plików, edytować follow-up bez aktywności i nie zastępować działających mechanizmów
