@@ -31,17 +31,33 @@ Uporządkować istniejącą sekcję „Kontakty” jako szybkie miejsce pracy z 
 - Zachować `contact_activities` jako jedyne źródło zapisanych aktywności.
 - Utrzymać zabezpieczenie przed podwójnym wpisem oferty: aktywność powiązana przez `shared_list_id` ma pierwszeństwo, a wpis zastępczy pojawia się wyłącznie dla historycznej oferty bez takiej aktywności.
 - Uporządkować oś czasu i subtelnie oznaczyć powiązaną ofertę.
-- Zachować istniejący `CallForm` i jego obsługę KROK, terminu oraz powodu; nie tworzyć drugiego formularza rozmowy ani historii.
+- Zachować istniejący `CallForm` jako formularz zapisu rozmowy/aktywności.
+- Nie tworzyć drugiego formularza rozmowy.
+- Termin i powód następnego kontaktu mają być możliwe do zmiany bez tworzenia nowej aktywności.
+- Mały mechanizm edycji w `ContactCard` wykorzysta istniejące pola i logikę, bez tworzenia drugiego systemu historii.
 
 ### 5. Dodawanie i bezpieczne usuwanie
 - Zachować istniejący minimalny `AddContactDialog`: Osoba, Firma, Telefon, E-mail.
 - Zachować ukrywanie kontaktu oraz potwierdzane usunięcie z liczbą ofert i wpisów historii.
 - Nie zmieniać relacji, zachowania ofert ani historii podczas tych operacji.
 
+## Konkretne pliki do modyfikacji
+- `src/components/admin/sections/ContactsSection.tsx` — główna lista kontaktów, wyszukiwanie i filtrowanie.
+- `src/components/admin/sections/contacts/ContactCard.tsx` — istniejąca karta kontaktu; rozbudować i uporządkować, nie tworzyć drugiej karty.
+- `src/components/admin/sections/contacts/CallForm.tsx` — istniejący formularz rozmowy/aktywności; wykorzystać istniejący mechanizm, jeżeli jest potrzebny.
+- `src/components/admin/sections/offers/OfferEditDialog.tsx` — poza zakresem Etapu 4; nie zmieniać.
+
 ## Ograniczenia techniczne
 - Bez migracji, nowych tabel, pól, RPC, zmian RLS i zmian istniejących danych.
 - Bez zmian w leadach, publicznych linkach, trackingu, generowaniu ofert i `OfferEditDialog`.
-- Zmiany ograniczone głównie do istniejących `ContactsSection.tsx`, `ContactCard.tsx` i w razie potrzeby kosmetycznego uporządkowania `CallForm.tsx`; istniejące narzędzia etykiet, statusów, wyszukiwania i walidacji pozostają źródłem prawdy.
+- Istniejące narzędzia etykiet, statusów, wyszukiwania i walidacji pozostają źródłem prawdy.
+
+## Zasada implementacyjna
+Najpierw wykorzystać istniejące komponenty, hooki, helpery, zapytania i funkcje. Jeżeli istniejąca funkcja działa, uporządkować jej UI zamiast zastępować ją nową implementacją.
+
+Nie tworzyć równoległych kart kontaktu, list kontaktów, formularzy rozmowy, historii, mechanizmów wyszukiwania ani mechanizmów statusów.
+
+Jeżeli istniejąca architektura uniemożliwi wykonanie punktu bez zmiany backendu, zatrzymać tę część prac i zgłosić konkretny brak zamiast samodzielnie zmieniać backend.
 
 ## Weryfikacja
 - Sprawdzić typy i pełny build projektu przez mechanizm projektu.
