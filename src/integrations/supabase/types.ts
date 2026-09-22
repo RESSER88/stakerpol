@@ -92,6 +92,7 @@ export type Database = {
           telefon: string | null
           telefon_norm: string | null
           termin_followup: string | null
+          termin_followup_note: string | null
           udzwig_kg: number | null
           ukryty: boolean
           utworzony: string
@@ -114,6 +115,7 @@ export type Database = {
           telefon?: string | null
           telefon_norm?: string | null
           termin_followup?: string | null
+          termin_followup_note?: string | null
           udzwig_kg?: number | null
           ukryty?: boolean
           utworzony?: string
@@ -136,6 +138,7 @@ export type Database = {
           telefon?: string | null
           telefon_norm?: string | null
           termin_followup?: string | null
+          termin_followup_note?: string | null
           udzwig_kg?: number | null
           ukryty?: boolean
           utworzony?: string
@@ -1293,7 +1296,9 @@ export type Database = {
           _contact_id: string
           _data_sprzedazy?: string
           _krok?: string
+          _shared_list_id?: string
           _termin_followup?: string
+          _termin_note?: string
           _tresc?: string
           _typ: string
           _udzwig_kg?: number

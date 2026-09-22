@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { KROK_OPTIONS } from '@/utils/contactLabels';
 
 interface Props {
   contactId: string;
@@ -10,15 +11,6 @@ interface Props {
   wysokoscStart: number | null;
   onSaved: () => void;
 }
-
-const KROK_OPTIONS: { value: string; label: string }[] = [
-  { value: 'nowy', label: 'Nowy' },
-  { value: 'oferta', label: 'Oferta' },
-  { value: 'oddzwonic', label: 'Oddzwonić' },
-  { value: 'porownuje', label: 'Porównuje' },
-  { value: 'cena', label: 'Cena' },
-  { value: 'nieaktualne', label: 'Nieaktualne' },
-];
 
 type TerminOption = { value: string; label: string; days: number | null };
 
@@ -103,6 +95,7 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
   const [krok, setKrok] = useState<string | null>(null);
   const [termin, setTermin] = useState<string | null>(null);
   const [customDate, setCustomDate] = useState('');
+  const [terminNote, setTerminNote] = useState('');
   const [showCustomDate, setShowCustomDate] = useState(false);
   const [tresc, setTresc] = useState('');
   const [saving, setSaving] = useState(false);
@@ -131,6 +124,7 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
       _krok: krok ?? undefined,
       _termin_followup: terminValue,
       _wyczysc_termin: clear === true,
+      _termin_note: terminNote.trim() || undefined,
       _udzwig_kg: udzwigTouched ? udzwig : undefined,
       _wysokosc_m: wysokoscTouched ? wysokosc : undefined,
     });
@@ -145,6 +139,7 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
     setKrok(null);
     setTermin(null);
     setCustomDate('');
+    setTerminNote('');
     setShowCustomDate(false);
     setTresc('');
     setUdzwigTouched(false);
@@ -223,6 +218,13 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
               Inna data
             </button>
           )}
+          <input
+            aria-label="Powód następnego kontaktu"
+            value={terminNote}
+            onChange={(e) => setTerminNote(e.target.value.slice(0, 160))}
+            placeholder="Powód (np. potwierdzić termin)"
+            className="mt-2 w-full bg-transparent border-b border-editorial-line py-1.5 text-sm text-editorial-ink placeholder:text-editorial-muted/60 focus:outline-none focus:border-editorial-ink"
+          />
         </div>
 
 
