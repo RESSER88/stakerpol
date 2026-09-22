@@ -8,3 +8,11 @@
 - [x] Naprawa zapisu nowej oferty: usunięte stare przeciążenie `create_offer`, toast pokazuje treść błędu
 - [x] Desktopowa wersja `/oferta/:token` — profesjonalna tabela (nagłówki grup, zebra, ceny, „Zamawiam”)
 - [x] Panel admina: „Zapytania” jako osobna sekcja nawigacji, bez zmiany routingu `/admin`
+- [x] Raport diagnostyczny Kontakty/Oferty (kod + Supabase)
+- [ ] Etap 1–3 Kontakty/Oferty (minimum): wspólny helper statusu oferty i etykiet kroku
+- [ ] Etap 1–3: przypisanie kontaktu do oferty bez kontaktu (wyszukiwanie + nowy kontakt)
+- [ ] Etap 1–3: historia bez podwójnych wpisów oferty
+- [ ] Etap 1–3: usuwanie/archiwizacja oferty i świadome usuwanie kontaktu z ostrzeżeniem
+- [ ] Etap 1–3: `contacts.termin_followup_note` (powód powrotu) + edycja terminu w karcie
+- [ ] Etap 1–3: formularz „Dodaj kontakt” (osoba, firma, telefon, e-mail) z walidacją telefonu/e-maila
+- [ ] Kolejny etap (do zgłoszenia): ręczne scalanie duplikatów kontaktów
