@@ -149,38 +149,58 @@ const OfferEditDialog = ({ offer, onClose, onSaved }: Props) => {
             />
           </div>
 
-          <div>
-            <Label htmlFor="edit-firma">Firma (opcjonalnie)</Label>
-            <input
-              id="edit-firma"
-              value={firma}
-              onChange={(e) => setFirma(e.target.value.slice(0, 160))}
-              placeholder="Nazwa firmy"
-              className={inputClass}
-            />
-          </div>
+          {offer?.contact_id ? (
+            <>
+              <div>
+                <Label htmlFor="edit-firma">Firma (opcjonalnie)</Label>
+                <input
+                  id="edit-firma"
+                  value={firma}
+                  onChange={(e) => setFirma(e.target.value.slice(0, 160))}
+                  placeholder="Nazwa firmy"
+                  className={inputClass}
+                />
+              </div>
 
-          <div>
-            <Label htmlFor="edit-telefon">Telefon (opcjonalnie)</Label>
-            <input
-              id="edit-telefon"
-              value={telefon}
-              onChange={(e) => setTelefon(e.target.value)}
-              placeholder="np. +48 123 456 789"
-              className={inputClass}
-            />
-          </div>
+              <div>
+                <Label htmlFor="edit-telefon">Telefon (opcjonalnie)</Label>
+                <input
+                  id="edit-telefon"
+                  value={telefon}
+                  onChange={(e) => setTelefon(e.target.value)}
+                  placeholder="np. +48 123 456 789"
+                  className={inputClass}
+                />
+                {telError && <p className="mt-1 text-[11px] text-destructive">{telError}</p>}
+              </div>
 
-          <div>
-            <Label htmlFor="edit-email">E-mail (opcjonalnie)</Label>
-            <input
-              id="edit-email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="adres@firma.pl"
-              className={inputClass}
-            />
-          </div>
+              <div>
+                <Label htmlFor="edit-email">E-mail (opcjonalnie)</Label>
+                <input
+                  id="edit-email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="adres@firma.pl"
+                  className={inputClass}
+                />
+                {mailError && <p className="mt-1 text-[11px] text-destructive">{mailError}</p>}
+              </div>
+            </>
+          ) : (
+            <div className="border border-editorial-line p-3">
+              <p className="text-[11px] uppercase tracking-wider text-editorial-muted">
+                Brak przypisanego kontaktu
+              </p>
+              <button
+                type="button"
+                onClick={() => setAssignOpen(true)}
+                className="mt-2 flex items-center gap-1.5 px-2.5 py-2 text-[11px] uppercase tracking-wider border border-editorial-ink text-editorial-ink"
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                Przypisz kontakt
+              </button>
+            </div>
+          )}
 
           <div>
             <Label htmlFor="edit-notatka">Notatka (opcjonalnie)</Label>
