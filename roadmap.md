@@ -16,8 +16,8 @@
 - [x] Etap 1–3: `contacts.termin_followup_note` (powód powrotu) + edycja terminu w karcie
 - [x] Etap 1–3: formularz „Dodaj kontakt” (osoba, firma, telefon, e-mail) z walidacją telefonu/e-maila
 - [ ] Kolejny etap (do zgłoszenia): ręczne scalanie duplikatów kontaktów
-- [ ] Etap 4: uporządkowana lista kontaktów z wyszukiwaniem, filtrem KROK, terminem i liczbą ofert
-- [ ] Etap 4: ContactCard — nagłówek, szybka edycja, następny kontakt, oferty i jedna historia
-- [ ] Etap 4: otwieranie istniejącej edycji oferty z karty kontaktu, bez duplikacji widoku
-- [ ] Etap 4: testy typów, widoków i dostępnych przepływów bez zmian bazy/RPC
-- [ ] Etap 4: stosować pełne ścieżki plików, edytować follow-up bez aktywności i nie zastępować działających mechanizmów
+- [x] Etap 4: uporządkowana lista kontaktów z wyszukiwaniem, filtrem KROK, terminem i liczbą ofert
+- [x] Etap 4: ContactCard — nagłówek, szybka edycja, następny kontakt, oferty i jedna historia
+- [x] Etap 4: otwieranie istniejącej edycji oferty z karty kontaktu, bez duplikacji widoku
+- [x] Etap 4: testy typów, widoków i dostępnych przepływów bez zmian bazy/RPC
+- [x] Etap 4: stosować pełne ścieżki plików, edytować follow-up bez aktywności i nie zastępować działających mechanizmów

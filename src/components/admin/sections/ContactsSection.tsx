@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Loader2, Search, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { fmtDate, krokLabel } from '@/utils/contactLabels';
+import { fmtDate, KROK_OPTIONS, krokLabel } from '@/utils/contactLabels';
 import { matchesContactQuery } from '@/utils/contactSearch';
 import SectionHeader from '../editorial/SectionHeader';
 import ContactCard from './contacts/ContactCard';
@@ -20,21 +20,15 @@ interface ContactRow {
   termin_followup_note: string | null;
 }
 
-type SourceFilter = 'all' | 'telefon' | 'www';
-
-const SOURCE_TABS: { value: SourceFilter; label: string }[] = [
-  { value: 'all', label: 'Wszystkie' },
-  { value: 'telefon', label: 'Telefon' },
-  { value: 'www', label: 'WWW' },
-];
+type StepFilter = 'all' | string;
 
 const ContactsSection = () => {
   const { toast } = useToast();
   const [rows, setRows] = useState<ContactRow[]>([]);
-  const [lastContact, setLastContact] = useState<Record<string, string>>({});
+  const [offerCounts, setOfferCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
-  const [source, setSource] = useState<SourceFilter>('all');
+  const [step, setStep] = useState<StepFilter>('all');
   const [openId, setOpenId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
@@ -59,21 +53,21 @@ const ContactsSection = () => {
     setRows(list);
 
     if (list.length > 0) {
-      const { data: acts } = await supabase
-        .from('contact_activities')
-        .select('contact_id, data')
+      const { data: linkedOffers } = await supabase
+        .from('shared_lists')
+        .select('contact_id')
         .in(
           'contact_id',
           list.map((r) => r.id)
-        )
-        .order('data', { ascending: false });
-      const map: Record<string, string> = {};
-      for (const a of acts ?? []) {
-        if (!map[a.contact_id]) map[a.contact_id] = a.data;
+        );
+      const counts: Record<string, number> = {};
+      for (const offer of linkedOffers ?? []) {
+        if (!offer.contact_id) continue;
+        counts[offer.contact_id] = (counts[offer.contact_id] ?? 0) + 1;
       }
-      setLastContact(map);
+      setOfferCounts(counts);
     } else {
-      setLastContact({});
+      setOfferCounts({});
     }
     setLoading(false);
   }, [toast]);
@@ -84,10 +78,10 @@ const ContactsSection = () => {
 
   const visible = useMemo(() => {
     return rows.filter((r) => {
-      if (source !== 'all' && r.zrodlo !== source) return false;
+      if (step !== 'all' && r.krok !== step) return false;
       return matchesContactQuery(r, query);
     });
-  }, [rows, query, source]);
+  }, [rows, query, step]);
 
   return (
     <div className="max-w-4xl">
@@ -105,18 +99,18 @@ const ContactsSection = () => {
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          {SOURCE_TABS.map((t) => (
+          {[{ value: 'all', label: 'Wszystkie' }, ...KROK_OPTIONS].map((option) => (
             <button
-              key={t.value}
+              key={option.value}
               type="button"
-              onClick={() => setSource(t.value)}
+              onClick={() => setStep(option.value)}
               className={`h-9 px-3 text-[11px] uppercase tracking-wider border transition-colors ${
-                source === t.value
+                step === option.value
                   ? 'border-editorial-ink bg-editorial-ink text-background'
                   : 'border-editorial-line text-editorial-muted hover:border-editorial-ink'
               }`}
             >
-              {t.label}
+              {option.label}
             </button>
           ))}
           <button
@@ -143,25 +137,47 @@ const ContactsSection = () => {
                 onClick={() => setOpenId(r.id)}
                 className="w-full text-left py-4 hover:bg-editorial-line/30 transition-colors px-1"
               >
-                <div className="flex items-baseline gap-2 flex-wrap">
-                  <span className="font-editorial text-base text-editorial-ink">
-                    {r.osoba || r.firma || 'Bez nazwy'}
-                  </span>
-                  {r.firma && r.osoba && (
-                    <span className="text-[11px] text-editorial-muted">{r.firma}</span>
-                  )}
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-editorial-muted">
-                    {krokLabel(r.krok)}
-                  </span>
-                </div>
-                <div className="text-[11px] text-editorial-muted mt-1 tracking-wide">
-                  {r.telefon || 'brak telefonu'}
-                  {r.email ? ` · ${r.email}` : ''} · {r.zrodlo} · ostatni kontakt:{' '}
-                  {lastContact[r.id] ? fmtDate(lastContact[r.id]) : 'brak'} · termin:{' '}
-                  {r.termin_followup ? fmtDate(r.termin_followup) : 'brak'}
-                  {r.termin_followup && r.termin_followup_note
-                    ? ` (${r.termin_followup_note})`
-                    : ''}
+                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-editorial text-base text-editorial-ink">
+                        {r.osoba || r.firma || 'Bez nazwy'}
+                      </span>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.15em] border border-editorial-line px-1.5 py-0.5 text-editorial-ink">
+                        {krokLabel(r.krok)}
+                      </span>
+                    </div>
+                    {r.firma && r.osoba && (
+                      <p className="mt-0.5 text-xs text-editorial-muted truncate">{r.firma}</p>
+                    )}
+                    {(r.telefon || r.email) && (
+                      <p className="mt-1 text-[11px] text-editorial-muted break-words">
+                        {[r.telefon, r.email].filter(Boolean).join(' · ')}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-start gap-x-5 gap-y-2 sm:justify-end sm:text-right">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.15em] text-editorial-muted">
+                        Następny kontakt
+                      </p>
+                      <p className="mt-0.5 text-xs text-editorial-ink">
+                        {r.termin_followup ? fmtDate(r.termin_followup) : 'Brak terminu'}
+                      </p>
+                      {r.termin_followup_note && (
+                        <p className="mt-0.5 max-w-52 text-[11px] text-editorial-muted line-clamp-1">
+                          {r.termin_followup_note}
+                        </p>
+                      )}
+                    </div>
+                    <div className="min-w-16">
+                      <p className="text-[10px] uppercase tracking-[0.15em] text-editorial-muted">
+                        Oferty
+                      </p>
+                      <p className="mt-0.5 text-xs text-editorial-ink">{offerCounts[r.id] ?? 0}</p>
+                    </div>
+                  </div>
                 </div>
               </button>
             </li>
