@@ -20,3 +20,4 @@
 - [ ] Etap 4: ContactCard — nagłówek, szybka edycja, następny kontakt, oferty i jedna historia
 - [ ] Etap 4: otwieranie istniejącej edycji oferty z karty kontaktu, bez duplikacji widoku
 - [ ] Etap 4: testy typów, widoków i dostępnych przepływów bez zmian bazy/RPC
+- [ ] Etap 4: stosować pełne ścieżki plików, edytować follow-up bez aktywności i nie zastępować działających mechanizmów
