@@ -1,5 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Copy, Loader2, Ban, Search, Pencil, Archive, Trash2, UserPlus } from 'lucide-react';
+import {
+  Archive,
+  Ban,
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Loader2,
+  Pencil,
+  Search,
+  Trash2,
+  UserPlus,
+} from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { buildUrl } from '@/utils/offerToken';
@@ -17,6 +28,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import ContactCard from '../contacts/ContactCard';
 import OfferEditDialog from './OfferEditDialog';
 import AssignContactDialog from './AssignContactDialog';
@@ -65,52 +83,42 @@ const viewsText = (row: OfferRow): string =>
     ? `Oglądał, ${row.view_count}×${row.last_viewed_at ? ` · ostatnio ${fmtDate(row.last_viewed_at)}` : ''}`
     : 'Brak otwarć';
 
-const newer = (a: OfferRow, b: OfferRow) =>
-  new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+const ACTION_CLASS =
+  'h-9 w-9 rounded-none border-editorial-line text-editorial-muted hover:border-editorial-ink hover:bg-transparent hover:text-editorial-ink';
 
-const ts = (iso: string | null | undefined) => (iso ? new Date(iso).getTime() : 0);
+interface ActionButtonProps {
+  label: string;
+  onClick: () => void;
+  destructive?: boolean;
+  children: React.ReactNode;
+}
 
-/**
- * Jeden wiersz na kontakt: bieżąca oferta to najnowsza aktywna, a gdy takiej
- * nie ma — najnowsza ze wszystkich. Oferty bez kontaktu zostają osobno.
- * Kolejność: najnowsza aktywność kontaktu — max(created_at ofert, data rozmów).
- */
-const groupRows = (
-  rows: OfferRow[],
-  lastActivity: Record<string, string>
-): { row: OfferRow; extras: number; activityAt: number }[] => {
-  const byContact = new Map<string, OfferRow[]>();
-  const loose: { row: OfferRow; extras: number; activityAt: number }[] = [];
-
-  for (const row of rows) {
-    if (!row.contact_id) {
-      loose.push({ row, extras: 0, activityAt: ts(row.created_at) });
-      continue;
-    }
-    const list = byContact.get(row.contact_id);
-    if (list) list.push(row);
-    else byContact.set(row.contact_id, [row]);
-  }
-
-  const grouped = [...byContact.values()].map((list) => {
-    const actives = list.filter(isOfferActive).sort(newer);
-    const current = actives[0] ?? [...list].sort(newer)[0];
-    const newestOffer = Math.max(...list.map((r) => ts(r.created_at)));
-    const activityAt = Math.max(newestOffer, ts(lastActivity[current.contact_id ?? '']));
-    return { row: current, extras: list.length - 1, activityAt };
-  });
-
-  return [...grouped, ...loose].sort(
-    (a, b) => b.activityAt - a.activityAt || newer(a.row, b.row)
-  );
-};
+const ActionButton = ({ label, onClick, destructive = false, children }: ActionButtonProps) => (
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        onClick={onClick}
+        aria-label={label}
+        className={`${ACTION_CLASS} ${
+          destructive ? 'hover:border-destructive hover:text-destructive' : ''
+        }`}
+      >
+        {children}
+      </Button>
+    </TooltipTrigger>
+    <TooltipContent>{label}</TooltipContent>
+  </Tooltip>
+);
 
 const SentOffersView = ({ reloadKey }: Props) => {
   const { toast } = useToast();
   const [rows, setRows] = useState<OfferRow[]>([]);
-  const [lastActivity, setLastActivity] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
+  const [completedOpen, setCompletedOpen] = useState(false);
   const [revokeTarget, setRevokeTarget] = useState<OfferRow | null>(null);
   const [revoking, setRevoking] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<OfferRow | null>(null);
@@ -138,20 +146,6 @@ const SentOffersView = ({ reloadKey }: Props) => {
     }
     const list = (data ?? []) as unknown as OfferRow[];
     setRows(list);
-
-    const ids = [...new Set(list.map((r) => r.contact_id).filter(Boolean))] as string[];
-    if (ids.length > 0) {
-      const { data: acts } = await supabase
-        .from('contact_activities')
-        .select('contact_id, data')
-        .in('contact_id', ids)
-        .order('data', { ascending: false });
-      const map: Record<string, string> = {};
-      for (const a of acts ?? []) if (!map[a.contact_id]) map[a.contact_id] = a.data;
-      setLastActivity(map);
-    } else {
-      setLastActivity({});
-    }
     setLoading(false);
   }, [toast]);
 
@@ -159,17 +153,18 @@ const SentOffersView = ({ reloadKey }: Props) => {
     void load();
   }, [load, reloadKey]);
 
-  const grouped = useMemo(() => groupRows(rows, lastActivity), [rows, lastActivity]);
-
   const visible = useMemo(
     () =>
-      grouped.filter(
-        (g) =>
-          matchesContactQuery(g.row.contacts ?? {}, query) ||
-          (g.row.label ?? '').toLowerCase().includes(normalizeQuery(query))
+      rows.filter(
+        (row) =>
+          matchesContactQuery(row.contacts ?? {}, query) ||
+          (row.label ?? '').toLowerCase().includes(normalizeQuery(query))
       ),
-    [grouped, query]
+    [rows, query]
   );
+
+  const activeRows = useMemo(() => visible.filter(isOfferActive), [visible]);
+  const completedRows = useMemo(() => visible.filter((row) => !isOfferActive(row)), [visible]);
 
   const copy = async (url: string) => {
     try {
@@ -230,8 +225,84 @@ const SentOffersView = ({ reloadKey }: Props) => {
   if (rows.length === 0)
     return <p className="text-xs text-editorial-muted italic">Brak wysłanych ofert.</p>;
 
+  const renderOffer = (row: OfferRow) => {
+    const state = offerState(row);
+    const urgent = callToday(row.contacts?.termin_followup);
+    const offerName = row.label?.trim() || `Oferta ${row.id.slice(0, 8)}`;
+    const contactName = row.contact_id
+      ? row.contacts?.osoba || row.contacts?.firma || 'Kontakt bez nazwy'
+      : 'Brak przypisanego kontaktu';
+    const accessibleLink = !row.revoked_at && !row.archived_at;
+
+    return (
+      <li key={row.id} className="min-w-0 border-b border-editorial-line py-4 sm:py-5">
+        <div className="min-w-0">
+          <div className="flex min-w-0 flex-wrap items-start gap-x-3 gap-y-2">
+            <h3 className="min-w-0 flex-1 break-words text-sm font-medium text-editorial-ink">
+              {offerName}
+            </h3>
+            <span
+              className={`shrink-0 border px-1.5 py-0.5 text-[10px] uppercase tracking-wider ${state.className}`}
+            >
+              {state.label}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => row.contact_id && setOpenContactId(row.contact_id)}
+            disabled={!row.contact_id}
+            className="mt-1 block max-w-full truncate text-left text-xs text-editorial-muted disabled:cursor-default"
+          >
+            {contactName}
+          </button>
+
+          {urgent && (
+            <span className="mt-2 inline-block border border-destructive bg-destructive/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-destructive motion-safe:animate-pulse">
+              Zadzwoń dziś
+            </span>
+          )}
+
+          <div className="mt-3 grid min-w-0 grid-cols-1 gap-x-5 gap-y-1 text-[11px] text-editorial-muted sm:grid-cols-3">
+            <span className="min-w-0 break-words">{viewsText(row)}</span>
+            <span>Wysłano {fmtDate(row.created_at)}</span>
+            <span>Ważna do {fmtDate(row.expires_at)}</span>
+          </div>
+        </div>
+
+        <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2">
+          {!row.contact_id && (
+            <ActionButton label="Przypisz kontakt" onClick={() => setAssignTarget(row)}>
+              <UserPlus />
+            </ActionButton>
+          )}
+          <ActionButton label="Kopiuj link" onClick={() => void copy(buildUrl(row.token))}>
+            <Copy />
+          </ActionButton>
+          <ActionButton label="Edytuj ofertę" onClick={() => setEditTarget(row)}>
+            <Pencil />
+          </ActionButton>
+          {accessibleLink && (
+            <ActionButton label="Zatrzymaj ofertę" onClick={() => setRevokeTarget(row)} destructive>
+              <Ban />
+            </ActionButton>
+          )}
+          {!row.archived_at && (
+            <ActionButton label="Archiwizuj ofertę" onClick={() => void handleArchive(row)}>
+              <Archive />
+            </ActionButton>
+          )}
+          <ActionButton label="Usuń ofertę" onClick={() => setDeleteTarget(row)} destructive>
+            <Trash2 />
+          </ActionButton>
+        </div>
+      </li>
+    );
+  };
+
   return (
-    <div className="max-w-3xl">
+    <TooltipProvider delayDuration={250}>
+    <div className="w-full max-w-4xl min-w-0 overflow-x-hidden">
       <div className="flex items-center gap-2 border-b border-editorial-line mb-4">
         <Search className="h-3.5 w-3.5 text-editorial-muted" />
         <input
@@ -246,115 +317,48 @@ const SentOffersView = ({ reloadKey }: Props) => {
       {visible.length === 0 ? (
         <p className="text-xs text-editorial-muted italic">Brak wyników.</p>
       ) : (
-      <ul className="border-t border-editorial-line">
-        {visible.map(({ row, extras }) => {
-          const state = offerState(row);
-          const urgent = callToday(row.contacts?.termin_followup);
-          const name = row.contacts?.firma || row.contacts?.osoba || row.label || 'Bez nazwy';
+        <div className="min-w-0">
+          <section aria-labelledby="active-offers-heading">
+            <div className="flex items-center justify-between gap-3 border-b border-editorial-line pb-2">
+              <h2 id="active-offers-heading" className="text-[11px] font-bold uppercase tracking-wider text-editorial-muted">
+                Aktywne i wymagające uwagi
+              </h2>
+              <span className="text-[11px] tabular-nums text-editorial-muted">{activeRows.length}</span>
+            </div>
+            {activeRows.length > 0 ? (
+              <ul>{activeRows.map(renderOffer)}</ul>
+            ) : (
+              <p className="py-4 text-xs italic text-editorial-muted">Brak aktywnych ofert.</p>
+            )}
+          </section>
 
-          const active = !row.revoked_at && !row.archived_at;
-          return (
-            <li
-              key={row.id}
-              className="flex flex-wrap items-center gap-3 py-4 border-b border-editorial-line"
+          <section className="mt-6" aria-labelledby="completed-offers-heading">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setCompletedOpen((open) => !open)}
+              aria-expanded={completedOpen}
+              aria-controls="completed-offers-list"
+              className="h-auto w-full justify-between rounded-none border-y border-editorial-line px-0 py-3 hover:bg-transparent"
             >
-              <button
-                type="button"
-                onClick={() => row.contact_id && setOpenContactId(row.contact_id)}
-                disabled={!row.contact_id}
-                className="flex-1 min-w-0 text-left disabled:cursor-default"
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm text-editorial-ink truncate">{name}</span>
-                  <span className="text-[11px] text-editorial-muted">
-                    {row.contact_id
-                      ? row.contacts?.telefon || 'brak telefonu'
-                      : 'Brak przypisanego kontaktu'}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                  {urgent && (
-                    <span className="text-[10px] uppercase tracking-wider border px-1.5 py-0.5 text-destructive border-destructive bg-destructive/10 animate-pulse motion-reduce:animate-none">
-                      Zadzwoń dziś
-                    </span>
-                  )}
-                  <span
-                    className={`text-[10px] uppercase tracking-wider border px-1.5 py-0.5 ${state.className}`}
-                  >
-                    {state.label}
-                  </span>
-                </div>
-
-                <div className="text-[11px] text-editorial-muted mt-1.5 tracking-wide">
-                  {viewsText(row)} · wysłano {fmtDate(row.created_at)} · ważna do{' '}
-                  {fmtDate(row.expires_at)}
-                  {extras > 0
-                    ? ` · +${extras} ${extras === 1 ? 'oferta' : 'ofert'} w historii`
-                    : ''}
-                </div>
-              </button>
-
-              <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                {!row.contact_id && (
-                  <button
-                    type="button"
-                    onClick={() => setAssignTarget(row)}
-                    className="flex items-center gap-1.5 px-2.5 py-2 text-[11px] uppercase tracking-wider border border-editorial-ink text-editorial-ink"
-                  >
-                    <UserPlus className="h-3.5 w-3.5" />
-                    Przypisz kontakt
-                  </button>
+              <span className="flex min-w-0 items-center gap-2">
+                {completedOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <span id="completed-offers-heading" className="text-left text-[11px] font-bold uppercase tracking-wider text-editorial-muted">
+                  Zakończone i archiwalne · {completedRows.length}
+                </span>
+              </span>
+            </Button>
+            {completedOpen && (
+              <div id="completed-offers-list">
+                {completedRows.length > 0 ? (
+                  <ul>{completedRows.map(renderOffer)}</ul>
+                ) : (
+                  <p className="py-4 text-xs italic text-editorial-muted">Brak zakończonych ofert.</p>
                 )}
-                <button
-                  type="button"
-                  onClick={() => copy(buildUrl(row.token))}
-                  aria-label="Kopiuj adres linku"
-                  className="p-2 border border-editorial-line hover:border-editorial-ink"
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditTarget(row)}
-                  aria-label="Edytuj ofertę"
-                  className="p-2 border border-editorial-line hover:border-editorial-ink"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-                {active && (
-                  <button
-                    type="button"
-                    onClick={() => setRevokeTarget(row)}
-                    className="flex items-center gap-1.5 px-2.5 py-2 text-[11px] uppercase tracking-wider border border-editorial-line text-editorial-muted hover:border-destructive hover:text-destructive"
-                  >
-                    <Ban className="h-3.5 w-3.5" />
-                    Zatrzymaj
-                  </button>
-                )}
-                {!row.archived_at && (
-                  <button
-                    type="button"
-                    onClick={() => void handleArchive(row)}
-                    aria-label="Archiwizuj ofertę"
-                    className="p-2 border border-editorial-line text-editorial-muted hover:border-editorial-ink"
-                  >
-                    <Archive className="h-3.5 w-3.5" />
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setDeleteTarget(row)}
-                  aria-label="Usuń ofertę"
-                  className="p-2 border border-editorial-line text-editorial-muted hover:border-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
               </div>
-            </li>
-          );
-        })}
-      </ul>
+            )}
+          </section>
+        </div>
       )}
 
       <ContactCard
@@ -424,6 +428,7 @@ const SentOffersView = ({ reloadKey }: Props) => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 };
 
