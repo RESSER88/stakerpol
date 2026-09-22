@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { emailError, phoneError } from '@/utils/contactValidation';
 import {
   Dialog,
   DialogContent,
@@ -9,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { CHANNEL_OTHER, OFFER_CHANNEL_OPTIONS } from './offerChannels';
+import AssignContactDialog from './AssignContactDialog';
 
 export interface EditableOffer {
   id: string;
