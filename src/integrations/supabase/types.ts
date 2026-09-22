@@ -1121,7 +1121,7 @@ export type Database = {
           _nazwa: string
           _notatka?: string
           _renewed_from?: string
-          _telefon: string
+          _telefon?: string
           _token: string
           _tygodnie?: number
         }
