@@ -218,6 +218,13 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
               Inna data
             </button>
           )}
+          <input
+            aria-label="Powód następnego kontaktu"
+            value={terminNote}
+            onChange={(e) => setTerminNote(e.target.value.slice(0, 160))}
+            placeholder="Powód (np. potwierdzić termin)"
+            className="mt-2 w-full bg-transparent border-b border-editorial-line py-1.5 text-sm text-editorial-ink placeholder:text-editorial-muted/60 focus:outline-none focus:border-editorial-ink"
+          />
         </div>
 
 
