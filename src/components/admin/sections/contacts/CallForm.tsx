@@ -95,6 +95,7 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
   const [krok, setKrok] = useState<string | null>(null);
   const [termin, setTermin] = useState<string | null>(null);
   const [customDate, setCustomDate] = useState('');
+  const [terminNote, setTerminNote] = useState('');
   const [showCustomDate, setShowCustomDate] = useState(false);
   const [tresc, setTresc] = useState('');
   const [saving, setSaving] = useState(false);
