@@ -265,6 +265,16 @@ const OfferEditDialog = ({ offer, onClose, onSaved }: Props) => {
             </button>
           </div>
         </div>
+
+        <AssignContactDialog
+          offer={assignOpen && offer ? { id: offer.id, label: offer.label } : null}
+          onClose={() => setAssignOpen(false)}
+          onAssigned={() => {
+            setAssignOpen(false);
+            onSaved();
+            onClose();
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
