@@ -139,6 +139,7 @@ const CallForm = ({ contactId, udzwigStart, wysokoscStart, onSaved }: Props) => 
     setKrok(null);
     setTermin(null);
     setCustomDate('');
+    setTerminNote('');
     setShowCustomDate(false);
     setTresc('');
     setUdzwigTouched(false);
