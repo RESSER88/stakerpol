@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Copy, EyeOff, Link2, Loader2, Mail, Pencil, Phone, Trash2 } from 'lucide-react';
+import { CalendarDays, Copy, EyeOff, Link2, Loader2, Mail, Pencil, Phone, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { buildToken, buildUrl, MAX_TOKEN_ATTEMPTS } from '@/utils/offerToken';
-import { fmtDate, fmtDateTime, krokLabel, typLabel } from '@/utils/contactLabels';
+import { fmtDate, fmtDateTime, KROK_OPTIONS, krokLabel, typLabel } from '@/utils/contactLabels';
 import { offerState } from '@/utils/offerStatus';
 import { emailError, phoneError } from '@/utils/contactValidation';
 import {
@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import CallForm from './CallForm';
+import OfferEditDialog, { EditableOffer } from '../offers/OfferEditDialog';
 
 interface Props {
   contactId: string | null;
@@ -50,6 +51,7 @@ interface OfferRow {
   id: string;
   token: string;
   label: string | null;
+  note: string | null;
   filters: unknown;
   created_at: string;
   expires_at: string;
@@ -60,6 +62,7 @@ interface OfferRow {
   renewed_from: string | null;
   channel: string | null;
   channel_detail: string | null;
+  contact_id: string | null;
 }
 
 interface ActivityRow {
@@ -71,7 +74,7 @@ interface ActivityRow {
   shared_list_id: string | null;
 }
 
-type EditableKey = 'osoba' | 'firma' | 'telefon' | 'email' | 'termin_followup' | 'termin_note';
+type EditableKey = 'osoba' | 'firma' | 'telefon' | 'email' | 'krok' | 'termin_followup' | 'termin_note';
 
 type Draft = Record<EditableKey, string>;
 
@@ -80,6 +83,7 @@ const toDraft = (c: ContactRow): Draft => ({
   firma: c.firma ?? '',
   telefon: c.telefon ?? '',
   email: c.email ?? '',
+  krok: c.krok,
   termin_followup: c.termin_followup ?? '',
   termin_note: c.termin_followup_note ?? '',
 });
@@ -99,10 +103,12 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
   const [loading, setLoading] = useState(false);
   const [renewing, setRenewing] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(
-    { osoba: '', firma: '', telefon: '', email: '', termin_followup: '', termin_note: '' }
+    { osoba: '', firma: '', telefon: '', email: '', krok: 'nowy', termin_followup: '', termin_note: '' }
   );
   const [savingFields, setSavingFields] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [editingFollowup, setEditingFollowup] = useState(false);
+  const [editOffer, setEditOffer] = useState<OfferRow | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -120,7 +126,7 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
       supabase
         .from('shared_lists')
         .select(
-          'id, token, label, filters, created_at, expires_at, revoked_at, archived_at, view_count, last_viewed_at, renewed_from, channel, channel_detail'
+          'id, token, label, note, filters, created_at, expires_at, revoked_at, archived_at, view_count, last_viewed_at, renewed_from, channel, channel_detail, contact_id'
         )
         .eq('contact_id', contactId)
         .order('created_at', { ascending: false }),
@@ -144,6 +150,8 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
 
   useEffect(() => {
     setEditing(false);
+    setEditingFollowup(false);
+    setEditOffer(null);
     void load();
   }, [load]);
 
@@ -216,6 +224,7 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
       firma: draft.firma.trim() || null,
       telefon: draft.telefon.trim() || null,
       email: draft.email.trim() || null,
+      krok: draft.krok,
       termin_followup: draft.termin_followup || null,
       termin_followup_note: draft.termin_note.trim() || null,
     };
@@ -230,6 +239,45 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
     await load();
     onChanged?.();
   };
+
+  const saveFollowup = async () => {
+    if (!contact || savingFields) return;
+    setSavingFields(true);
+    const { error } = await supabase
+      .from('contacts')
+      .update({
+        termin_followup: draft.termin_followup || null,
+        termin_followup_note: draft.termin_note.trim() || null,
+      })
+      .eq('id', contact.id);
+    setSavingFields(false);
+    if (error) {
+      toast({ title: 'Błąd zapisu', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: '✓ Zapisano', description: 'Następny kontakt został zaktualizowany' });
+    setEditingFollowup(false);
+    await load();
+    onChanged?.();
+  };
+
+  const editableOffer = useMemo<EditableOffer | null>(() => {
+    if (!editOffer || !contact) return null;
+    return {
+      id: editOffer.id,
+      label: editOffer.label,
+      note: editOffer.note,
+      channel: editOffer.channel,
+      channel_detail: editOffer.channel_detail,
+      contact_id: editOffer.contact_id,
+      contacts: {
+        osoba: contact.osoba,
+        firma: contact.firma,
+        telefon: contact.telefon,
+        email: contact.email,
+      },
+    };
+  }, [contact, editOffer]);
 
   const copy = async (url: string) => {
     try {
@@ -317,12 +365,12 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
   return (
     <Dialog open={!!contactId} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="pr-8">
           <DialogTitle className="font-editorial text-xl text-editorial-ink">
             {contact?.osoba || contact?.firma || 'Kontakt'}
           </DialogTitle>
           <DialogDescription className="text-[11px] uppercase tracking-wider text-editorial-muted">
-            {contact ? `${krokLabel(contact.krok)} · źródło: ${contact.zrodlo}` : '—'}
+            {contact ? `Krok: ${krokLabel(contact.krok)}` : 'Karta kontaktu'}
           </DialogDescription>
         </DialogHeader>
 
@@ -330,16 +378,13 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
 
         {contact && (
           <div className="space-y-6">
-            <div className="space-y-3 text-sm text-editorial-ink">
+             <section className="space-y-3 text-sm text-editorial-ink">
               {!editing ? (
                 <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1 min-w-0">
-                    <div className="text-sm text-editorial-ink">
-                      {contact.osoba || '—'}
-                      {contact.firma && (
-                        <span className="text-editorial-muted"> · {contact.firma}</span>
-                      )}
-                    </div>
+                    <div className="space-y-1.5 min-w-0">
+                     {contact.firma && contact.osoba && (
+                       <p className="text-sm text-editorial-muted">{contact.firma}</p>
+                     )}
                     {contact.telefon && (
                       <a
                         href={`tel:${contact.telefon}`}
@@ -385,6 +430,23 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
                       className={inputClass}
                     />
                   </div>
+                   <div>
+                     <label htmlFor="contact-krok" className={labelClass}>
+                       Krok
+                     </label>
+                     <select
+                       id="contact-krok"
+                       value={draft.krok}
+                       onChange={(e) => setDraft((d) => ({ ...d, krok: e.target.value }))}
+                       className={inputClass}
+                     >
+                       {KROK_OPTIONS.map((option) => (
+                         <option key={option.value} value={option.value}>
+                           {option.label}
+                         </option>
+                       ))}
+                     </select>
+                   </div>
                   <div>
                     <label htmlFor="contact-firma" className={labelClass}>
                       Firma
@@ -476,26 +538,88 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
                   </div>
                 </div>
               )}
-            </div>
+             </section>
 
-            <div>
-              <div className={sectionTitle}>Następny kontakt</div>
-              <div className="text-sm text-editorial-ink">
-                {contact.termin_followup ? fmtDate(contact.termin_followup) : 'brak terminu'}
-              </div>
-              {contact.termin_followup_note && (
-                <div className="text-[11px] text-editorial-muted mt-1">
-                  {contact.termin_followup_note}
-                </div>
-              )}
-              {(contact.udzwig_kg || contact.wysokosc_m) && (
-                <div className="text-[11px] text-editorial-muted mt-1">
-                  {contact.udzwig_kg ? `${contact.udzwig_kg} kg` : ''}
-                  {contact.udzwig_kg && contact.wysokosc_m ? ' · ' : ''}
-                  {contact.wysokosc_m ? `${contact.wysokosc_m} m` : ''}
-                </div>
-              )}
-            </div>
+             <section className="border-y border-editorial-line py-4">
+               <div className="flex items-start justify-between gap-3">
+                 <div className="min-w-0">
+                   <div className={sectionTitle}>Następny kontakt</div>
+                   {!editingFollowup && (
+                     <>
+                       <div className="flex items-center gap-2 text-sm text-editorial-ink">
+                         <CalendarDays className="h-4 w-4 shrink-0 text-editorial-muted" />
+                         {contact.termin_followup
+                           ? fmtDate(contact.termin_followup)
+                           : 'Brak zaplanowanego kontaktu'}
+                       </div>
+                       {contact.termin_followup_note && (
+                         <p className="mt-1.5 pl-6 text-xs text-editorial-muted">
+                           {contact.termin_followup_note}
+                         </p>
+                       )}
+                     </>
+                   )}
+                 </div>
+                 {!editingFollowup && (
+                   <button
+                     type="button"
+                     onClick={() => {
+                       setDraft(toDraft(contact));
+                       setEditingFollowup(true);
+                     }}
+                     aria-label="Edytuj następny kontakt"
+                     className="p-2 shrink-0 border border-editorial-line hover:border-editorial-ink"
+                   >
+                     <Pencil className="h-3.5 w-3.5" />
+                   </button>
+                 )}
+               </div>
+               {editingFollowup && (
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                   <div>
+                     <label htmlFor="quick-followup-date" className={labelClass}>Data</label>
+                     <input
+                       id="quick-followup-date"
+                       type="date"
+                       value={draft.termin_followup}
+                       onChange={(e) => setDraft((d) => ({ ...d, termin_followup: e.target.value }))}
+                       className={inputClass}
+                     />
+                   </div>
+                   <div>
+                     <label htmlFor="quick-followup-note" className={labelClass}>Powód</label>
+                     <input
+                       id="quick-followup-note"
+                       value={draft.termin_note}
+                       onChange={(e) => setDraft((d) => ({ ...d, termin_note: e.target.value.slice(0, 160) }))}
+                       placeholder="np. potwierdzić termin"
+                       className={inputClass}
+                     />
+                   </div>
+                   <div className="flex items-center gap-2 sm:col-span-2">
+                     <button
+                       type="button"
+                       onClick={() => void saveFollowup()}
+                       disabled={savingFields}
+                       className="h-9 px-3 text-[11px] uppercase tracking-wider border border-editorial-ink bg-editorial-ink text-background disabled:opacity-40"
+                     >
+                       {savingFields ? 'Zapisuję…' : 'Zapisz'}
+                     </button>
+                     <button
+                       type="button"
+                       onClick={() => {
+                         setDraft(toDraft(contact));
+                         setEditingFollowup(false);
+                       }}
+                       disabled={savingFields}
+                       className="h-9 px-3 text-[11px] uppercase tracking-wider border border-editorial-line text-editorial-muted hover:border-editorial-ink"
+                     >
+                       Anuluj
+                     </button>
+                   </div>
+                 </div>
+               )}
+             </section>
 
             <div>
               <div className={sectionTitle}>Oferty ({offers.length})</div>
@@ -506,14 +630,19 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
                   {offers.map((o) => {
                     const state = offerState(o);
                     return (
-                      <li
+                       <li
                         key={o.id}
-                        className="py-3 border-b border-editorial-line flex flex-wrap items-center gap-2"
+                         className="border-b border-editorial-line"
                       >
-                        <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 py-3">
+                         <button
+                           type="button"
+                           onClick={() => setEditOffer(o)}
+                           className="flex-1 min-w-0 text-left hover:opacity-70 transition-opacity"
+                         >
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm text-editorial-ink truncate">
-                              {o.label || 'Bez nazwy'}
+                               {o.label || `Oferta ${o.id.slice(0, 8)}`}
                             </span>
                             <span
                               className={`text-[10px] uppercase tracking-wider border px-1.5 py-0.5 ${state.className}`}
@@ -528,10 +657,10 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
                             )}
                           </div>
                           <div className="text-[11px] text-editorial-muted mt-0.5">
-                            {o.view_count} {o.view_count === 1 ? 'otwarcie' : 'otwarć'} · do{' '}
-                            {fmtDate(o.expires_at)}
+                             {fmtDate(o.created_at)} · {o.view_count}{' '}
+                             {o.view_count === 1 ? 'otwarcie' : 'otwarć'}
                           </div>
-                        </div>
+                         </button>
                         <div className="flex items-center gap-2 shrink-0">
                           <button
                             type="button"
@@ -549,6 +678,7 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
                           >
                             {renewing === o.id ? 'Tworzę…' : 'Nowy link'}
                           </button>
+                        </div>
                         </div>
                       </li>
                     );
@@ -581,6 +711,16 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
                       {item.wynik && (
                         <p className="text-[11px] text-editorial-muted mt-1">{item.wynik}</p>
                       )}
+                       {item.offer && (
+                         <button
+                           type="button"
+                           onClick={() => setEditOffer(item.offer ?? null)}
+                           className="mt-1.5 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-editorial-muted hover:text-editorial-ink"
+                         >
+                           <Link2 className="h-3 w-3" />
+                           {item.offer.label || `Oferta ${item.offer.id.slice(0, 8)}`}
+                         </button>
+                       )}
                     </li>
                   ))}
                 </ul>
@@ -645,6 +785,16 @@ const ContactCard = ({ contactId, onClose, onChanged }: Props) => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <OfferEditDialog
+          offer={editableOffer}
+          onClose={() => setEditOffer(null)}
+          onSaved={() => {
+            setEditOffer(null);
+            void load();
+            onChanged?.();
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
