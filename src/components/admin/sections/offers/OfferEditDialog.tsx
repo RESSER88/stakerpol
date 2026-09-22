@@ -57,6 +57,7 @@ const OfferEditDialog = ({ offer, onClose, onSaved }: Props) => {
   const [kanal, setKanal] = useState<string | null>(null);
   const [skad, setSkad] = useState('');
   const [saving, setSaving] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
 
   useEffect(() => {
     if (!offer) return;
@@ -69,7 +70,9 @@ const OfferEditDialog = ({ offer, onClose, onSaved }: Props) => {
     setSkad(offer.channel_detail ?? '');
   }, [offer]);
 
-  const canSave = nazwa.trim().length > 0;
+  const telError = offer?.contact_id ? phoneError(telefon) : null;
+  const mailError = offer?.contact_id ? emailError(email) : null;
+  const canSave = nazwa.trim().length > 0 && !telError && !mailError;
 
   const save = async () => {
     if (!offer || saving || !canSave) return;
