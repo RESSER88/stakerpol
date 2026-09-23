@@ -80,7 +80,7 @@ const callToday = (termin: string | null | undefined): boolean => {
 /** Opis otwarć — wyłącznie view_count / last_viewed_at z shared_lists. */
 const viewsText = (row: OfferRow): string =>
   row.view_count > 0
-    ? `Oglądał, ${row.view_count}×${row.last_viewed_at ? ` · ostatnio ${fmtDate(row.last_viewed_at)}` : ''}`
+    ? `Oglądał ${row.view_count}×${row.last_viewed_at ? ` · ostatnio ${fmtDate(row.last_viewed_at)}` : ''}`
     : 'Brak otwarć';
 
 const ACTION_CLASS =
@@ -235,42 +235,38 @@ const SentOffersView = ({ reloadKey }: Props) => {
     const accessibleLink = !row.revoked_at && !row.archived_at;
 
     return (
-      <li key={row.id} className="min-w-0 border-b border-editorial-line py-4 sm:py-5">
-        <div className="min-w-0">
-          <div className="flex min-w-0 flex-wrap items-start gap-x-3 gap-y-2">
-            <h3 className="min-w-0 flex-1 break-words text-sm font-medium text-editorial-ink">
-              {offerName}
-            </h3>
-            <span
-              className={`shrink-0 border px-1.5 py-0.5 text-[10px] uppercase tracking-wider ${state.className}`}
-            >
-              {state.label}
-            </span>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => row.contact_id && setOpenContactId(row.contact_id)}
-            disabled={!row.contact_id}
-            className="mt-1 block max-w-full truncate text-left text-xs text-editorial-muted disabled:cursor-default"
+      <li key={row.id} className="min-w-0 border-b border-editorial-line py-2.5 sm:py-3">
+        <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-3 gap-y-1">
+          <h3 className="min-w-0 flex-1 break-words text-sm font-medium text-editorial-ink">
+            {offerName}
+          </h3>
+          <span
+            className={`shrink-0 border px-1.5 py-0.5 text-[10px] uppercase tracking-wider ${state.className}`}
           >
-            {contactName}
-          </button>
-
-          {urgent && (
-            <span className="mt-2 inline-block border border-destructive bg-destructive/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-destructive motion-safe:animate-pulse">
-              Zadzwoń dziś
-            </span>
-          )}
-
-          <div className="mt-3 grid min-w-0 grid-cols-1 gap-x-5 gap-y-1 text-[11px] text-editorial-muted sm:grid-cols-3">
-            <span className="min-w-0 break-words">{viewsText(row)}</span>
-            <span>Wysłano {fmtDate(row.created_at)}</span>
-            <span>Ważna do {fmtDate(row.expires_at)}</span>
-          </div>
+            {state.label}
+          </span>
         </div>
 
-        <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => row.contact_id && setOpenContactId(row.contact_id)}
+          disabled={!row.contact_id}
+          className="mt-0.5 block max-w-full truncate text-left text-xs text-editorial-muted disabled:cursor-default"
+        >
+          {contactName}
+        </button>
+
+        {urgent && (
+          <span className="mt-1 inline-block border border-destructive bg-destructive/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-destructive motion-safe:animate-pulse">
+            Zadzwoń dziś
+          </span>
+        )}
+
+        <p className="mt-1 min-w-0 break-words text-[11px] leading-snug text-editorial-muted">
+          {viewsText(row)} · Wysłano {fmtDate(row.created_at)} · Ważna do {fmtDate(row.expires_at)}
+        </p>
+
+        <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">
           {!row.contact_id && (
             <ActionButton label="Przypisz kontakt" onClick={() => setAssignTarget(row)}>
               <UserPlus />
