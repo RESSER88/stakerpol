@@ -149,8 +149,8 @@ const NewOfferView = ({ products, onCreated, prefill }: Props) => {
       toast({
         title: '✓ Oferta utworzona',
         description: kontaktNowy
-          ? `Nowy kontakt · ${matchedCount} ${matchedCount === 1 ? 'pozycja' : 'pozycji'}`
-          : 'Oferta trafiła do istniejącego kontaktu.',
+          ? `Nowy kontakt · ${matchedCount} ${matchedCount === 1 ? 'pozycja' : 'pozycji'} · następny kontakt za 14 dni`
+          : 'Oferta trafiła do istniejącego kontaktu · następny kontakt za 14 dni (jeśli nie był zaplanowany).',
       });
       onCreated();
     } catch (err) {
