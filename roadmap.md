@@ -24,3 +24,7 @@
 - [x] Etap 5: uporządkowana karta oferty z pełnym zestawem spójnych akcji ikonowych i tooltipami
 - [x] Etap 5: weryfikacja statusów, działań oraz układu mobile/desktop bez zmian backendu i danych
 - [x] Etap 4: stosować pełne ścieżki plików, edytować follow-up bez aktywności i nie zastępować działających mechanizmów
+- [ ] Mobilny `/admin`: reset scrolla po zmianie sekcji i przy przeładowaniu
+- [ ] Mobilny `/admin`: czytelna dolna nawigacja z safe area, bez numeracji
+- [ ] Mobilny dashboard: mniejsze odstępy i czytelniejsze etykiety statystyk
+- [ ] Weryfikacja `/admin` przy szerokościach 320, 360, 390, 412 i 430 px
