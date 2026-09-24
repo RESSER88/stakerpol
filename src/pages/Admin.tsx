@@ -31,6 +31,23 @@ const Admin = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [productImages, setProductImages] = useState<string[]>([]);
 
+  useEffect(() => {
+    const previousScrollRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = 'manual';
+
+    return () => {
+      window.history.scrollRestoration = previousScrollRestoration;
+    };
+  }, []);
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'instant',
+    });
+  }, [activeSection]);
+
   // Stable reference — recreating every render caused the editor's useEffect
   // to re-fire and wipe locally-edited fields after a save / realtime refetch.
   const defaultNewProduct: Product = useMemo(() => ({
