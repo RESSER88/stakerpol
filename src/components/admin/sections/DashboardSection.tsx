@@ -60,7 +60,7 @@ const DashboardSection = ({ productCount, products, onNavigate, onOpenInquiries,
   ];
 
   return (
-    <div className="max-w-3xl mx-auto space-y-12">
+    <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8 lg:space-y-12">
       {/* Greeting */}
       <header>
         <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-editorial-muted mb-4">
@@ -93,8 +93,8 @@ const DashboardSection = ({ productCount, products, onNavigate, onOpenInquiries,
       <section className="grid grid-cols-3 border-y border-editorial-line py-8">
         {stats.map((s, i) => {
           const wrapperClass = i > 0
-            ? 'pl-4 lg:pl-8 border-l border-editorial-line'
-            : 'pr-4 lg:pr-8';
+            ? 'px-2 sm:px-4 lg:pl-8 lg:pr-0 border-l border-editorial-line'
+            : 'px-2 sm:px-4 lg:pl-0 lg:pr-8';
           const content = (
             <>
               <div className={cn(
@@ -106,7 +106,7 @@ const DashboardSection = ({ productCount, products, onNavigate, onOpenInquiries,
                 {s.value}
                 {s.highlight && <PulseDot />}
               </div>
-              <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-editorial-muted mt-2">
+              <div className="text-[10px] font-bold tracking-wider lg:tracking-[0.2em] uppercase text-editorial-muted mt-2">
                 {s.label}
               </div>
             </>
