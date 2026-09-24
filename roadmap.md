@@ -27,4 +27,4 @@
 - [x] Mobilny `/admin`: reset scrolla po zmianie sekcji i przy przeładowaniu
 - [x] Mobilny `/admin`: czytelna dolna nawigacja z safe area, bez numeracji
 - [x] Mobilny dashboard: mniejsze odstępy i czytelniejsze etykiety statystyk
-- [ ] Weryfikacja `/admin` przy szerokościach 320, 360, 390, 412 i 430 px
+- [x] Weryfikacja `/admin` przy szerokościach 320, 360, 390, 412 i 430 px
