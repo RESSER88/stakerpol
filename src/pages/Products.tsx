@@ -7,7 +7,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/utils/translations';
 import { usePublicSupabaseProducts } from '@/hooks/usePublicSupabaseProducts';
 import { Link } from 'react-router-dom';
-import { Shield, Loader2 } from 'lucide-react';
+import { Shield } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import FAQSection from '@/components/ui/FAQSection';
 import FAQSchema from '@/components/seo/FAQSchema';
 import { Helmet } from 'react-helmet-async';
@@ -33,11 +34,26 @@ const Products = () => {
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="flex justify-center items-center min-h-[400px]">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-stakerpol-orange mx-auto mb-4" />
-            <p className="text-muted-foreground">Ładowanie produktów...</p>
-          </div>
+        <div
+          className="grid gap-4 md:gap-6"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
+          aria-busy="true"
+          aria-label="Ładowanie produktów"
+        >
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-lg border border-border overflow-hidden bg-card">
+              <Skeleton className="aspect-[4/3] w-full rounded-none" />
+              <div className="p-4 space-y-3">
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+                <div className="grid grid-cols-2 gap-2">
+                  <Skeleton className="h-10" /><Skeleton className="h-10" />
+                  <Skeleton className="h-10" /><Skeleton className="h-10" />
+                </div>
+                <Skeleton className="h-11 w-full" />
+              </div>
+            </div>
+          ))}
         </div>
       );
     }

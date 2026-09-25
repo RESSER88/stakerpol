@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import LazyImage from '@/components/ui/LazyImage';
+import { getThumbnailUrl } from '@/utils/imageVariants';
 import ProductImageBadges from './ProductImageBadges';
 import { getGalleryImageAlt, ProductAltSource } from '@/utils/productImageAlt';
 
@@ -91,6 +92,7 @@ const ProductImage = ({ image, alt, images, productionYear, availabilityStatus, 
             aspectRatio="3:4"
             width={800}
             height={600}
+            priority={currentImageIndex === 0}
             className="transition-transform duration-300 group-hover:scale-105"
           />
 
@@ -148,7 +150,7 @@ const ProductImage = ({ image, alt, images, productionYear, availabilityStatus, 
               }`}
             >
               <LazyImage
-                src={img}
+                src={getThumbnailUrl(img)}
                 alt={thumbAlt(index)}
                 aspectRatio="3:4"
                 width={120}

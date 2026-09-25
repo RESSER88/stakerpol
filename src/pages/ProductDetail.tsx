@@ -5,7 +5,8 @@ import { Helmet } from 'react-helmet-async';
 import Layout from '@/components/layout/Layout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/utils/translations';
-import { usePublicSupabaseProducts } from '@/hooks/usePublicSupabaseProducts';
+import { usePublicProductDetail, usePublicRelatedProducts } from '@/hooks/usePublicProductDetail';
+import ProductDetailSkeleton from '@/components/products/ProductDetailSkeleton';
 import { useProductTranslationsDisplay } from '@/hooks/useProductTranslationsDisplay';
 import ProductImage from '@/components/products/ProductImage';
 import ProductInfo from '@/components/products/ProductInfo';
@@ -16,7 +17,6 @@ import { generateProductSchema } from '@/utils/seo/generateProductSchema';
 import { getMainImageAlt } from '@/utils/productImageAlt';
 import { useProductSEO } from '@/hooks/useProductSEO';
 import { trackViewItem } from '@/utils/analytics';
-import { Loader2 } from 'lucide-react';
 import FAQSection from '@/components/ui/FAQSection';
 import FAQSchema from '@/components/seo/FAQSchema';
 import { FEATURES } from '@/config/featureFlags';
@@ -37,9 +37,8 @@ const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { language } = useLanguage();
   const t = useTranslation(language);
-  const { products, isLoading } = usePublicSupabaseProducts();
-
-  const product = products.find((p) => p.slug === id || p.id === id);
+  const { product, isLoading } = usePublicProductDetail(id);
+  const relatedProducts = usePublicRelatedProducts(product?.id);
 
   const { translations, isLoading: translationsLoading } = useProductTranslationsDisplay(
     product?.id || '',
@@ -92,14 +91,7 @@ const ProductDetail = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="container-custom py-12">
-          <div className="flex justify-center items-center min-h-[400px]">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-stakerpol-orange mx-auto mb-4" />
-              <p className="text-muted-foreground">Ładowanie produktu...</p>
-            </div>
-          </div>
-        </div>
+        <ProductDetailSkeleton />
       </Layout>
     );
   }
@@ -284,7 +276,7 @@ const ProductDetail = () => {
       <FAQSchema items={productFaqItems} />
 
       {/* CARD — Related products (simplified) */}
-      <RelatedProducts currentProductId={product.id} products={products} />
+      <RelatedProducts currentProductId={product.id} products={relatedProducts} />
 
       <ProductStickyBar product={product as any} />
     </Layout>

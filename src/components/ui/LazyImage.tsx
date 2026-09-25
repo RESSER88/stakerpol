@@ -93,9 +93,10 @@ const LazyImage = ({
       };
       
       // Start loading
+      if (priority) (img as any).fetchPriority = 'high';
       img.src = src;
     }
-  }, [isInView, src, imgSrc, hasError, onError]);
+  }, [isInView, src, imgSrc, hasError, onError, priority]);
 
   const handleLoad = () => {
     setIsLoaded(true);
@@ -184,6 +185,7 @@ const LazyImage = ({
             isLoaded ? 'opacity-100' : 'opacity-0'
           )}
           loading={priority ? "eager" : "lazy"}
+          {...(priority ? { fetchpriority: 'high' } : {})}
           decoding="async"
         />
       )}
