@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 import Layout from '@/components/layout/Layout';
 import { Helmet } from 'react-helmet-async';
 import FAQSchema from '@/components/seo/FAQSchema';
@@ -133,7 +134,11 @@ const FAQ: React.FC = () => {
                 {CATEGORY_HEADER[selected]}
               </h2>
               {loading ? (
-                <p className="text-center text-muted-foreground py-8">Ładowanie…</p>
+                <div className="space-y-3" aria-busy="true" aria-label="Ładowanie…">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full rounded-lg" />
+                  ))}
+                </div>
               ) : visibleFaqs.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
                   {t('faq_no_results').replace('{searchTerm}', searchTerm)}
