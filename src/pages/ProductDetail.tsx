@@ -17,6 +17,7 @@ import { generateProductSchema } from '@/utils/seo/generateProductSchema';
 import { getMainImageAlt } from '@/utils/productImageAlt';
 import { useProductSEO } from '@/hooks/useProductSEO';
 import { trackViewItem } from '@/utils/analytics';
+import { Loader2 } from 'lucide-react';
 import FAQSection from '@/components/ui/FAQSection';
 import FAQSchema from '@/components/seo/FAQSchema';
 import { FEATURES } from '@/config/featureFlags';
