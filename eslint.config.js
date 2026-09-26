@@ -5,7 +5,13 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  {
+    ignores: [
+      "dist",
+      "supabase/functions", // Deno Edge Functions — inne środowisko, inne reguły
+      "src/integrations/supabase", // pliki generowane automatycznie
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -24,6 +30,8 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       "@typescript-eslint/no-unused-vars": "off",
+      // Projekt szeroko używa `any` (222 wystąpienia) — wyłączone, by uniknąć refaktoru.
+      "@typescript-eslint/no-explicit-any": "off",
     },
   }
 );
