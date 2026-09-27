@@ -43,7 +43,6 @@ const CookieConsent = () => {
     };
 
     try {
-      // @ts-expect-error — gtag jest ładowany zewnętrznie
       window.gtag?.('consent', 'update', payload);
     } catch {
       // celowo ignorowane — brak gtag nie może blokować zgody
