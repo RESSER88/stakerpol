@@ -43,19 +43,22 @@ const CookieConsent = () => {
     };
 
     try {
-      // @ts-ignore
       window.gtag?.('consent', 'update', payload);
-    } catch {}
+    } catch {
+      // celowo ignorowane — brak gtag nie może blokować zgody
+    }
 
     // Microsoft Clarity — start/stop based on analytics consent
     try {
       if (next.analytics) {
         window.dispatchEvent(new Event('clarity-consent-granted'));
       } else {
-        // @ts-ignore
+        // @ts-expect-error — clarity jest ładowany zewnętrznie
         window.clarity?.('stop');
       }
-    } catch {}
+    } catch {
+      // celowo ignorowane — brak clarity nie może blokować zgody
+    }
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   };

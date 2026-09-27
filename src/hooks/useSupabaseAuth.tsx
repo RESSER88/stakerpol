@@ -109,7 +109,7 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setIsAdmin(Boolean(data));
           checkedRoleForUserRef.current = userId;
-          setAdminError(Boolean(data) ? null : 'To konto nie ma uprawnień administratora.');
+          setAdminError(data ? null : 'To konto nie ma uprawnień administratora.');
         }
       } catch (e: any) {
         logger.error('❌ Error checking admin role:', e);
