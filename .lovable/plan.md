@@ -1,125 +1,128 @@
-# AI INTEGRATION ARCHITECTURE — rozszerzenie Planu v2 (SEO_MODEL_CONTENT_AI)
+# FINAL AI ARCHITECTURE — bezpośrednie OpenAI API (rozszerzenie Planu v2)
 
 Status: specyfikacja. Nic nie jest wdrażane (brak kluczy, Edge Functions, migracji, zmian UI).
+Zasada nadrzędna: brak jakiegokolwiek połączenia z Lovable AI (bez Lovable AI Gateway, bez `LOVABLE_API_KEY`, bez modeli i billingu Lovable). Jedyny provider: OpenAI API na Twoim koncie (API, billing, limity, tokeny, wybór modeli).
 
 ## A. Brakujące elementy AI w Planie v2
 
-1. Nie określono dostawcy ani drogi połączenia („AI Gateway” był tylko nazwą).
+1. Nie określono providera ani drogi połączenia.
 2. Brak miejsca przechowywania klucza i zasad jego odczytu.
-3. Model zapisany na sztywno, brak konfiguracji i testu połączenia.
+3. Model zapisany na sztywno, brak whitelisty i testu połączenia.
 4. Brak schematu odpowiedzi i walidacji przed zapisem draftu.
-5. Brak autoryzacji endpointu (tylko admin), limitów, obsługi błędów 402/403/429.
+5. Brak autoryzacji endpointu (tylko admin), limitów, obsługi błędów OpenAI.
 6. Brak śladu diagnostycznego: produkt → generacja → model → czas → status → wersja promptu.
 
 ## B. Finalna architektura komunikacji
 
 ```text
-Admin UI (SEO Manager > "Do akceptacji" / karta egzemplarza)
+Admin UI (SEO Manager > zakładka AI / karta egzemplarza VARIANT|UNIQUE)
    | supabase.functions.invoke('generate-product-delta', { product_id })
-   |   (JWT zalogowanego admina, brak klucza w przeglądarce)
+   |   (JWT zalogowanego admina; przeglądarka nie zna klucza ani nie wybiera modelu)
    v
-Edge Function generate-product-delta  (Deno, serwer)
+Edge Function generate-product-delta (Deno, Supabase)
    1. weryfikacja JWT + has_role(uid,'admin')
    2. walidacja product_id (UUID, istnieje, nie sold, kwalifikacja != STANDARD, content_lock = false)
    3. odczyt: products, wynik Diff Engine, model_content, ai_settings
-   4. budowa promptu (PROMPT_VERSION = product_delta_v1)
+   4. sprawdzenie ai_settings.enabled i model ∈ ALLOWED_MODELS
+   5. budowa promptu (wersja z ai_settings.prompt_version)
    v
-Provider "openai" -> Lovable AI Gateway (/v1/responses, modele OpenAI)
+fetch -> https://api.openai.com/v1/responses  (Authorization: Bearer OPENAI_API_KEY)
    v
-Odpowiedź strukturalna (JSON wg schematu)
+Structured Output (json_schema, strict)
    v
-Walidacja w Edge Function (schemat + długość + zgodność liczb z faktami)
+Walidacja w Edge Function
    v
-product_seo_settings.delta_content, ai_status = 'draft'  + wpis w ai_generations
+ai_generations (wpis) -> product_seo_settings.delta_content, ai_status='draft'
    v
-Redaktor: zatwierdź / edytuj i zablokuj / generuj ponownie / odrzuć
+Ręczna akceptacja redaktora -> ai_status='approved'
    v
-ai_status = 'approved' (tylko ręcznie) -> mikro-akapit na /produkty/:slug + JSON-LD
+Mikro-akapit na /produkty/:slug + JSON-LD
 ```
 
 Odpowiedzialności:
-- Wywołanie AI z frontendu: wyłącznie przycisk w SEO Managerze (nowy hook `useProductDeltaAI`), przekazuje tylko `product_id`.
-- Połączenie HTTP z AI: tylko w Edge Function.
-- Wybór modelu: Edge Function czyta `ai_settings` (nie komponent).
-- Walidacja: Edge Function, przed jakimkolwiek zapisem.
-- Zapis draftu: `product_seo_settings` (relacja 1:1, zgodnie z werdyktem A).
+- Frontend: przycisk w SEO Managerze (hook `useProductDeltaAI`), wysyła tylko `product_id`.
+- Połączenie HTTP z OpenAI: wyłącznie Edge Function (bez SDK Lovable, zwykły `fetch` lub oficjalny pakiet `openai`).
+- Wybór modelu: `ai_settings.model`, sprawdzany w Edge Function.
+- Walidacja i zapis: Edge Function, przed jakimkolwiek zapisem.
+- Draft: `product_seo_settings` (1:1, werdykt A).
 
-## C. Bezpieczne przechowywanie klucza
+## C. Klucz OPENAI_API_KEY
 
-- Pierwszy provider: modele OpenAI udostępniane przez Lovable AI Gateway. Secret: `LOVABLE_API_KEY` — zarządzany przez platformę, zapisany w sekretach Supabase Edge Functions, odczyt `Deno.env.get('LOVABLE_API_KEY')`. Nie trafia do `src/`, Git, bazy ani odpowiedzi.
-- Opcja na przyszłość (bezpośrednie konto OpenAI): secret `OPENAI_API_KEY` dodany przez bezpieczny formularz sekretów; ta sama abstrakcja providera, zmiana tylko w Edge Function.
-- Produkcja: sekret w środowisku produkcyjnym Edge Functions. Staging/dev: osobna wartość w środowisku testowym (osobny limit 100 sekretów na środowisko). Brak zmian w `.env` i zmiennych `VITE_*`.
-- Edge Function nigdy nie zwraca ani nie loguje klucza, nagłówków autoryzacji ani pełnych odpowiedzi providera.
+- Nazwa: `OPENAI_API_KEY`. Miejsce: sekrety Supabase Edge Functions (Project Settings → Secrets), dodany przez Ciebie przez bezpieczny formularz — wartość nie przechodzi przez czat.
+- Odczyt: `Deno.env.get('OPENAI_API_KEY')`; brak → status `Not configured`, odpowiedź 503 bez szczegółów.
+- NIGDY: React, `src/`, `VITE_*`, `.env`, GitHub, baza, `ai_settings`, odpowiedzi funkcji, logi.
+- Produkcja: klucz produkcyjny w sekretach środowiska produkcyjnego. Staging/dev: osobny klucz (osobny projekt OpenAI z niskim limitem wydatków) w środowisku testowym.
+- Zalecenie po Twojej stronie w OpenAI: osobny projekt „stakerpol”, miesięczny limit budżetu, klucz z dostępem tylko do Responses API.
 
-## D. Konfiguracja modelu
+## D. Konfiguracja modelu i ALLOWED MODELS
 
-Rozdzielenie:
-- SECRET: klucz API (sekrety Edge Functions).
-- CONFIGURATION: nowa tabela `ai_settings` (jeden wiersz): `provider` ('openai'), `model` (np. `openai/gpt-6-astra` — domyślny), `allowed_models` (lista), `reasoning_effort` ('low'|'medium'), `prompt_version`, `enabled`, `paused_reason`, `updated_at`, `updated_by`.
-- Uzasadnienie wyboru B+C: model zmienia admin w SEO Managerze bez redeployu; secret zostaje oddzielnie. Lista `allowed_models` weryfikowana przy wdrożeniu z listą modeli bramki (`/v1/models`) — nie z pamięci. Nazwy typu „GPT-5.6 Luna/Terra/Sol” trafią na listę tylko jeśli bramka je potwierdzi.
-- Abstrakcja w Edge Function: `getProvider(settings.provider) -> generate({ model, system, input, schema })`. Teraz jedna implementacja: `openai`.
-- PRODUCT DATA (products), AI OUTPUT (product_seo_settings) i GLOBAL AI CONFIG (ai_settings) są rozdzielone — zmiana modelu nie zmienia danych produktów.
+- SECRET: `OPENAI_API_KEY` (sekrety). CONFIGURATION: tabela `ai_settings` (jeden wiersz): `provider` ('openai'), `model`, `enabled`, `prompt_version` (np. `product_delta_v1`), `paused_reason`, `last_test_at`, `last_test_status`, `last_test_latency_ms`, `updated_at`, `updated_by`.
+- Whitelista (rekomendacja MVP): stała `ALLOWED_MODELS` w module `_shared/ai/openai.ts` Edge Functions — backend decyduje, frontend pobiera listę z funkcji `ai-config` i pokazuje dropdown. Brak pola tekstowego na model.
+- Zapis modelu przez funkcję `ai-config` (tylko admin): odrzuca model spoza whitelisty. `generate-product-delta` sprawdza to ponownie przed każdym wywołaniem.
+- Nazwy modeli na whiteliście: weryfikowane w Etapie 0 z dokumentacją OpenAI i endpointem `GET /v1/models` na Twoim koncie (przykłady GPT-5.6 Luna/Terra/Sol dopiszemy tylko, jeśli konto je udostępnia). Model domyślny wybierzesz Ty.
+- Abstrakcja: `getProvider('openai').generate({ model, system, input, schema })` — kolejny provider = nowy plik adaptera, bez zmian UI.
+- Rozdzielenie: PRODUCT DATA (`products`), AI OUTPUT (`product_seo_settings`), GLOBAL AI CONFIG (`ai_settings`) — zmiana modelu nie zmienia danych produktów.
 
-## E. Admin UX (zakładka „AI” w SEO Managerze, jedna karta)
+## E. Admin UX (zakładka „AI” w SEO Managerze)
 
 ```text
-AI Provider:    OpenAI (przez Lovable AI Gateway)
-Model:          [ openai/gpt-6-astra  v ]   (tylko allowed_models)
-Status:         Connected | Error: <typ> | Not configured | Paused (brak środków)
-Ostatni test:   2026-09-28 12:50, 840 ms
-[ Test AI connection ]
+Provider:   OpenAI API
+Model:      [ <model z whitelisty>  v ]
+Status:     Not configured | Connected | Error: <typ> | Paused (<powód>)
+Ostatni test: 2026-09-28 12:50, 840 ms
+[ Test połączenia ]
 ```
-Na karcie egzemplarza (VARIANT/UNIQUE): `[ Generuj draft AI ]` — nieaktywny dla STANDARD, przy content_lock, przy statusie Paused.
+Przy egzemplarzach VARIANT/UNIQUE: `[ Generuj draft AI ]` — nieaktywny dla STANDARD, przy content_lock, przy Paused/Not configured.
 
-## F. Test połączenia
+## F. Test połączenia (`ai-connection-test`)
 
-Edge Function `ai-connection-test` (tylko admin): minimalne wywołanie z krótkim promptem technicznym („odpowiedz: OK”), bez danych produktu. Zwraca `{ success, provider, model, latency_ms, error_type?, error_message? }`. Wynik zapisywany w `ai_settings.last_test_*`. Klucz nigdy nie jest zwracany.
+Tylko admin; używa `OPENAI_API_KEY`; minimalne żądanie do OpenAI (krótki prompt techniczny, bez danych produktu). Zwraca `{ success, provider:"openai", model, latency_ms, error_type? }`; wynik zapisany w `ai_settings.last_test_*`. Klucz nigdy nie jest zwracany.
 
 ## G. Generowanie Product Delta (przykład SN 6627934)
 
-Dane wejściowe (tylko fakty z bazy): model SWE 200D, SN 6627934, rok, mth, maszt 2700 mm, wolny skok 1400 mm, podest, opcje dodatkowe, kwalifikacja UNIQUE, lista delt z Diff Engine, skrót model_content (kontekst — nie do przepisywania).
+Wejście (tylko fakty z bazy): SWE 200D, SN 6627934, rok, mth, maszt 2700 mm, wolny skok 1400 mm, podest, opcje dodatkowe, kwalifikacja UNIQUE, delty z Diff Engine, skrót model_content jako kontekst.
 
-Prompt systemowy (product_delta_v1), zasady:
-- opisuj wyłącznie przekazane delty względem standardu modelu;
-- nie wymyślaj parametrów, certyfikatów, gwarancji, zastosowań bez uzasadnienia w danych, opinii, recenzji;
-- nie zmieniaj żadnych liczb; bez przymiotników marketingowych;
-- maksymalnie 350 znaków, język polski;
-- jeśli danych brak lub są sprzeczne — dopisz ostrzeżenie w `warnings`, zamiast zgadywać.
+Prompt systemowy `product_delta_v1`:
+- opisuj wyłącznie przekazane delty względem standardu modelu, nie cały opis SWE 200D;
+- nie wymyślaj parametrów, certyfikatów, gwarancji, zastosowań bez podstaw, opinii, recenzji;
+- nie zmieniaj liczb; bez marketingowego „lania wody”;
+- maks. 350 znaków, po polsku; przy brakach/sprzecznościach → `warnings`.
 
-Schemat odpowiedzi (strict, wszystkie pola wymagane, bez limitów w schemacie):
+Schemat (strict):
 ```json
 { "delta_content": "string", "detected_features_used": ["string"], "warnings": ["string"] }
 ```
 
-Walidacja w kodzie: poprawny JSON; `delta_content` niepusty i ≤ 350 znaków; każda liczba w tekście występuje w faktach wejściowych; `detected_features_used` ⊆ lista delt; brak słów z listy zakazanej (np. „gwarancja”, „certyfikat”, „najlepszy”). Niezgodność → brak zapisu treści, `ai_generations.status = 'invalid'`, komunikat dla admina. Zapis zawsze jako `ai_status = 'draft'`; AI nie może ustawić `approved`.
+Walidacja w kodzie: poprawny JSON; `delta_content` niepusty i ≤ 350 znaków; każda liczba w tekście występuje w faktach; `detected_features_used` ⊆ delty; brak słów zakazanych („gwarancja”, „certyfikat”, „najlepszy” itd.). Niezgodność → brak zapisu treści, `ai_generations.status='invalid'`, komunikat dla admina. AI zawsze zapisuje tylko `draft`.
 
 ## H. Błędy, limity, koszt, logowanie
 
-- Długość: limit w prompcie + przycięcie/odrzucenie w walidacji (model nie przyjmuje parametru max_tokens).
-- Strumieniowanie odpowiedzi po stronie Edge Function (brak sztucznych timeoutów, anulowanie tylko przez użytkownika).
-- 429 i 5xx: maks. 1 automatyczne ponowienie z backoffem (Retry-After), potem błąd dla admina — brak pętli.
-- 400 (zły model/schemat): bez ponowień, komunikat „nieprawidłowa konfiguracja”.
-- 401: „Not configured”.
-- 402 / 403 (brak środków, limit workspace, odmowa dostawcy): `ai_settings.enabled=false` + `paused_reason`; wszystkie przyciski AI wyłączone do ręcznego odblokowania.
-- Anty-spam: odrzucenie, jeśli dla produktu trwa generacja lub ostatnia była < 30 s temu; dzienny limit generacji (np. 50) sprawdzany w `ai_generations`.
-- Nowa tabela `ai_generations` (uzasadnienie: jedyny sposób na historię prób, także nieudanych, bez nadpisywania draftu): `id, product_id, model, provider, prompt_version, status (success|invalid|error|paused), error_type, latency_ms, run_id, created_by, created_at`. Bez treści promptu, bez kluczy, bez surowych odpowiedzi. Diagnostyka kosztu: produkt → generacja → model → czas → status; szczegóły zużycia w logach bramki (run_id).
-- PROMPT_VERSION: tak, jako stała w Edge Function + kolumna `prompt_version` w `product_seo_settings` i `ai_generations`. Bez systemu wersjonowania treści.
+- Długość: `max_output_tokens` w żądaniu (np. 400) + limit znaków w walidacji.
+- Timeout: 60 s na wywołanie OpenAI (AbortController).
+- 429 / 5xx: maks. 1 automatyczne ponowienie z odczekaniem (Retry-After), potem błąd — brak pętli.
+- 400 / 404 (zły model lub schemat): bez ponowień, „nieprawidłowa konfiguracja modelu”.
+- 401: „Not configured / nieprawidłowy klucz”.
+- 429 `insufficient_quota` (brak środków na koncie OpenAI): `ai_settings.enabled=false`, `paused_reason='quota'`; przyciski wyłączone do ręcznego odblokowania.
+- Anty-spam: blokada, gdy trwa generacja dla produktu lub ostatnia < 30 s; dzienny limit (np. 50) liczony z `ai_generations`.
+- Tabela `ai_generations` (potrzebna — historia także nieudanych prób bez nadpisywania draftu): `id, product_id, provider, model, prompt_version, status (success|invalid|error|paused), error_type, latency_ms, input_tokens, output_tokens, openai_request_id, created_by, created_at`. Bez promptu, bez surowej odpowiedzi, bez kluczy. Diagnostyka kosztu: produkt → generacja → model → czas → status → tokeny; szczegółowe koszty w panelu Twojego konta OpenAI.
+- PROMPT_VERSION: tak — `ai_settings.prompt_version` + kolumna `prompt_version` w `ai_generations` i `product_seo_settings`. Bez systemu wersjonowania treści.
 
 ## Security
 
-- `verify_jwt = true` dla obu funkcji; w kodzie dodatkowo `has_role(uid,'admin')` — niezalogowany i zwykły użytkownik: 401/403.
-- `product_id` walidowany (UUID, istnieje, nie sold); STANDARD → 409 „nie wymaga AI”; content_lock → 409.
-- RLS: `ai_settings` i `ai_generations` — odczyt/zapis tylko admin; zapis generacji przez service_role w funkcji. Nadane GRANT-y wyłącznie dla authenticated/service_role, bez anon.
-- Publicznie widoczna tylko treść `approved` (istniejące zasady odczytu product_seo_settings do weryfikacji przy wdrożeniu).
+- Obie funkcje: walidacja JWT w kodzie + `has_role(uid,'admin')`; niezalogowany → 401, zwykły użytkownik → 403.
+- `product_id` walidowany (UUID, istnieje, nie sold); STANDARD → 409; content_lock → 409.
+- RLS: `ai_settings`, `ai_generations` — tylko admin; zapisy przez service_role w funkcji; GRANT tylko authenticated/service_role, bez anon.
+- Publicznie tylko treść `approved`.
+- Dodatkowo: istniejący `test-translation-direct.js` w repo zawiera klucz publiczny i test starej funkcji — poza zakresem, do decyzji w Etapie 0.
 
 ## I. Zmiany do dopisania w Planie v2
 
-- Etap 0 (rozszerzony): usunięcie ProductSchema.tsx, baseline 37 egzemplarzy + weryfikacja listy modeli bramki i dostępności klucza.
-- Etap 2a — AI Provider Configuration: tabela `ai_settings`, zakładka „AI” w SEO Managerze, `ai-connection-test`.
-- Etap 2b — Secure AI Gateway: Edge Function `generate-product-delta` (auth, walidacja wejścia, abstrakcja providera, streaming, obsługa błędów).
-- Etap 3 (rozszerzony) — Product Delta Generation: prompt product_delta_v1, schemat, walidacja, zapis draftu, tabela `ai_generations`.
-- Etap 4 bez zmian (akceptacja redaktora), Etap 5 bez zmian (mikro-akapit na /produkty/:slug), QA dopisane: test SN 6627934 (UNIQUE), SN 6625316 (VARIANT), odmowa dla STANDARD, test jako niezalogowany i zwykły użytkownik, symulacja 402/429.
+- Etap 0 (rozszerzony): usunięcie ProductSchema.tsx, baseline 37 egzemplarzy, weryfikacja modeli na Twoim koncie OpenAI, ustalenie whitelisty i modelu domyślnego, dodanie `OPENAI_API_KEY` (przez Ciebie).
+- Etap 2a — AI Provider Configuration: `ai_settings`, funkcja `ai-config`, zakładka „AI”, `ai-connection-test`.
+- Etap 2b — Secure OpenAI Integration: `generate-product-delta` (auth, walidacja wejścia, adapter OpenAI, whitelist, obsługa błędów).
+- Etap 3 (rozszerzony) — Product Delta Generation: prompt `product_delta_v1`, schemat, walidacja, draft, `ai_generations`.
+- Etapy 4–5 bez zmian. QA: SN 6627934 (UNIQUE), SN 6625316 (VARIANT), odmowa dla STANDARD, wywołanie jako niezalogowany i zwykły użytkownik, model spoza whitelisty, brak klucza, symulacja 429/quota.
 
 ## J. Finalna decyzja
 
-READY FOR AI IMPLEMENTATION — pod warunkiem wykonania w Etapie 0 weryfikacji listy modeli bramki (identyfikatory do `allowed_models`) i zatwierdzenia przez Ciebie: dostawca = modele OpenAI przez Lovable AI Gateway (bez osobnego konta OpenAI), domyślny model `openai/gpt-6-astra`.
+READY FOR AI IMPLEMENTATION — z warunkami Etapu 0: potwierdzenie listy modeli dostępnych na Twoim koncie OpenAI, wybór modelu domyślnego, dodanie `OPENAI_API_KEY` do sekretów przez Ciebie.
