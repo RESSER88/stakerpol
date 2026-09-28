@@ -20,11 +20,11 @@ Zasady: bez Lovable AI. W MVP wyłącznie OpenAIProvider (Twoje konto i klucz). 
    - `test-translation-direct.js` i pełna mapa zależności DeepL (hooki, funkcje, tabele, cron, flagi);
    - dotychczasowy Etap 0 Planu v2 (usunięcie `ProductSchema.tsx`, baseline 37 egzemplarzy).
 1. Odłączenie aktywnej ścieżki DeepL: usunięcie wywołania `useProductTranslationIntegration()` z `Layout.tsx`. Bez usuwania tabel, funkcji i pozostałego kodu DeepL. Brak zmian wyglądu.
-2. Migracja: `ai_settings`, `ai_provider_configs` (1 rekord `openai`), `ai_generations`, funkcje Vault, kolumny AI w `product_seo_settings`.
+2. Migracja: `ai_settings`, `ai_provider_configs` (1 rekord `openai`), `ai_generations`, `product_ai_drafts`, funkcje Vault, funkcje `approve_product_ai_draft` i `unpublish_product_delta`, kolumny `delta_content`/`content_lock`/`delta_*` w `product_seo_settings`.
 3. `_shared/ai/`: interfejs `AIProvider`, registry, `OpenAIProvider`.
 4. Edge Function `ai-providers`: dodanie / zmiana / usunięcie klucza, test połączenia, synchronizacja modeli, wybór modelu, włączenie/pauza.
 5. SEO Manager → zakładka „AI”: Provider → Model (lista providerów = tylko OpenAI).
-6. Edge Function `generate-product-delta` + przycisk „Generuj draft AI” (VARIANT/UNIQUE) + akceptacja redaktora.
+6. Edge Function `generate-product-delta` + przyciski „Generuj draft AI” (VARIANT/UNIQUE), „Akceptuj”, „Odrzuć”, „Wycofaj publikację” + Security QA.
 7. Później, osobnym poleceniem: usunięcie pozostałości DeepL.
 
 ## 3. Klucze — Supabase Vault
@@ -104,23 +104,54 @@ OpenAI: modele z `GET /v1/models` na Twoim koncie (filtr tekstowych), generowani
 | created_by | uuid null | |
 | created_at | timestamptz | |
 
-`product_seo_settings` — nowe kolumny
+`product_ai_drafts` (nowa, tylko admin — jedyne miejsce draftu AI)
 | kolumna | typ | uwagi |
 |---|---|---|
-| delta_content | text null | draft lub zatwierdzony tekst |
-| ai_status | text | none, draft, approved, rejected (domyślnie none) |
-| content_lock | boolean | domyślnie false |
-| ai_provider | text null | |
-| ai_model | text null | |
-| prompt_version | text null | |
-| ai_generated_at | timestamptz null | |
-| approved_at / approved_by | timestamptz / uuid null | |
+| id | uuid PK | |
+| product_id | uuid UNIQUE | FK → products; jeden wiersz na produkt, nadpisywany przy regeneracji |
+| content | text | treść draftu |
+| detected_features_used | jsonb | |
+| warnings | jsonb | |
+| status | text | draft, approved, rejected |
+| provider / model / prompt_version | text | |
+| generation_id | uuid null | FK → ai_generations |
+| generated_at / generated_by | timestamptz / uuid | |
+| reviewed_at / reviewed_by | timestamptz / uuid null | audyt akceptacji/odrzucenia |
+| updated_at | timestamptz | |
 
-Dostęp: `ai_settings`, `ai_provider_configs`, `ai_generations` — odczyt tylko admin (`has_role`), zapis tylko Edge Functions (service_role); bez dostępu `anon`. Publicznie z `product_seo_settings` widoczny wyłącznie `delta_content` przy `ai_status='approved'`. Klucze wyłącznie w Vault.
+`product_seo_settings` — nowe kolumny (tylko treść zatwierdzona, bez `ai_status`)
+| kolumna | typ | uwagi |
+|---|---|---|
+| delta_content | text null | publiczna treść; widoczna, gdy `IS NOT NULL` |
+| content_lock | boolean | domyślnie false; blokuje nadpisanie przez akceptację draftu |
+| delta_approved_at / delta_approved_by | timestamptz / uuid null | |
+| delta_source | text null | ai lub manual |
 
-## 7. Product Delta (bez zmian merytorycznych)
+Dostęp:
+- `product_ai_drafts`: RLS włączone; GRANT tylko `authenticated` (polityka: odczyt wyłącznie `has_role(admin)`) i `service_role`; brak GRANT dla `anon`; zapis wyłącznie przez Edge Functions / funkcje SECURITY DEFINER.
+- `ai_settings`, `ai_provider_configs`, `ai_generations`: odczyt tylko admin, zapis tylko Edge Functions; bez `anon`.
+- `product_seo_settings.delta_content` czytany publicznie jak dotąd (istniejące zasady dostępu do tabeli zweryfikować w Etapie 0). Klucze wyłącznie w Vault.
 
-products → Diff Engine → detected_deltas → aplikacja ustala STANDARD/VARIANT/UNIQUE (nie AI) → `registry[active_provider]` + `selected_model` → schemat `{delta_content, detected_features_used, warnings}` (≤350 znaków, prompt `product_delta_v1` zakazuje wymyślania faktów) → walidacja → `ai_generations` → `ai_status='draft'` → ręczna akceptacja → `approved`. Limity: timeout 60 s, 1 ponowienie tylko dla 429/5xx, `quota`/`auth` → pauza, anty-spam 30 s na produkt, dzienny limit.
+## 7. Product Delta — przepływ
+
+```text
+Diff Engine (aplikacja ustala STANDARD/VARIANT/UNIQUE, nie AI)
+  -> generate-product-delta -> OpenAIProvider (selected_model)
+  -> walidacja -> ai_generations
+  -> product_ai_drafts (upsert po product_id, status='draft')
+  -> redaktor: AKCEPTUJ | ODRZUĆ | GENERUJ PONOWNIE
+  -> AKCEPTUJ: product_seo_settings.delta_content
+```
+
+- Stan możliwy: stara zatwierdzona treść w `delta_content` + nowy draft `status='draft'` — publiczna strona nadal pokazuje starą treść.
+- Akceptacja: funkcja SECURITY DEFINER `approve_product_ai_draft(product_id, edited_content)` (wołana przez Edge Function), sprawdza `has_role(auth.uid(),'admin')`, w jednej transakcji: walidacja długości (≤350) i treści (słowa zakazane, niepusta) → odmowa, gdy `content_lock = true` → zapis `delta_content`, `delta_source`, `delta_approved_*` → draft `status='approved'`, `reviewed_*`.
+- Odrzucenie: `status='rejected'`, `delta_content` bez zmian.
+- „Wycofaj publikację”: funkcja `unpublish_product_delta(product_id)` (admin) → `delta_content = NULL`; draft pozostaje do audytu.
+- Limity: timeout 60 s, 1 ponowienie tylko dla 429/5xx, `quota`/`auth` → pauza, anty-spam 30 s na produkt, dzienny limit.
+
+## Security QA (obowiązkowe)
+
+Jako `anon`: odczyt `product_ai_drafts` przez REST → brak dostępu; wywołanie funkcji akceptacji/wycofania → odmowa; publiczna strona nadal czyta `delta_content`. Jako zwykły zalogowany użytkownik: brak odczytu draftów i brak akceptacji. Jako admin: odczyt, akceptacja, odrzucenie, wycofanie; akceptacja przy `content_lock=true` odrzucona.
 
 ## Decyzja
 
