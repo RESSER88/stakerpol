@@ -1,145 +1,127 @@
-# AI PROVIDER MANAGER — raport architektury (rozszerzenie Planu v2)
+# AI PROVIDER MANAGER — finalna architektura MVP (po korektach)
 
-Status: audyt + specyfikacja. Nic nie jest wdrażane (brak tabel, Edge Functions, sekretów, zmian UI, usuwania DeepL).
-Zasady: bez Lovable AI (bez gatewaya, `LOVABLE_API_KEY`, billingu Lovable). Providerzy: OpenAI, Anthropic, Google Gemini — na Twoich kontach i kluczach. DeepL nie jest częścią nowego systemu.
+Status: specyfikacja do akceptacji. Nic nie jest wdrażane.
+Zasady: bez Lovable AI. W MVP wyłącznie OpenAIProvider (Twoje konto i klucz). Anthropic/Gemini tylko przewidziane w interfejsie i registry — bez kodu. DeepL nie należy do nowego systemu.
 
-## A. Obecna architektura AI
+## 1. Ustalenia z audytu (stan faktyczny)
 
-- Brak jakiejkolwiek integracji z modelem językowym (OpenAI/Anthropic/Gemini) w kodzie i bazie.
-- Jedyna „AI” w projekcie to stary system tłumaczeń DeepL (opis w B/C).
-- SEO Manager (`src/components/admin/SEOManagerTool.tsx`) — ręczna edycja `product_seo_settings`, bez AI.
+- Aktywna ścieżka DeepL: `useProductTranslationIntegration` w `Layout.tsx` — na każdej publicznej stronie otwiera nasłuch zmian `products` i przy dodaniu produktu woła `auto-translate`, niezależnie od flagi `DEEPL_ENABLED=false`.
+- Odczyt: `useProductTranslationsDisplay` na karcie produktu czyta `product_translations` — zostaje do decyzji po Etapie 0.
+- Martwe: `useProductTranslations` (za flagą false), `translation-worker` (cron usunięty), `schedule-translations`, `AI_TRANSLATION_PLAN.md`.
+- W sekretach Edge Functions istnieje `DEEPL_API_KEY`; tabela `deepl_api_keys` przechowuje klucze w zwykłej tabeli (do sprawdzenia w Etapie 0).
+- `test-translation-direct.js`: zawiera wyłącznie publiczny klucz „anon” projektu Supabase (ten sam co w kodzie strony) — nie jest to klucz prywatny ani klucz DeepL, rotacja nie jest wymagana. Plik to pozostałość testowa, kandydat do usunięcia.
 
-## B. Mapa DeepL / translation
+## 2. Poprawiona kolejność etapów
 
-| Element | Rodzaj | Kto używa |
-|---|---|---|
-| `supabase/functions/auto-translate` | Edge Function, woła `api-free.deepl.com`, klucze czyta z tabeli `deepl_api_keys` | hooki niżej, translation-worker |
-| `supabase/functions/schedule-translations` | Edge Function (kolejka `translation_jobs`) | `useAutoTranslation` |
-| `supabase/functions/translation-worker` | Edge Function (cron → auto-translate) | cron usunięty migracją 2026-08-05 |
-| `deepl_api_keys` | tabela z `api_key_encrypted` (klucz w bazie) | auto-translate |
-| `translation_jobs`, `translation_logs`, `translation_stats` | tabele | funkcje DeepL |
-| `product_translations` | tabela z przetłumaczonymi polami | `useProductTranslationsDisplay` na karcie produktu |
-| `src/hooks/useProductTranslationIntegration.ts` | nasłuch realtime INSERT na `products` → `auto-translate` | `Layout.tsx` (każda publiczna strona) |
-| `src/hooks/useAutoTranslation.ts` | wywołania auto-translate / schedule-translations | tylko `useProductTranslationIntegration` |
-| `src/hooks/useProductTranslations.ts` | `translateProductFields` | `useSupabaseProducts` — za flagą `DEEPL_ENABLED=false` |
-| `src/hooks/useProductTranslationsDisplay.ts` | odczyt `product_translations` | `ProductDetail.tsx` |
-| `FEATURES.DEEPL_ENABLED` | flaga = false | `useSupabaseProducts` |
-| `test-translation-direct.js` | skrypt testowy w katalogu głównym | nikt |
-| `AI_TRANSLATION_PLAN.md` | dokument | nikt |
-| `src/utils/translations/*` | statyczne tłumaczenia UI (PL/EN/DE/SK/CS) | cała strona — NIE dotyczy DeepL, zostaje |
+0. Etap 0 — weryfikacja (tylko odczyt):
+   - `product_translations`: liczba wierszy, języki, czy strony EN/DE/SK/CS z nich korzystają;
+   - `deepl_api_keys`: czy są aktywne klucze (bez pokazywania wartości) → decyzja o unieważnieniu u DeepL;
+   - `DEEPL_API_KEY` w sekretach → kandydat do usunięcia po wyłączeniu funkcji;
+   - `test-translation-direct.js` i pełna mapa zależności DeepL (hooki, funkcje, tabele, cron, flagi);
+   - dotychczasowy Etap 0 Planu v2 (usunięcie `ProductSchema.tsx`, baseline 37 egzemplarzy).
+1. Odłączenie aktywnej ścieżki DeepL: usunięcie wywołania `useProductTranslationIntegration()` z `Layout.tsx`. Bez usuwania tabel, funkcji i pozostałego kodu DeepL. Brak zmian wyglądu.
+2. Migracja: `ai_settings`, `ai_provider_configs` (1 rekord `openai`), `ai_generations`, funkcje Vault, kolumny AI w `product_seo_settings`.
+3. `_shared/ai/`: interfejs `AIProvider`, registry, `OpenAIProvider`.
+4. Edge Function `ai-providers`: dodanie / zmiana / usunięcie klucza, test połączenia, synchronizacja modeli, wybór modelu, włączenie/pauza.
+5. SEO Manager → zakładka „AI”: Provider → Model (lista providerów = tylko OpenAI).
+6. Edge Function `generate-product-delta` + przycisk „Generuj draft AI” (VARIANT/UNIQUE) + akceptacja redaktora.
+7. Później, osobnym poleceniem: usunięcie pozostałości DeepL.
 
-## C. Aktywne vs martwe
+## 3. Klucze — Supabase Vault
 
-- Aktywne (ryzyko): `useProductTranslationIntegration` w `Layout.tsx` — każdy odwiedzający otwiera kanał realtime na `products` i przy dodaniu produktu jego przeglądarka woła `auto-translate`. Działa niezależnie od flagi `DEEPL_ENABLED`. Do odłączenia jako pierwsze.
-- Aktywne (odczyt): `useProductTranslationsDisplay` na karcie produktu czyta `product_translations` — przed usunięciem sprawdzić, czy tabela ma dane i czy wersje EN/DE/SK/CS ich używają.
-- Martwe: `useProductTranslations` (flaga false), `translation-worker` (brak cron), `schedule-translations` (tylko przez martwą ścieżkę), `test-translation-direct.js` (kandydat do usunięcia), `AI_TRANSLATION_PLAN.md`.
-- Do weryfikacji przed usunięciem: czy `deepl_api_keys` zawiera klucze (usunąć i unieważnić u DeepL), zawartość `translation_*`.
-- Kolejność sprzątania (osobny etap, po akceptacji): odłączyć hook z Layout → wyłączyć funkcje → decyzja o `product_translations` → usunięcie tabel/kodu.
+- Nazwa w Vault: `ai_key_openai` (w przyszłości `ai_key_<provider>`).
+- Funkcje w schemacie `private` (SECURITY DEFINER, `EXECUTE` tylko `service_role`): `ai_key_set(provider, key)`, `ai_key_get(provider)`, `ai_key_delete(provider)`, `ai_key_exists(provider)`.
+- Dodanie/zmiana: pole hasła w SEO Managerze → `ai-providers {action:'set_key'}` → JWT + `has_role(admin)` → test klucza → zapis w Vault (zmiana = nadpisanie) → status `connected`.
+- Usunięcie: potwierdzenie → `delete_key` → usunięcie z Vault → `status='not_configured'`; jeśli OpenAI jest aktywny → `ai_settings.enabled=false`, `paused_reason='no_key'`.
+- Frontend nigdy nie otrzymuje klucza — widzi tylko `Configured` i datę.
 
-## D. Proponowana architektura
+## 4. UI (zakładka „AI” w SEO Managerze)
 
 ```text
-SEO Manager → zakładka "AI / Providers"
-   | supabase.functions.invoke('ai-providers', {...})  (JWT admina)
-   v
-Edge Function ai-providers  (zarządzanie: klucze, modele, test, aktywny provider)
-Edge Function generate-product-delta  (generowanie)
-   | wspólny moduł _shared/ai/: registry + adaptery
-   v
-getProvider(ai_settings.active_provider)  → OpenAIProvider | AnthropicProvider | GeminiProvider
-   v
-API providera (klucz z Vault, tylko w pamięci funkcji)
-   v
-Structured output → walidacja → ai_generations → product_seo_settings (draft)
-   v
-Ręczna akceptacja → approved → /produkty/:slug
+Provider:  [ OpenAI  v ]            (lista z registry — obecnie 1 pozycja)
+Klucz API: Configured (2026-09-28)  [ Zmień klucz ] [ Usuń klucz ]
+Model:     [ <z available_models>  v ]   [ Odśwież listę ]
+Status:    Connected | Error | Not configured | Paused
+[ Test połączenia ]      Ostatni test: 12:50, 840 ms
 ```
-Frontend nigdy nie łączy się z API providera i nigdy nie otrzymuje klucza.
 
-## E. Przechowywanie kluczy
-
-- Wymaganie „admin dodaje/usuwa klucz z panelu” wyklucza sekrety Edge Functions (zmiana wymagałaby tokena zarządczego Supabase o pełnych uprawnieniach — zbyt ryzykowne).
-- Rekomendacja: Supabase Vault (`vault.secrets`, szyfrowanie po stronie bazy). Nazwy: `ai_key_openai`, `ai_key_anthropic`, `ai_key_gemini`.
-- Dostęp wyłącznie przez funkcje `SECURITY DEFINER` w schemacie prywatnym (`private.ai_key_set/delete/get`), z `EXECUTE` tylko dla `service_role`. Brak dostępu dla `anon`/`authenticated`, brak widoku w PostgREST.
-- Odczyt klucza tylko w Edge Function (service role) tuż przed wywołaniem providera; nigdy w odpowiedzi, logach, `ai_settings`, localStorage, `VITE_*`, Git.
-- UI pokazuje tylko `Configured ••••` i datę dodania (bez fragmentów klucza).
-- Staging/dev: osobny projekt Supabase = osobny Vault i osobne klucze.
-
-## F. Dodawanie klucza
-
-Admin wpisuje klucz w polu typu hasło → `ai-providers {action:'set_key', provider, key}` (HTTPS) → JWT + `has_role(admin)` → walidacja formatu → test połączenia z tym kluczem → dopiero przy sukcesie zapis do Vault → status `Connected`. Pole czyszczone natychmiast po wysłaniu; klucz nie wraca do przeglądarki.
-
-## G. Usuwanie klucza
-
-`[ Usuń API key ]` → potwierdzenie → `ai-providers {action:'delete_key', provider}` → usunięcie z Vault → `ai_provider_configs.status='not_configured'`. Jeśli był aktywnym providerem: `ai_settings.enabled=false`, `paused_reason='no_key'`, przyciski generowania wyłączone. Trwające generowanie kończy się (klucz był już w pamięci), kolejne są odrzucane.
-
-## H. Test providera
-
-`ai-providers {action:'test', provider}` → adapter `testConnection()` = listowanie modeli (bez generowania treści, bez danych produktu, zero kosztu tokenów). Zwraca `{ success, provider, latency_ms, models_count, error_type? }`; zapis w `last_test_*`.
-
-## I. Modele
-
-| Provider | Sposób ustalania | Model domyślny | Źródło |
-|---|---|---|---|
-| OpenAI | `GET https://api.openai.com/v1/models` ∩ filtr modeli tekstowych | wybiera admin po teście | dokumentacja OpenAI API (Models) |
-| Anthropic | `GET https://api.anthropic.com/v1/models` | wybiera admin po teście | dokumentacja Anthropic API (Models) |
-| Google Gemini | `GET https://generativelanguage.googleapis.com/v1beta/models`, tylko z `generateContent` | wybiera admin po teście | dokumentacja Gemini API (models.list) |
-
-- Lista pobierana przez backend na koncie danego klucza i zapisywana w `ai_provider_configs.available_models` (cache, odświeżane przy teście). Żadnych nazw modeli wymyślonych w kodzie.
-- Filtr bezpieczeństwa w adapterze: tylko modele tekstowe (bez embeddingów, audio, obrazów).
-- Dropdown modelu zmienia się wraz z providerem; brak ręcznego wpisywania. Edge Function przed każdym wywołaniem sprawdza `model ∈ available_models`.
-
-## J. Konfiguracja (schemat)
-
-- `ai_settings` (1 wiersz): `active_provider`, `active_model`, `enabled`, `paused_reason`, `prompt_version`, `updated_at`, `updated_by`.
-- `ai_provider_configs` (1 wiersz na providera): `provider` (PK), `enabled`, `selected_model`, `available_models` jsonb, `models_synced_at`, `status` (not_configured|connected|error), `key_configured_at`, `last_test_at`, `last_test_status`, `last_error_type`, `updated_at`, `updated_by`.
-- `ai_generations`: `id, product_id, provider, model, prompt_version, status (success|invalid|error|paused), error_type, latency_ms, input_tokens, output_tokens, created_by, created_at` — bez promptu, odpowiedzi i kluczy.
-- Klucze: tylko Vault.
-- RLS: wszystkie trzy tabele — odczyt tylko admin (`has_role`), zapis tylko przez Edge Functions (service_role). GRANT bez `anon`.
-
-## K. Provider abstraction
+## 5. Provider abstraction
 
 ```text
 interface AIProvider {
-  id: 'openai' | 'anthropic' | 'gemini'
-  testConnection(key): { ok, latencyMs, errorType? }
-  listModels(key): ModelInfo[]
-  generate(key, { model, system, input, schema, maxOutputTokens }):
-      { json, usage, rawStatus }
-  mapError(httpStatus, body): 'auth'|'quota'|'rate_limit'|'bad_model'|'server'|'timeout'
+  id; label
+  testConnection(key)            -> { ok, latencyMs, errorType? }
+  listModels(key)                -> ModelInfo[]   (tylko modele tekstowe)
+  generate(key, { model, system, input, schema, maxOutputTokens }) -> { json, usage }
+  mapError(status, body)         -> auth | quota | rate_limit | bad_model | server | timeout
 }
-registry = { openai: OpenAIProvider, anthropic: AnthropicProvider, gemini: GeminiProvider }
+registry = { openai: OpenAIProvider }   // anthropic, gemini — tylko miejsce w typie
 ```
-Całe `if provider…` zamknięte w adapterach w `_shared/ai/`. UI i generowanie znają tylko `registry[id]`. Nowy provider = nowy adapter + wiersz w `ai_provider_configs`.
+OpenAI: modele z `GET /v1/models` na Twoim koncie (filtr tekstowych), generowanie przez `POST /v1/responses` ze structured output. Żadnych nazw modeli w kodzie.
 
-## L. Integracja z Product Delta
+## 6. Finalny schemat tabel
 
-Bez zmian logiki: products → Diff Engine → detected_deltas → (aplikacja ustala STANDARD/VARIANT/UNIQUE; AI tego nie decyduje) → aktywny provider/model → `delta_content` (schemat `{delta_content, detected_features_used, warnings}`, ≤350 znaków, prompt `product_delta_v1` zakazujący wymyślania faktów) → walidacja (liczby ⊆ fakty, cechy ⊆ delty, słowa zakazane) → `ai_status='draft'` → akceptacja → `approved`. Limity: timeout 60 s, 1 ponowienie tylko dla 429/5xx, `quota`/`auth` → pauza aktywnego providera, anty-spam 30 s na produkt i dzienny limit.
+`ai_settings` (jeden wiersz)
+| kolumna | typ | uwagi |
+|---|---|---|
+| id | smallint PK | stałe 1 |
+| active_provider | text | FK → ai_provider_configs.provider, domyślnie 'openai' |
+| enabled | boolean | domyślnie false |
+| paused_reason | text null | no_key, quota, auth, manual |
+| prompt_version | text | domyślnie 'product_delta_v1' |
+| updated_at | timestamptz | |
+| updated_by | uuid null | |
 
-## M. Ryzyka bezpieczeństwa
+`ai_provider_configs` (jeden rekord: openai)
+| kolumna | typ | uwagi |
+|---|---|---|
+| provider | text PK | 'openai' |
+| selected_model | text null | musi należeć do available_models (walidacja w Edge Function) |
+| available_models | jsonb | lista z API providera |
+| models_synced_at | timestamptz null | |
+| status | text | not_configured, connected, error |
+| key_configured_at | timestamptz null | tylko data, bez klucza |
+| last_test_at | timestamptz null | |
+| last_test_status | text null | success, error |
+| last_test_latency_ms | integer null | |
+| last_error_type | text null | |
+| updated_at | timestamptz | |
+| updated_by | uuid null | |
 
-- Klucz przechodzi raz przez przeglądarkę admina przy dodawaniu (HTTPS, pole hasła, brak zapisu lokalnego) — akceptowalne; alternatywa wymagałaby ręcznego dodawania w panelu Supabase.
-- Błędne uprawnienia do funkcji Vault = wyciek klucza → `EXECUTE` tylko service_role, test w QA jako anon/authenticated.
-- Logowanie ciał żądań w Edge Function → zakaz logowania nagłówków i body.
-- Obecny wyciek: `deepl_api_keys` trzyma klucze w zwykłej tabeli; hook DeepL działa w przeglądarkach klientów.
-- Koszt: klucze na Twoich kontach — zalecane limity budżetu u każdego providera.
+`ai_generations`
+| kolumna | typ | uwagi |
+|---|---|---|
+| id | uuid PK | |
+| product_id | uuid | FK → products |
+| provider | text | |
+| model | text | |
+| prompt_version | text | |
+| status | text | success, invalid, error, paused |
+| error_type | text null | |
+| latency_ms | integer null | |
+| input_tokens | integer null | |
+| output_tokens | integer null | |
+| created_by | uuid null | |
+| created_at | timestamptz | |
 
-## N. Zmiany do implementacji
+`product_seo_settings` — nowe kolumny
+| kolumna | typ | uwagi |
+|---|---|---|
+| delta_content | text null | draft lub zatwierdzony tekst |
+| ai_status | text | none, draft, approved, rejected (domyślnie none) |
+| content_lock | boolean | domyślnie false |
+| ai_provider | text null | |
+| ai_model | text null | |
+| prompt_version | text null | |
+| ai_generated_at | timestamptz null | |
+| approved_at / approved_by | timestamptz / uuid null | |
 
-1. Migracja: `ai_settings`, `ai_provider_configs`, `ai_generations` (+GRANT, RLS), funkcje Vault w schemacie prywatnym, kolumny w `product_seo_settings` (`delta_content`, `ai_status`, `content_lock`, `prompt_version`, `ai_provider`, `ai_model`).
-2. `_shared/ai/` z trzema adapterami i registry.
-3. Edge Functions: `ai-providers`, `generate-product-delta`.
-4. SEO Manager: zakładka „AI / Providers” (3 karty providerów + wybór aktywnego providera/modelu) i przycisk „Generuj draft AI” przy VARIANT/UNIQUE.
-5. Osobny etap: sprzątanie DeepL wg C.
+Dostęp: `ai_settings`, `ai_provider_configs`, `ai_generations` — odczyt tylko admin (`has_role`), zapis tylko Edge Functions (service_role); bez dostępu `anon`. Publicznie z `product_seo_settings` widoczny wyłącznie `delta_content` przy `ai_status='approved'`. Klucze wyłącznie w Vault.
 
-## O. Kolejność
+## 7. Product Delta (bez zmian merytorycznych)
 
-0. Etap 0 Planu v2 + weryfikacja danych w `product_translations` i `deepl_api_keys`.
-1. Odłączenie `useProductTranslationIntegration` z `Layout.tsx` (najpilniejsze, bez zmiany wyglądu).
-2. Migracja konfiguracji + Vault.
-3. Adapter OpenAI + `ai-providers` (klucz, test, modele) + zakładka AI.
-4. Adaptery Anthropic i Gemini.
-5. `generate-product-delta` + draft/akceptacja.
-6. Usunięcie pozostałości DeepL.
+products → Diff Engine → detected_deltas → aplikacja ustala STANDARD/VARIANT/UNIQUE (nie AI) → `registry[active_provider]` + `selected_model` → schemat `{delta_content, detected_features_used, warnings}` (≤350 znaków, prompt `product_delta_v1` zakazuje wymyślania faktów) → walidacja → `ai_generations` → `ai_status='draft'` → ręczna akceptacja → `approved`. Limity: timeout 60 s, 1 ponowienie tylko dla 429/5xx, `quota`/`auth` → pauza, anty-spam 30 s na produkt, dzienny limit.
 
-Decyzja: architektura gotowa do implementacji po Twojej akceptacji raportu (w szczególności: Vault jako magazyn kluczy oraz odłączenie hooka DeepL jako pierwszy krok).
+## Decyzja
+
+Po Twojej akceptacji rozpoczynam od Etapu 0 (tylko odczyt) i Etapu 1 (odłączenie hooka DeepL z `Layout.tsx`); kolejne etapy po raporcie z Etapu 0.
