@@ -1,3 +1,28 @@
+# Odłączenie DeepL ze stron klienta
+
+Cel: strona przestaje uruchamiać stare tłumaczenia DeepL w przeglądarkach odwiedzających. Wygląd i działanie strony bez zmian.
+
+## Co zmieniam
+
+1. `src/components/layout/Layout.tsx` — usuwam import i wywołanie `useProductTranslationIntegration()`. Efekt: żadna publiczna strona nie otwiera już nasłuchu zmian produktów i nie wywołuje funkcji `auto-translate`.
+2. Specyfikację AI (poniżej) zapisuję jako osobny dokument `.lovable/plan/ai-provider-manager-spec.md`, żeby wrócić do niej później.
+
+## Czego NIE ruszam
+
+- Pliku hooka `useProductTranslationIntegration.ts` i `useAutoTranslation.ts` (zostają nieużywane do późniejszego sprzątania).
+- Edge Functions `auto-translate`, `schedule-translations`, `translation-worker`, tabel DeepL/tłumaczeń, sekretu `DEEPL_API_KEY`, flagi `DEEPL_ENABLED`.
+- Odczytu `product_translations` na karcie produktu (`useProductTranslationsDisplay`) — wersje językowe działają jak dotąd.
+- `test-translation-direct.js` (zawiera tylko publiczny klucz — bez rotacji).
+
+## Weryfikacja
+
+- Build i lint bez nowych błędów.
+- Strona główna i karta produktu ładują się normalnie; w ruchu sieciowym brak połączenia z kanałem `product-translations` i brak wywołań `auto-translate`.
+
+---
+
+# ZAŁĄCZNIK — zapisana specyfikacja do późniejszego powrotu
+
 # AI PROVIDER MANAGER — finalna architektura MVP (po korektach)
 
 Status: specyfikacja do akceptacji. Nic nie jest wdrażane.
