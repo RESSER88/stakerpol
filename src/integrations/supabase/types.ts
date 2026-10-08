@@ -467,7 +467,10 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          model: string | null
           product_id: string
+          provider: string | null
+          reviewed_at: string | null
           status: string
           updated_at: string
         }
@@ -476,7 +479,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          model?: string | null
           product_id: string
+          provider?: string | null
+          reviewed_at?: string | null
           status?: string
           updated_at?: string
         }
@@ -485,7 +491,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          model?: string | null
           product_id?: string
+          provider?: string | null
+          reviewed_at?: string | null
           status?: string
           updated_at?: string
         }
@@ -577,6 +586,7 @@ export type Database = {
           availability: string | null
           created_at: string | null
           delta_content: string | null
+          delta_content_approved_at: string | null
           enable_schema: boolean | null
           gtin: string | null
           id: string
@@ -594,6 +604,7 @@ export type Database = {
           availability?: string | null
           created_at?: string | null
           delta_content?: string | null
+          delta_content_approved_at?: string | null
           enable_schema?: boolean | null
           gtin?: string | null
           id?: string
@@ -611,6 +622,7 @@ export type Database = {
           availability?: string | null
           created_at?: string | null
           delta_content?: string | null
+          delta_content_approved_at?: string | null
           enable_schema?: boolean | null
           gtin?: string | null
           id?: string
