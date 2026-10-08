@@ -461,6 +461,44 @@ export type Database = {
         }
         Relationships: []
       }
+      product_ai_drafts: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          product_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_ai_drafts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_benefits: {
         Row: {
           created_at: string
@@ -538,6 +576,7 @@ export type Database = {
         Row: {
           availability: string | null
           created_at: string | null
+          delta_content: string | null
           enable_schema: boolean | null
           gtin: string | null
           id: string
@@ -554,6 +593,7 @@ export type Database = {
         Insert: {
           availability?: string | null
           created_at?: string | null
+          delta_content?: string | null
           enable_schema?: boolean | null
           gtin?: string | null
           id?: string
@@ -570,6 +610,7 @@ export type Database = {
         Update: {
           availability?: string | null
           created_at?: string | null
+          delta_content?: string | null
           enable_schema?: boolean | null
           gtin?: string | null
           id?: string
@@ -1108,6 +1149,7 @@ export type Database = {
       }
     }
     Functions: {
+      approve_product_ai_draft: { Args: { _draft_id: string }; Returns: Json }
       bytea_to_text: { Args: { data: string }; Returns: string }
       cleanup_expired_shared_lists: { Args: never; Returns: number }
       cleanup_old_handled_leads: { Args: never; Returns: number }
@@ -1341,6 +1383,10 @@ export type Database = {
               error: true
             } & "Could not choose the best candidate function between: public.urlencode(string => bytea), public.urlencode(string => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
           }
+      withdraw_product_delta_content: {
+        Args: { _product_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "user"
