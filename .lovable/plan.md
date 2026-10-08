@@ -1,51 +1,70 @@
-# Plan SEO dla STAKERPOL — oparty na realnych danych
+# Plan SEO dla STAKERPOL — oparty na prawdziwych danych z Google Search Console
 
-## Skąd te dane i dlaczego ten plan
+## Co pokazują Twoje dane (ostatnie 28 dni, prosto z GSC)
 
-Dane z Semrush (Google PL, październik 2026):
+**Połączenie działa** — usługa `https://stakerpol.pl/` zweryfikowana, pełny dostęp.
 
-- stakerpol.pl: **26 fraz, ~25 wizyt/mies.** — prawie cały ruch to fraza markowa „stakerpol” (96%).
-- Karty produktów są zaindeksowane, ale stoją na pozycjach **11–52** (np. „paleciak elektryczny toyota bt" poz. 11, „swe140" poz. 23, „wózek paletowy elektryczny wysokiego podnoszenia" poz. 52).
-- Tymczasem rynek szuka: **„paleciak elektryczny" 6 600/mies., „paleciak" 9 900/mies., „wózek paletowy" 3 600/mies.** — a trudność frazy „wózek paletowy elektryczny" to tylko **13/100 (niska)**.
+### Strony (wyświetlenia → kliknięcia → pozycja)
 
-**Wniosek:** Google widzi stronę, ale karty produktów nie mają treści, za którą mogłyby wygrać z konkurencją. To nie problem techniczny — to problem treści. Dlatego plan koncentruje się na treści kart produktów i strony katalogu, nie na nowych funkcjach.
+| Strona | Wyśw. | Klik. | Pozycja |
+|---|---|---|---|
+| Strona główna | 2 080 | 14 | 13,2 |
+| /produkty (katalog) | 713 | 3 | 12,8 |
+| SWE 200D (6579281) | 34 | 3 | 6,3 |
+| SWE 200D (6774106) | 71 | 2 | 4,9 |
+| SWE 200D (6524383) | 39 | 2 | 3,7 |
+| SWE 100 (6305917) | 23 | 2 | 4,8 |
+| /faq | 100 | 0 | 5,8 |
 
-## Co robimy (3 kroki, po kolei)
+### Frazy
 
-### Krok 1 — Unikalne opisy na kartach produktów (największy efekt)
+- „stakerpol" — poz. 1, 5 kliknięć (marka działa).
+- „paleciak elektryczny toyota" — **87 wyświetleń, poz. 10,9, tylko 1 kliknięcie**.
+- „paleciaki elektryczne" — poz. 6,3.
+- Reszta to pojedyncze wyświetlenia na frazy modelowe (bt staxio, swe 100, swe140).
 
-Obecnie ~40 wózków tego samego modelu ma niemal identyczną treść — Google traktuje je jako duplikaty i nie pokazuje wysoko.
+## Wnioski — dlaczego ten plan
 
-- Do każdej karty produktu dodajemy krótki (2–4 zdania), rzeczowy akapit: do czego ten konkretny egzemplarz się nadaje (maszt, wysokość, udźwig, podest, zastosowanie w magazynie/naczepie).
-- Generowany przez AI, ale **zawsze po Twojej akceptacji w panelu** — przycisk „Generuj opis" → podgląd → „Akceptuj" / „Odrzuć". Nic nie publikuje się automatycznie.
-- Treść jest widoczna dla klienta i dla Google.
-- Zaczynamy od wózków, które już są na pozycjach 11–30 (np. SWE 140, SWE 120L) — one najszybciej przeskoczą do top 10.
+1. **Strona główna i katalog mają razem ~2 800 wyświetleń, ale stoją na pozycji ~13** (druga strona wyników) — stąd prawie zerowe kliknięcia. To największy rezerwuar ruchu: wystarczy wejść do top 5, żeby kliknięcia wzrosły kilkukrotnie.
+2. **Karty produktów, które mają treść, rankują świetnie** (poz. 4–6 i CTR 3–9%). Problem: jest ich za mało i część to stare adresy `/products/` (np. 6301428) zamiast `/produkty/`.
+3. **FAQ ma 100 wyświetleń i 0 kliknięć** — treść jest, ale nie pracuje na sprzedaż.
+4. Semrush potwierdza potencjał: „paleciak elektryczny" 6 600 szukań/mies., „paleciak" 9 900/mies., niska trudność (13/100).
 
-### Krok 2 — Wzmocnienie strony katalogu /produkty
+## Co robimy (3 kroki)
 
-- Krótki tekst na stronie listy produktów pod frazy „paleciak elektryczny", „wózek paletowy elektryczny" (6 600 + 1 600 wyszukań/mies., niska konkurencja).
-- Nagłówki i opisy sekcji zgodne z tym, czego ludzie realnie szukają.
+### Krok 1 — Wzmocnienie strony głównej i katalogu (największy efekt, najmniej pracy)
 
-### Krok 3 — Pomiar i decyzje co miesiąc
+- Krótkie, rzeczowe teksty pod frazy „paleciak elektryczny", „wózek paletowy elektryczny", „paleciak elektryczny toyota" — na stronie głównej i /produkty.
+- Cel: przesunąć 2 800 wyświetleń z pozycji 13 do top 5.
+- Bez zmiany wyglądu — tylko treść w istniejących sekcjach.
 
-- Podpięcie Google Search Console do projektu (konto już połączone w Lovable — trzeba je powiązać z tym projektem).
-- Raz w miesiącu: lista fraz, pozycje, kliknięcia → decyzja, które karty wzmocnić następne.
+### Krok 2 — Unikalne opisy kart produktów z AI (Ty akceptujesz każdy)
+
+- Przycisk „Generuj opis" w panelu → podgląd → „Akceptuj" / „Odrzuć". Nic nie publikuje się automatycznie.
+- Opis = 2–4 zdania o konkretnym egzemplarzu (maszt, udźwig, zastosowanie), widoczny dla klienta i Google.
+- Zaczynamy od wózków z wyświetleniami w GSC (SWE 200D, SWE 120L, SWE 140) i od karty 6301428, która dziś stoi na starym adresie.
+
+### Krok 3 — Porządek techniczny + pomiar
+
+- Przekierowania starych adresów `/products/...` → `/produkty/...` (Google widzi obie wersje).
+- Raz w miesiącu raport z GSC: frazy, pozycje, kliknięcia → decyzja o kolejnych kartach.
 
 ## Czego NIE robimy
 
-- Nie zmieniamy wyglądu strony, układu kart ani funkcji.
-- Nie tworzymy nowych stron ani bloga.
-- Nie publikujemy niczego bez Twojej akceptacji.
-- Nie ruszamy bazy danych poza jednym nowym polem na zatwierdzony opis.
+- Nie zmieniamy wyglądu, układu ani funkcji strony.
+- Nie tworzymy bloga ani nowych stron.
+- Nic nie publikujemy bez Twojej akceptacji.
+- Nie ruszamy bazy poza jednym polem na zatwierdzony opis.
 
 ## Szczegóły techniczne
 
-- Nowa kolumna `delta_content` w `product_seo_settings` (opis publikowany) + tabela `product_ai_drafts` (robocze wersje, tylko dla admina).
-- Generowanie przez Edge Function z Twoim kluczem API (OpenAI lub Claude — do wyboru przy wdrożeniu), klucz nigdy nie trafia do przeglądarki.
-- Oczekiwany efekt: realny wzrost widoczności w 3–6 miesięcy, mierzony w Search Console.
+- Kolumna `delta_content` w `product_seo_settings` + tabela `product_ai_drafts` (robocze wersje, tylko admin).
+- Generowanie przez Edge Function z Twoim kluczem API (OpenAI lub Claude — wybór przy wdrożeniu); klucz nigdy nie trafia do przeglądarki.
+- Przekierowania 301 w konfiguracji hostingu.
+- Oczekiwany efekt: wzrost kliknięć w 2–4 miesiące, mierzony w GSC.
 
 ## Kolejność wdrożenia
 
-1. Podpięcie GSC do projektu (5 min, bez kodu).
-2. Krok 1 na 3–5 wybranych wózkach jako test.
-3. Po potwierdzeniu efektu — reszta oferty + Krok 2.
+1. Krok 1 (treści strony głównej i katalogu) — najszybszy efekt.
+2. Krok 2 na 5 wózkach z największą liczbą wyświetleń — test.
+3. Krok 3 + reszta oferty po potwierdzeniu efektu.
