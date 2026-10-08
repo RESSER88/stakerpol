@@ -1,6 +1,7 @@
 import { Product } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Pencil, Copy, Trash2, ExternalLink } from 'lucide-react';
+import { Pencil, Copy, Trash2, ExternalLink, AlertTriangle } from 'lucide-react';
+import { slugMatchesSerial, SLUG_MISMATCH_HINT } from '@/utils/productSlug';
 import { Link } from 'react-router-dom';
 import ProductStatusChip from './ProductStatusChip';
 import { productPath } from '@/config/routes';
@@ -35,8 +36,13 @@ const ProductCardMobile = ({ product, onEdit, onCopy, onDelete }: Props) => {
             </h3>
             <ExternalLink className="h-3 w-3 text-admin-muted shrink-0" />
           </Link>
-          <p className="text-xs text-admin-muted mt-0.5">
+          <p className="text-xs text-admin-muted mt-0.5 inline-flex items-center gap-1">
             {product.specs.serialNumber || 'Brak nr seryjnego'} · {product.specs.productionYear || '—'}
+            {!slugMatchesSerial(product.slug, product.specs.serialNumber) && (
+              <AlertTriangle className="h-3.5 w-3.5 text-admin-orange" aria-label={SLUG_MISMATCH_HINT}>
+                <title>{SLUG_MISMATCH_HINT}</title>
+              </AlertTriangle>
+            )}
           </p>
         </div>
         <ProductStatusChip product={product} />

@@ -114,11 +114,13 @@ const Admin = () => {
   };
 
   const handleCopy = (product: Product) => {
+    // Kopia dostaje pusty slug i numer seryjny — slug powstanie z nowego numeru przy zapisie.
     const copiedProduct = {
       ...product,
       id: '',
+      slug: '',
       model: `${product.model} (kopia)`,
-      specs: { ...product.specs, serialNumber: `${product.specs.serialNumber}-COPY` }
+      specs: { ...product.specs, serialNumber: '' }
     };
     setSelectedProduct(copiedProduct);
     setProductImages(product.images || []);

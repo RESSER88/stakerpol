@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Product } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Pencil, Copy, Trash2, ArrowUp, ArrowDown, ArrowUpDown, ExternalLink } from 'lucide-react';
+import { Pencil, Copy, Trash2, ArrowUp, ArrowDown, ArrowUpDown, ExternalLink, AlertTriangle } from 'lucide-react';
+import { slugMatchesSerial, SLUG_MISMATCH_HINT } from '@/utils/productSlug';
 import { Link } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import ProductStatusChip from './ProductStatusChip';
@@ -108,7 +109,16 @@ const ProductsTableDesktop = ({ products, onEdit, onCopy, onDelete }: Props) => 
                     <ExternalLink className="h-3 w-3 text-admin-muted group-hover:text-admin-orange" />
                   </Link>
                 </TableCell>
-                <TableCell className="text-admin-muted text-sm">{product.specs.serialNumber || '—'}</TableCell>
+                <TableCell className="text-admin-muted text-sm">
+                  <span className="inline-flex items-center gap-1">
+                    {product.specs.serialNumber || '—'}
+                    {!slugMatchesSerial(product.slug, product.specs.serialNumber) && (
+                      <AlertTriangle className="h-3.5 w-3.5 text-admin-orange" aria-label={SLUG_MISMATCH_HINT}>
+                        <title>{SLUG_MISMATCH_HINT}</title>
+                      </AlertTriangle>
+                    )}
+                  </span>
+                </TableCell>
                 <TableCell className="text-admin-muted text-sm">{product.specs.productionYear || '—'}</TableCell>
                 <TableCell className="text-admin-muted text-sm">
                   {product.specs.workingHours ? `${product.specs.workingHours} mh` : '—'}

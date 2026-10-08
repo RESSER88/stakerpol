@@ -16,7 +16,9 @@ const Chapter02_Basic = ({ product, onChange, onSave, saving, isCreate }: Props)
   const setSpec = (k: string, v: string) =>
     onChange({ ...product, specs: { ...product.specs, [k]: v } });
 
-  const valid = !!product.model?.trim() && !!product.specs?.serialNumber?.trim();
+  const slugUnlocked = !isCreate && !!(product as any).slugUnlocked;
+  const valid = !!product.model?.trim() && !!product.specs?.serialNumber?.trim()
+    && (!slugUnlocked || !!product.slug?.trim());
   const shortDesc = product.shortDescription || '';
   const model = product.model || '';
   const slogan = product.slogan || '';
@@ -109,12 +111,37 @@ const Chapter02_Basic = ({ product, onChange, onSave, saving, isCreate }: Props)
             { value: 'sold', label: 'Sprzedany' },
           ]}
         />
-        <EditorialInput
-          label="Slug (opcjonalnie)"
-          value={product.slug || ''}
-          onChange={(e) => set({ slug: e.target.value })}
-          hint="Pozostaw puste, aby wygenerować automatycznie"
-        />
+        {isCreate ? (
+          <EditorialInput
+            label="Slug (opcjonalnie)"
+            value={product.slug || ''}
+            onChange={(e) => set({ slug: e.target.value })}
+            hint="Pozostaw puste, aby wygenerować automatycznie"
+          />
+        ) : (
+          <div className="space-y-2">
+            <EditorialInput
+              label="Slug"
+              value={product.slug || ''}
+              readOnly={!slugUnlocked}
+              onChange={(e) => slugUnlocked && set({ slug: e.target.value, slugUnlocked: true } as any)}
+              hint={slugUnlocked ? 'Zmiana adresu odblokowana — slug nie może być pusty' : 'Adres karty jest zablokowany'}
+            />
+            {!slugUnlocked && (
+              <button
+                type="button"
+                className="text-xs underline text-editorial-muted hover:text-editorial-accent"
+                onClick={() => {
+                  if (window.confirm('Zmiana sluga zmienia adres karty w Google. Stary adres przestanie działać, dopóki administrator serwera nie doda przekierowania 301. Kontynuować?')) {
+                    set({ slugUnlocked: true } as any);
+                  }
+                }}
+              >
+                Odblokuj zmianę adresu
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="sticky bottom-0 z-20 bg-editorial-bg pt-4 pb-4 border-t border-editorial-line flex justify-end -mx-4 md:mx-0 px-4 md:px-0">

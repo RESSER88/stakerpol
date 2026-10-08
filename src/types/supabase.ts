@@ -9,22 +9,8 @@ export type SupabaseProductImage = Database['public']['Tables']['product_images'
 
 // Funkcje mapowania między typami aplikacji a Supabase
 
-// Prosta funkcja tworząca slug po stronie klienta (fallback, ostateczną unikalność zapewnia DB)
-const toSlug = (name: string, serial?: string) => {
-  const base = (name || '').toString()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '') // usuń diakrytyki
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-');
-  const sn = (serial || '')
-    .toString()
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, '');
-  return sn ? `${base}-${sn}` : base;
-};
+// Slug po stronie klienta (fallback, ostateczną unikalność zapewnia DB)
+import { toSlug } from '@/utils/productSlug';
 
 export const mapSupabaseProductToProduct = (supabaseProduct: SupabaseProduct, images: SupabaseProductImage[] = []) => {
   return {
@@ -119,8 +105,17 @@ export const mapProductToSupabaseInsert = (product: any): SupabaseProductInsert 
 };
 
 export const mapProductToSupabaseUpdate = (product: any): SupabaseProductUpdate => {
-  return {
+  const mapped: any = {
     ...mapProductToSupabaseInsert(product),
     updated_at: new Date().toISOString()
   };
+  // Adres karty zmienia się tylko po świadomym odblokowaniu pola „Slug”.
+  if (!product.slugUnlocked) {
+    delete mapped.slug;
+  } else {
+    const slug = (product.slug || '').toString().trim();
+    if (!slug) throw new Error('Slug nie może być pusty');
+    mapped.slug = slug;
+  }
+  return mapped;
 };
