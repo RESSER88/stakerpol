@@ -1,44 +1,110 @@
-# Raport diagnostyczny — „Kopiuj” i slugi (tylko analiza)
+# Audyt widoczności dla wyszukiwarek AI + plan (bez zmian w kodzie)
 
-Nic nie zostało zmienione. Ten raport koryguje dwa punkty z poprzedniego raportu SEO (patrz na końcu).
+## 1. Co dziś widzi bot AI bez JavaScriptu (sprawdzone curl na stakerpol.pl)
 
-## 1. Jak działa „Kopiuj” dzisiaj
-- Funkcja: `handleCopy` w `src/pages/Admin.tsx`.
-- **Kliknięcie „Kopiuj” nie zapisuje rekordu w bazie.** Otwiera edytor w trybie „NOWY”: id puste, model „{model} (kopia)”, numer seryjny „{numer}-COPY”. Zapis do bazy (INSERT) następuje dopiero po „Zapisz” (`addProductMutation` w `useSupabaseProducts.ts`).
-- Kopiowane są wszystkie pola produktu (`...product`), **razem z polem `slug` oryginału**.
-- Slug kopii **nie** powstaje w triggerze bazy. `mapProductToSupabaseInsert` (`src/types/supabase.ts`) zawsze wysyła slug: wartość z pola „Slug (opcjonalnie)” (rozdział 02 edytora), a gdy pole jest puste — slug tworzony w przeglądarce (`toSlug(model, numer)`). Trigger `set_product_slug` działa tylko przy pustym slugu, więc w praktyce się nie uruchamia.
-- Wniosek: kopia przejmuje slug oryginału w polu formularza. Gdyby został w niezmienionej postaci, zapis by się nie udał (slug musi być unikalny). Slug `toyota-swe-200d-6760435` u wózka 6865260 oznacza, że w polu slug był tekst z numerem 6760435 (np. pozostawiony po edycji lub po kopii innego wózka). Z kodu nie da się ustalić dokładnej sekwencji kliknięć.
+- Produkty i ceny są pobierane z Supabase w przeglądarce (React). Nie ma pre-renderingu.
+- `curl https://stakerpol.pl/produkty` zwraca pusty szablon: 0 wystąpień "SWE 200D", "PLN" czy "zł". OAI-SearchBot, ClaudeBot i PerplexityBot nie widzą żadnego wózka ani ceny. Googlebot widzi je, bo wykonuje JS.
+- JSON-LD produktu (`generateProductSchema.ts`) powstaje dopiero w przeglądarce, więc proste boty go nie widzą. W `index.html` jest tylko statyczny JSON-LD firmy.
+- `robots.txt` jest w porządku: boty AI mają jawne `Allow`, zablokowane są tylko `/admin` i `/oferta` (to prawidłowe).
+- `llms.txt` istnieje i działa (text/plain), ale jest statyczny i nie podaje cen.
+- **Błąd krytyczny:** `https://stakerpol.pl/sitemap.xml` zwraca stronę HTML aplikacji (z canonical wskazującym na samą siebie), a nie XML. W `public/` nie ma pliku sitemap, a funkcja `sitemap` w Supabase nie jest podpięta pod domenę. Robots i llms.txt odsyłają więc do niedziałającej mapy.
+- Strona działa na hostingu Lovable (Cloudflare). Plik `_redirects` z Netlify nie pozwala tu przekierować ścieżki na Edge Function. To ogranicza punkt 3.
 
-## 2. Zdjęcia
-- Kopia przejmuje listę adresów zdjęć oryginału (`setProductImages(product.images)`). Po „Zapisz” tworzone są nowe wiersze `product_images` wskazujące **te same pliki** w Storage — plików nie duplikuje się.
-- Już dziś zdjęcia kopiują się poprawnie przy zapisie dopiero po „Zapisz”. Ryzyko: usunięcie pliku z magazynu przy jednym wózku usunęłoby go też w drugim (jeśli usuwanie kasuje plik — do sprawdzenia osobno).
+## 2. Co ma sens (efekt / nakład)
 
-## 3. Powiązane dane
-- `faq_ids`: kopiowane (pole produktu).
-- Korzyści (`product_benefits`): kopiowane tylko wtedy, gdy edytor ma je w stanie — do sprawdzenia w edytorze, nie zostało tu potwierdzone.
-- `product_seo_settings` (cena, GTIN, MPN, włączenie schematu): **nie kopiowane** — kopia startuje bez nich.
-- `product_translations`: nie kopiowane (system tłumaczeń odłączony).
+| Poziom | Ocena |
+|---|---|
+| 1. `llms.txt` + publiczny JSON z cenami | **Tak, największy efekt.** Mało pracy, czytają to boty bez JS. |
+| 2. Product + Offer w JSON-LD | **Tak, ale tylko w HTML z serwera.** Dziś działa to wyłącznie dla Google. Bez prerenderingu boty AI tego nie zobaczą. |
+| 3. ARD v0.91 | **Tani dodatek, mały efekt.** To wczesny, mało znany standard i żadna z wymienionych wyszukiwarek go dziś nie wspiera. Warto dodać jeden wpis JSON-LD i link w `llms.txt` (koszt ok. 30 min). Nie warto budować pod niego osobnego systemu `agent-skills`. |
 
-## 4. Wykonalność rozwiązania
-- Zasadnicza część („zapis dopiero po Zapisz”) **już działa**. Brakuje dwóch zmian, wyłącznie we frontendzie, bez bazy:
-  1. W `handleCopy` wyczyścić pole `slug` (zamiast przejmować slug oryginału).
-  2. Wyczyścić numer seryjny (zamiast „-COPY”) — formularz i tak wymaga numeru przed zapisem.
-- Wtedy slug powstanie z nowego modelu i numeru w chwili zapisu.
+Uwaga do cen: domyślny tryb to `inquiry_with_pricelist`. Bot pokaże cenę tylko przy wózkach, które mają `net_price` i tryb publicznej ceny. Brutto można policzyć jako netto × 1,23, wtedy z dopiskiem "brutto (VAT 23%)".
 
-## 5. Ostrzeżenie na liście produktów
-- Łatwe, tylko frontend: lista (`ProductsTableDesktop`, `ProductCardMobile`) ma już slug i numer seryjny. Warunek „slug nie kończy się na `-{numer}`” → mała ikona z podpowiedzią. Dziś dotyczy to 1 wózka.
+## 3. Automatyczna synchronizacja z bazy
 
-## 6. SEO w adminie
-- **Tytułu i meta description nie da się nadpisać ręcznie.** Oba są budowane w `ProductDetail.tsx` z modelu, roku, wysokości, udźwigu, motogodzin i statusu. W bazie nie ma pól na własny tytuł/opis.
-- Dostępność w JSON-LD pochodzi z `products.availability_status` (`generateProductSchema.ts`). Pole `product_seo_settings.availability` istnieje, ale nie wpływa na schemat — więc nie mogą się rozjechać na stronie, choć w bazie mogą mieć różne wartości.
-- **Edycja może zmienić slug i canonical.** Przy zapisie zmian (`mapProductToSupabaseUpdate`) slug jest wysyłany ponownie: jeśli ktoś zmieni pole „Slug” albo je wyczyści, slug przelicza się z aktualnego modelu i numeru. Zmienia się wtedy adres karty i canonical, a stary adres przestaje działać. Zmiana samej nazwy lub numeru przy niezmienionym polu slug adresu nie zmienia.
+Lovable nie może podpiąć ścieżek domeny `stakerpol.pl` pod Edge Function. Proponuję dwie warstwy:
 
-## Korekta poprzedniego raportu SEO
-- Przyczyna braku „ł”: slugi tworzy funkcja `toSlug` w przeglądarce, nie funkcja w bazie. `toSlug` usuwa akcenty (ą→a, ś→s, ó→o), ale litera „ł” nie ma takiego rozbicia i zostaje wycięta. Funkcja w bazie (używana tylko awaryjnie) wycina wszystkie polskie litery.
-- Przyczyna duplikatu 6760435: jak w pkt 1 — slug pochodzi z pola formularza, a nie z triggera.
+```text
+Supabase products ──> Edge Function "ai-catalog" (żywe dane, cache 15 min)
+      │                 https://<projekt>.supabase.co/functions/v1/ai-catalog(.json|/llms.txt)
+      │
+      └─> skrypt przy publikacji ──> public/sitemap.xml, public/llms.txt (z cenami),
+                                     statyczny HTML /produkty/<slug> z JSON-LD (prerender)
+```
 
-## Decyzje do podjęcia
-1. Czy przy „Kopiuj” czyścić slug i numer seryjny (zalecane)?
-2. Czy dodać ikonę ostrzeżenia o niezgodnym slugu?
-3. Czy zablokować pole „Slug” przy edycji istniejącego wózka, żeby nie zmieniać przypadkiem adresu?
-4. Czy zamieniać „ł” na „l” dla nowych wózków?
+- **Żywe dane:** Edge Function `ai-catalog` (wzorowana na `geo-feed`). Zwraca JSON z dostępnymi wózkami: model, rok, mth, udźwig, wysokość, cena netto/brutto lub "na zapytanie", status, URL. Wersja `?format=txt` zwraca to samo jako tekst dla LLM. Link do niej trafia do `llms.txt` i do wpisu ARD.
+- **Pliki na domenie:** sitemap, llms.txt i strony HTML wózków generowane z bazy przy każdym "Publish". Działa to bez dodatkowych usług, ale aktualizuje się przy publikacji, a nie co minutę.
+- **W pełni bezobsługowo na `stakerpol.pl/...`:** wymaga przejścia na szablon TanStack Start (SSR) albo Cloudflare Worker przed domeną. To osobna, większa decyzja i jej nie realizuję w tym planie.
+
+## 4. Etapy
+
+1. **Naprawa sitemap (pilne).** Generowanie `public/sitemap.xml` z tabeli `products` przy buildzie (strony stałe + `/produkty/<slug>` dostępnych i zarezerwowanych wózków).
+   Test: `curl -s https://stakerpol.pl/sitemap.xml | head` pokazuje `<urlset>`.
+2. **Edge Function `ai-catalog`.** Publiczna, tylko odczyt, przez klucz anon/RLS, bez nowych tabel.
+   Test: `curl -s .../functions/v1/ai-catalog | jq '.items[0]'`, a potem zmiana ceny w adminie i ponowny curl.
+3. **`llms.txt` generowany z bazy.** Sekcja "Aktualna oferta" z ceną lub "cena na zapytanie" dla każdego wózka oraz link do `ai-catalog`.
+   Test: `curl -s https://stakerpol.pl/llms.txt | grep -i "SWE 200D"`.
+4. **Prerender kart produktów.** Statyczny HTML z tytułem, opisem, parametrami i JSON-LD Product+Offer (`price`, `priceCurrency` PLN, `itemCondition` Used, `availability`, mth i rok jako `additionalProperty`). Treść ma odpowiadać temu, co widać w UI.
+   Test: `curl -s https://stakerpol.pl/produkty/<slug> | grep -o '"price":[^,]*'`.
+5. **Wpis ARD.** JSON-LD w `index.html` plus link w `llms.txt`.
+   Test: `curl -s https://stakerpol.pl/ | grep agenticresourcediscovery`.
+
+Każdy etap wdrażam osobno, po Twojej akceptacji. UI, wygląd i dane pozostają bez zmian, a `package.json` zmienia się tylko wtedy, gdy etap 1 lub 4 tego wymaga (zgłoszę to wcześniej).
+
+## Szkic wpisu ARD JSON-LD
+
+```json
+{
+  "@context": "https://agenticresourcediscovery.org/context/v1",
+  "@type": "ResourceEntry",
+  "identifier": "urn:air:stakerpol.pl:catalog",
+  "name": "Stakerpol — katalog używanych paleciaków elektrycznych Toyota BT",
+  "description": "Aktualna lista dostępnych wózków: model, rok produkcji, motogodziny, udźwig, wysokość podnoszenia, bateria, stan, cena netto PLN lub cena na zapytanie, status dostępności.",
+  "url": "https://stakerpol.pl/produkty",
+  "endpoint": "https://<projekt>.supabase.co/functions/v1/ai-catalog",
+  "encodingFormat": ["application/json", "text/plain"],
+  "inLanguage": ["pl", "en", "de", "sk", "cs"],
+  "provider": { "@type": "Organization", "name": "FHU Stakerpol", "url": "https://stakerpol.pl", "telephone": "+48694133592" },
+  "capabilities": [
+    "list_available_products",
+    "get_product_by_slug",
+    "filter_by_lift_capacity_kg",
+    "filter_by_lift_height_mm",
+    "filter_by_working_hours",
+    "filter_by_production_year",
+    "price_net_pln_or_inquiry",
+    "availability_status"
+  ],
+  "dataFields": {
+    "name": "products.name",
+    "slug": "products.slug",
+    "serialNumber": "products.serial_number",
+    "productionYear": "products.production_year",
+    "workingHours": "products.working_hours",
+    "liftCapacityKg": "products.lift_capacity_mast",
+    "liftCapacityInitialKg": "products.lift_capacity_initial",
+    "liftHeight": "products.lift_height",
+    "battery": "products.battery",
+    "condition": "products.condition_label",
+    "priceNet": "products.net_price",
+    "priceCurrency": "products.price_currency",
+    "priceMode": "products.price_display_mode",
+    "leasingMonthlyFromPln": "products.leasing_monthly_from_pln",
+    "warrantyMonths": "products.warranty_months",
+    "availability": "products.availability_status",
+    "image": "products.image_url"
+  },
+  "representativeQueries": [
+    "używany paleciak elektryczny Toyota BT SWE 200D cena",
+    "paleciak elektryczny z masztem 2000 kg do 1500 motogodzin",
+    "wózek paletowy elektryczny używany z gwarancją Małopolska",
+    "BT SWE 200D rocznik 2018 ile kosztuje",
+    "paleciak elektryczny z podestem dla operatora na sprzedaż",
+    "used Toyota BT electric pallet stacker price Poland"
+  ],
+  "updateFrequency": "PT15M",
+  "dateModified": "<generowane z max(products.updated_at)>"
+}
+```
+
+Uwaga: nazwy pól (`ResourceEntry`, `endpoint`, `capabilities`) sprawdzę ze specyfikacją ARD v0.91 przed wdrożeniem etapu 5. Szkic odwzorowuje pola Twojej bazy, nie schemat potwierdzony przez specyfikację.
