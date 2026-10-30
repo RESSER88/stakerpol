@@ -108,3 +108,11 @@ Każdy etap wdrażam osobno, po Twojej akceptacji. UI, wygląd i dane pozostają
 ```
 
 Uwaga: nazwy pól (`ResourceEntry`, `endpoint`, `capabilities`) sprawdzę ze specyfikacją ARD v0.91 przed wdrożeniem etapu 5. Szkic odwzorowuje pola Twojej bazy, nie schemat potwierdzony przez specyfikację.
+
+## Uzupełnienie do drugiego dokumentu (ARD, agent-card, wydajność)
+
+- **Gdzie wstawić wpis ARD:** do statycznego `index.html`, a nie do `Index.tsx`. To, co dokłada React, bot bez JavaScriptu nie widzi. Podstrony katalogu dostaną swój JSON-LD w prerenderze (etap 4).
+- **Plik dla agentów:** `public/.well-known/agent-card.json` i `public/agent-skills.md`, oba statyczne. Opisują, jak pobrać katalog (adres `ai-catalog`, pola, filtry). Same ceny w nich nie siedzą, żeby nie wymagały ręcznej edycji. Żywe ceny podaje wyłącznie `ai-catalog`.
+- **Szybkość dla ludzi:** boty nie dotykają aplikacji React. Pliki statyczne serwuje CDN, a `ai-catalog` to osobny adres i nie wpływa na ładowanie strony.
+- **Ochrona przed scrapingiem i obciążeniem bazy:** `ai-catalog` zwraca nagłówek `Cache-Control: public, max-age=900`, więc baza dostaje najwyżej kilka zapytań na godzinę. Funkcja zwraca tylko publiczne pola, działa tylko na odczyt i wykonuje jedno zapytanie z limitem 200 wierszy.
+- **Kolejność wdrożenia:** preview, potem Twoja akceptacja, potem Publish na stakerpol.pl. Etap 6 (agent-card + agent-skills) dochodzi razem z etapem 5.
