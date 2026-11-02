@@ -4,7 +4,9 @@ import type { Database } from './types';
 import { brokeredPreviewStorage } from './previewAuthStorage';
 
 const SUPABASE_URL = "https://peztqgfmmnxaaoapzpbw.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlenRxZ2ZtbW54YWFvYXB6cGJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NDU3NDAsImV4cCI6MjA2NjAyMTc0MH0.wXaJlrVMbf1z2egXCpdQUxTLv_dM9bswaZkOt6fLr-g";
+// Publishable key (sb_publishable_...) — public by design. Kept literal on purpose: the hosting environment
+// injects VITE_SUPABASE_PUBLISHABLE_KEY with the legacy anon key, which would override .env.
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_sRP0GUZEwGV8RaAPgAwL_w_Ahi-mqFB";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
