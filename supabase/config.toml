@@ -1,6 +1,6 @@
 project_id = "peztqgfmmnxaaoapzpbw"
 
-[functions.shared-list]
+[functions.auto-translate]
 verify_jwt = false
 
 [functions.daily-quote]
@@ -8,3 +8,21 @@ verify_jwt = false
 
 [functions.generate-product-description]
 verify_jwt = true
+
+[functions.geo-feed]
+verify_jwt = false
+
+[functions.migrate-images]
+verify_jwt = false
+
+[functions.notify-lead]
+verify_jwt = false
+
+[functions.schedule-translations]
+verify_jwt = false
+
+[functions.shared-list]
+verify_jwt = false
+
+[functions.sitemap]
+verify_jwt = false
