@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { getPublishableKey } from '../_shared/keys.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -75,7 +76,7 @@ Deno.serve(async (req) => {
   const authHeader = req.headers.get('Authorization') ?? '';
   if (!authHeader.startsWith('Bearer ')) return json(401, { error: 'Brak autoryzacji.' });
 
-  const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+  const supabase = createClient(Deno.env.get('SUPABASE_URL')!, getPublishableKey(), {
     global: { headers: { Authorization: authHeader } },
   });
 

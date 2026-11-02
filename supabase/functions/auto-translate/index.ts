@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { getSecretKey, getPublishableKey } from '../_shared/keys.ts';
 
 interface TranslationRequest {
   action: string;
@@ -37,7 +38,7 @@ const corsHeaders = {
 
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabaseKey = getSecretKey();
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Helper function to decrypt API key (simplified - in production use proper encryption)
@@ -294,7 +295,7 @@ serve(async (req) => {
     }
     const userClient = createClient(
       supabaseUrl,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
+      getPublishableKey(),
       { global: { headers: { Authorization: authHeader } } }
     );
     const token = authHeader.replace('Bearer ', '');

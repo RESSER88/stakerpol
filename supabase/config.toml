@@ -7,7 +7,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.generate-product-description]
-verify_jwt = true
+verify_jwt = false
 
 [functions.geo-feed]
 verify_jwt = false
