@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { getSecretKey } from '../_shared/keys.ts';
 
 /** Dotychczasowy format: 32 znaki base64url. */
 const LEGACY_TOKEN_PATTERN = /^[A-Za-z0-9_-]{32}$/;
@@ -76,7 +77,7 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      getSecretKey(),
       { auth: { persistSession: false } }
     );
 
