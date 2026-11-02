@@ -27,4 +27,5 @@ Allow: /
 User-agent: Applebot-Extended
 Allow: /
 
-Sitemap: https://stakerpol.pl/sitemap.xml
+Sitemap: https://stakerpol.pl/sitemap.php
+Sitemap: https://peztqgfmmnxaaoapzpbw.supabase.co/functions/v1/geo-feed
