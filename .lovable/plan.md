@@ -1,118 +1,65 @@
-# Audyt widoczności dla wyszukiwarek AI + plan (bez zmian w kodzie)
+# Analiza: przejście na klucze publishable / secret (tylko odczyt)
 
-## 1. Co dziś widzi bot AI bez JavaScriptu (sprawdzone curl na stakerpol.pl)
+Niczego nie zmieniono. Wartości kluczy pominięto.
 
-- Produkty i ceny są pobierane z Supabase w przeglądarce (React). Nie ma pre-renderingu.
-- `curl https://stakerpol.pl/produkty` zwraca pusty szablon: 0 wystąpień "SWE 200D", "PLN" czy "zł". OAI-SearchBot, ClaudeBot i PerplexityBot nie widzą żadnego wózka ani ceny. Googlebot widzi je, bo wykonuje JS.
-- JSON-LD produktu (`generateProductSchema.ts`) powstaje dopiero w przeglądarce, więc proste boty go nie widzą. W `index.html` jest tylko statyczny JSON-LD firmy.
-- `robots.txt` jest w porządku: boty AI mają jawne `Allow`, zablokowane są tylko `/admin` i `/oferta` (to prawidłowe).
-- `llms.txt` istnieje i działa (text/plain), ale jest statyczny i nie podaje cen.
-- **Błąd krytyczny:** `https://stakerpol.pl/sitemap.xml` zwraca stronę HTML aplikacji (z canonical wskazującym na samą siebie), a nie XML. W `public/` nie ma pliku sitemap, a funkcja `sitemap` w Supabase nie jest podpięta pod domenę. Robots i llms.txt odsyłają więc do niedziałającej mapy.
-- Strona działa na hostingu Lovable (Cloudflare). Plik `_redirects` z Netlify nie pozwala tu przekierować ścieżki na Edge Function. To ogranicza punkt 3.
+## 1. Frontend
+- `src/integrations/supabase/client.ts` (l. 6–7): URL i klucz anon (JWT `eyJ...`) **wpisane na sztywno**. Plik generuje Lovable — nie czyta `.env`.
+- `.env`: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (obecnie klucz legacy anon), `VITE_SUPABASE_PROJECT_ID`, `VITE_GSC_VERIFICATION`.
+- Kod czytający `.env` bezpośrednio: `useSupabaseAuth.tsx:37` (tylko URL), `QuoteOfTheDay.tsx:11` (URL funkcji daily-quote).
+- URL wpisany na sztywno: `SEOManagerTool.tsx:30–31` (sitemap, geo-feed) — sam URL, bez klucza.
+- Wywołania `functions.invoke` (klient wysyła apikey + Bearer sesji lub klucza anon): shared-list, migrate-images, auto-translate, schedule-translations, notify-lead.
 
-## 2. Co ma sens (efekt / nakład)
+## 2. Edge Functions
+| Funkcja | Zmienne | Kontrola wywołującego |
+|---|---|---|
+| auto-translate | SERVICE_ROLE_KEY + ANON_KEY | Bearer → `getClaims`, potem `has_role(admin)`; dodatkowo przyjmuje wywołanie z translation-worker |
+| generate-product-description | ANON_KEY (+ OPENAI_API_KEY) | verify_jwt=true + `getUser` + `has_role(admin)` |
+| migrate-images | SERVICE_ROLE_KEY + ANON_KEY | Bearer → `getClaims` + `has_role(admin)` |
+| geo-feed, sitemap | ANON_KEY | publiczne, brak kontroli (domyślny verify_jwt) |
+| schedule-translations | SERVICE_ROLE_KEY | brak kontroli w kodzie — polega wyłącznie na verify_jwt |
+| translation-worker | SERVICE_ROLE_KEY | brak kontroli; **wysyła `Authorization: Bearer <service_role>`** do auto-translate |
+| shared-list | SERVICE_ROLE_KEY | verify_jwt=false, publiczne, limit po IP |
+| daily-quote | brak kluczy Supabase | verify_jwt=false, publiczne |
+| notify-lead | RESEND_API_KEY, LEAD_WEBHOOK_URL | brak kontroli w kodzie — polega na verify_jwt |
 
-| Poziom | Ocena |
-|---|---|
-| 1. `llms.txt` + publiczny JSON z cenami | **Tak, największy efekt.** Mało pracy, czytają to boty bez JS. |
-| 2. Product + Offer w JSON-LD | **Tak, ale tylko w HTML z serwera.** Dziś działa to wyłącznie dla Google. Bez prerenderingu boty AI tego nie zobaczą. |
-| 3. ARD v0.91 | **Tani dodatek, mały efekt.** To wczesny, mało znany standard i żadna z wymienionych wyszukiwarek go dziś nie wspiera. Warto dodać jeden wpis JSON-LD i link w `llms.txt` (koszt ok. 30 min). Nie warto budować pod niego osobnego systemu `agent-skills`. |
+## 3. supabase/config.toml
+- `shared-list`: verify_jwt = false
+- `daily-quote`: verify_jwt = false
+- `generate-product-description`: verify_jwt = true
+- Pozostałe funkcje: brak wpisu (domyślnie wg ustawień wdrożenia).
 
-Uwaga do cen: domyślny tryb to `inquiry_with_pricelist`. Bot pokaże cenę tylko przy wózkach, które mają `net_price` i tryb publicznej ceny. Brutto można policzyć jako netto × 1,23, wtedy z dopiskiem "brutto (VAT 23%)".
+## 4. Klucze na sztywno (poza migracjami)
+- `src/integrations/supabase/client.ts:7` — klucz anon (publiczny).
+- `test-translation-direct.js:23` — klucz anon (publiczny).
+- Migracje (poza zakresem): `net.http_post` do funkcji z nagłówkami — 4 pliki z 2025-08 i 2026-04; wymagają osobnego przeglądu, bo mogą zawierać klucz legacy w cronie.
 
-## 3. Automatyczna synchronizacja z bazy
+## 5. social-media-rotation, notify-order, zct-diagnostics, zct-priority-manager
+Brak kodu w repozytorium i brak jakichkolwiek wywołań w kodzie. Istnieją tylko w Supabase (wdrożone poza Lovable) — trzeba je przejrzeć bezpośrednio w panelu Supabase.
 
-Lovable nie może podpiąć ścieżek domeny `stakerpol.pl` pod Edge Function. Proponuję dwie warstwy:
+## 6. Plan etapowy (legacy działa równolegle do końca)
 
-```text
-Supabase products ──> Edge Function "ai-catalog" (żywe dane, cache 15 min)
-      │                 https://<projekt>.supabase.co/functions/v1/ai-catalog(.json|/llms.txt)
-      │
-      └─> skrypt przy publikacji ──> public/sitemap.xml, public/llms.txt (z cenami),
-                                     statyczny HTML /produkty/<slug> z JSON-LD (prerender)
-```
+**Etap 0 — przygotowanie (bez zmian w kodzie)**
+Utworzyć w Supabase klucze `sb_publishable_` i `sb_secret_`; zinwentaryzować crony (`cron.job`, wywołania `net.http_post`), Make.com i Hermes oraz 4 funkcje spoza repo. Ryzyko: brak.
 
-- **Żywe dane:** Edge Function `ai-catalog` (wzorowana na `geo-feed`). Zwraca JSON z dostępnymi wózkami: model, rok, mth, udźwig, wysokość, cena netto/brutto lub "na zapytanie", status, URL. Wersja `?format=txt` zwraca to samo jako tekst dla LLM. Link do niej trafia do `llms.txt` i do wpisu ARD.
-- **Pliki na domenie:** sitemap, llms.txt i strony HTML wózków generowane z bazy przy każdym "Publish". Działa to bez dodatkowych usług, ale aktualizuje się przy publikacji, a nie co minutę.
-- **W pełni bezobsługowo na `stakerpol.pl/...`:** wymaga przejścia na szablon TanStack Start (SSR) albo Cloudflare Worker przed domeną. To osobna, większa decyzja i jej nie realizuję w tym planie.
+**Etap 1 — frontend**
+Podmienić `VITE_SUPABASE_PUBLISHABLE_KEY` na `sb_publishable_` i wartość w `client.ts` (plik generowany — zmiana przez połączenie Supabase / Lovable, nie ręcznie). `test-translation-direct.js` zaktualizować lub usunąć.
+Ryzyko: średnie. Klucz `sb_publishable_` nie jest JWT — dla niezalogowanych wywołań `functions.invoke` do funkcji z verify_jwt=true (notify-lead z formularza zamówienia, sitemap/geo-feed jeśli wymagają JWT) brama odrzuci żądanie 401. Wymaga wcześniejszego ustawienia verify_jwt=false dla publicznych funkcji (Etap 2a). Zalogowani admini nie są dotknięci (wysyłany jest JWT sesji).
 
-## 4. Etapy
+**Etap 2a — konfiguracja verify_jwt**
+Ustawić verify_jwt=false dla notify-lead, sitemap, geo-feed, schedule-translations, translation-worker, auto-translate, migrate-images i dodać kontrolę w kodzie tam, gdzie jej brak (schedule-translations, translation-worker, notify-lead — np. sprawdzenie sekretu/roli lub limit). Ryzyko: wysokie dla bezpieczeństwa — bez dodanej kontroli w kodzie funkcje staną się publicznie wywoływalne. Kolejność: najpierw kod z kontrolą, potem zmiana verify_jwt.
 
-1. **Naprawa sitemap (pilne).** Generowanie `public/sitemap.xml` z tabeli `products` przy buildzie (strony stałe + `/produkty/<slug>` dostępnych i zarezerwowanych wózków).
-   Test: `curl -s https://stakerpol.pl/sitemap.xml | head` pokazuje `<urlset>`.
-2. **Edge Function `ai-catalog`.** Publiczna, tylko odczyt, przez klucz anon/RLS, bez nowych tabel.
-   Test: `curl -s .../functions/v1/ai-catalog | jq '.items[0]'`, a potem zmiana ceny w adminie i ponowny curl.
-3. **`llms.txt` generowany z bazy.** Sekcja "Aktualna oferta" z ceną lub "cena na zapytanie" dla każdego wózka oraz link do `ai-catalog`.
-   Test: `curl -s https://stakerpol.pl/llms.txt | grep -i "SWE 200D"`.
-4. **Prerender kart produktów.** Statyczny HTML z tytułem, opisem, parametrami i JSON-LD Product+Offer (`price`, `priceCurrency` PLN, `itemCondition` Used, `availability`, mth i rok jako `additionalProperty`). Treść ma odpowiadać temu, co widać w UI.
-   Test: `curl -s https://stakerpol.pl/produkty/<slug> | grep -o '"price":[^,]*'`.
-5. **Wpis ARD.** JSON-LD w `index.html` plus link w `llms.txt`.
-   Test: `curl -s https://stakerpol.pl/ | grep agenticresourcediscovery`.
+**Etap 2b — Edge Functions: zmienne**
+Zastąpić `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` nowymi sekretami (np. `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`) z fallbackiem na legacy. Ryzyko: niskie przy fallbacku.
 
-Każdy etap wdrażam osobno, po Twojej akceptacji. UI, wygląd i dane pozostają bez zmian, a `package.json` zmienia się tylko wtedy, gdy etap 1 lub 4 tego wymaga (zgłoszę to wcześniej).
+**Etap 2c — wywołania funkcja→funkcja**
+translation-worker → auto-translate: `sb_secret_` nie jest JWT, więc nie może iść jako `Bearer`; przejść na nagłówek `apikey` i w auto-translate rozpoznawać wywołanie serwisowe inaczej niż przez `getClaims`. Ryzyko: wysokie — tłumaczenia z kolejki przestaną działać przy błędzie (ścieżka DeepL i tak ma zostać odłączona).
 
-## Szkic wpisu ARD JSON-LD
+**Etap 3 — automatyzacje zewnętrzne**
+Make.com, Hermes, crony w bazie: przejść na `sb_secret_` (nagłówek `apikey`, nie `Bearer`). Ryzyko: wysokie — poza repozytorium, test każdego scenariusza.
 
-```json
-{
-  "@context": "https://agenticresourcediscovery.org/context/v1",
-  "@type": "ResourceEntry",
-  "identifier": "urn:air:stakerpol.pl:catalog",
-  "name": "Stakerpol — katalog używanych paleciaków elektrycznych Toyota BT",
-  "description": "Aktualna lista dostępnych wózków: model, rok produkcji, motogodziny, udźwig, wysokość podnoszenia, bateria, stan, cena netto PLN lub cena na zapytanie, status dostępności.",
-  "url": "https://stakerpol.pl/produkty",
-  "endpoint": "https://<projekt>.supabase.co/functions/v1/ai-catalog",
-  "encodingFormat": ["application/json", "text/plain"],
-  "inLanguage": ["pl", "en", "de", "sk", "cs"],
-  "provider": { "@type": "Organization", "name": "FHU Stakerpol", "url": "https://stakerpol.pl", "telephone": "+48694133592" },
-  "capabilities": [
-    "list_available_products",
-    "get_product_by_slug",
-    "filter_by_lift_capacity_kg",
-    "filter_by_lift_height_mm",
-    "filter_by_working_hours",
-    "filter_by_production_year",
-    "price_net_pln_or_inquiry",
-    "availability_status"
-  ],
-  "dataFields": {
-    "name": "products.name",
-    "slug": "products.slug",
-    "serialNumber": "products.serial_number",
-    "productionYear": "products.production_year",
-    "workingHours": "products.working_hours",
-    "liftCapacityKg": "products.lift_capacity_mast",
-    "liftCapacityInitialKg": "products.lift_capacity_initial",
-    "liftHeight": "products.lift_height",
-    "battery": "products.battery",
-    "condition": "products.condition_label",
-    "priceNet": "products.net_price",
-    "priceCurrency": "products.price_currency",
-    "priceMode": "products.price_display_mode",
-    "leasingMonthlyFromPln": "products.leasing_monthly_from_pln",
-    "warrantyMonths": "products.warranty_months",
-    "availability": "products.availability_status",
-    "image": "products.image_url"
-  },
-  "representativeQueries": [
-    "używany paleciak elektryczny Toyota BT SWE 200D cena",
-    "paleciak elektryczny z masztem 2000 kg do 1500 motogodzin",
-    "wózek paletowy elektryczny używany z gwarancją Małopolska",
-    "BT SWE 200D rocznik 2018 ile kosztuje",
-    "paleciak elektryczny z podestem dla operatora na sprzedaż",
-    "used Toyota BT electric pallet stacker price Poland"
-  ],
-  "updateFrequency": "PT15M",
-  "dateModified": "<generowane z max(products.updated_at)>"
-}
-```
+**Etap 4 — weryfikacja**
+Logi Edge Functions i API: brak żądań z kluczami legacy przez min. 1–2 tygodnie. Wyłączenia legacy nie planujemy.
 
-Uwaga: nazwy pól (`ResourceEntry`, `endpoint`, `capabilities`) sprawdzę ze specyfikacją ARD v0.91 przed wdrożeniem etapu 5. Szkic odwzorowuje pola Twojej bazy, nie schemat potwierdzony przez specyfikację.
-
-## Uzupełnienie do drugiego dokumentu (ARD, agent-card, wydajność)
-
-- **Gdzie wstawić wpis ARD:** do statycznego `index.html`, a nie do `Index.tsx`. To, co dokłada React, bot bez JavaScriptu nie widzi. Podstrony katalogu dostaną swój JSON-LD w prerenderze (etap 4).
-- **Plik dla agentów:** `public/.well-known/agent-card.json` i `public/agent-skills.md`, oba statyczne. Opisują, jak pobrać katalog (adres `ai-catalog`, pola, filtry). Same ceny w nich nie siedzą, żeby nie wymagały ręcznej edycji. Żywe ceny podaje wyłącznie `ai-catalog`.
-- **Szybkość dla ludzi:** boty nie dotykają aplikacji React. Pliki statyczne serwuje CDN, a `ai-catalog` to osobny adres i nie wpływa na ładowanie strony.
-- **Ochrona przed scrapingiem i obciążeniem bazy:** `ai-catalog` zwraca nagłówek `Cache-Control: public, max-age=900`, więc baza dostaje najwyżej kilka zapytań na godzinę. Funkcja zwraca tylko publiczne pola, działa tylko na odczyt i wykonuje jedno zapytanie z limitem 200 wierszy.
-- **Kolejność wdrożenia:** preview, potem Twoja akceptacja, potem Publish na stakerpol.pl. Etap 6 (agent-card + agent-skills) dochodzi razem z etapem 5.
+## Szczegóły techniczne
+- Nowe klucze nie są JWT: nie działają z `verify_jwt=true` ani jako `Authorization: Bearer`.
+- `getClaims`/`getUser` z JWT sesji użytkownika działają bez zmian — kontrola admina w auto-translate, migrate-images, generate-product-description pozostaje poprawna.
