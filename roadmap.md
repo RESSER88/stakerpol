@@ -30,3 +30,5 @@
 - [x] Weryfikacja `/admin` przy szerokościach 320, 360, 390, 412 i 430 px
 - [x] SEO etap 1: JSON-LD Product/Breadcrumb, LocalBusiness, robots.txt, mapa strony
 - [x] Logo w LocalBusiness (public/logo.png)
+- [x] SEO etap 3, krok 1: karta /produkty/<slug> w HTML z serwera (head, JSON-LD, treść)
+- [ ] SEO etap 3, krok 2: lista /produkty i strony stałe w HTML z serwera (czeka na polecenie)

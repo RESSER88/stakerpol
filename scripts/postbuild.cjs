@@ -112,12 +112,23 @@ $seoRedirect = function ($to) use ($seoQs) {
 };
 if ($seoMapped || $seoHadLang || $seoTrailing) { $seoRedirect($seoTarget); }
 
-// --- sprawdzenie karty produktu w Supabase ---
-// Zwraca ['found' => bool, 'slug' => string] albo null przy jakiejkolwiek
-// watpliwosci (blad, timeout, brak cURL) - wtedy strona zostaje 200.
-$seoLookup = function ($field, $value) {
+// --- karta produktu z Supabase ---
+// ZMIEN W OBU MIEJSCACH: pola i reguly ponizej odpowiadaja src/types/supabase.ts
+// (mapSupabaseProductToProduct), src/utils/seo/productMeta.ts, src/utils/productImageAlt.ts,
+// src/utils/seo/generateProductSchema.ts i src/utils/productPricing.ts.
+// Zgodnosc: bun scripts/check-ssr-parity.ts (uruchamiany recznie).
+// Zwraca ['found' => bool, 'slug' => string, 'row' => array|null] albo null przy
+// jakiejkolwiek watpliwosci (blad, timeout, brak cURL) - wtedy strona zostaje 200.
+$seoSelect = 'id,slug,name,serial_number,production_year,lift_capacity_mast,lift_capacity_initial,'
+    . 'working_hours,lift_height,min_height,mast,battery,condition,drive_type,free_lift,'
+    . 'short_description,detailed_description,image_url,main_image_alt,slogan,availability_status,'
+    . 'price_display_mode,net_price,price_currency,'
+    . 'product_images(image_url,display_order),'
+    . 'product_seo_settings(gtin,mpn,price_valid_until,enable_schema)';
+$seoLookup = function ($field, $value) use ($seoSelect) {
     try {
-        $cacheFile = rtrim((string) @sys_get_temp_dir(), '/') . '/stakerpol-seo-' . md5($field . ':' . $value) . '.json';
+        $dir = rtrim((string) @sys_get_temp_dir(), '/');
+        $cacheFile = $dir . '/stakerpol-seo3-' . md5($field . ':' . $value) . '.json';
         $cached = @file_get_contents($cacheFile);
         if ($cached !== false) {
             $c = @json_decode($cached, true);
@@ -127,7 +138,8 @@ $seoLookup = function ($field, $value) {
             }
         }
         if (!function_exists('curl_init')) { return null; }
-        $url = '__SUPABASE_URL__/rest/v1/products?select=slug&' . $field . '=eq.' . rawurlencode($value) . '&limit=1';
+        $url = '__SUPABASE_URL__/rest/v1/products?select=' . rawurlencode($seoSelect)
+            . '&' . $field . '=eq.' . rawurlencode($value) . '&limit=1';
         $ch = @curl_init($url);
         if (!$ch) { return null; }
         @curl_setopt_array($ch, [
@@ -143,21 +155,26 @@ $seoLookup = function ($field, $value) {
         $rows = @json_decode($body, true);
         if (!is_array($rows)) { return null; }
         if (count($rows) === 0) {
-            $r = ['found' => false, 'slug' => ''];
+            $r = ['found' => false, 'slug' => '', 'row' => null];
         } elseif (isset($rows[0]) && is_array($rows[0])) {
-            $r = ['found' => true, 'slug' => isset($rows[0]['slug']) ? (string) $rows[0]['slug'] : ''];
+            $r = ['found' => true, 'slug' => isset($rows[0]['slug']) ? (string) $rows[0]['slug'] : '', 'row' => $rows[0]];
         } else {
             return null;
         }
         $r['t'] = time();
-        @file_put_contents($cacheFile, json_encode($r));
+        $json = json_encode($r);
+        $tmp = $json !== false ? @tempnam($dir, 'stkseo') : false;
+        if ($tmp !== false) {
+            if (@file_put_contents($tmp, $json) === false || !@rename($tmp, $cacheFile)) { @unlink($tmp); }
+        }
         return $r;
-    } catch (\Throwable $ex) {
+    } catch (Throwable $ex) {
         return null;
     }
 };
 
 $seoNotFound = false;
+$seoProd = null;
 if ($seoIsProduct) {
     $seoSeg = rawurldecode(substr($seoPath, strlen('/produkty/')));
     if (preg_match('#^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$#i', $seoSeg)) {
@@ -169,6 +186,7 @@ if ($seoIsProduct) {
     } else {
         $seoRow = $seoLookup('slug', $seoSeg);
         if ($seoRow !== null && !$seoRow['found']) { $seoNotFound = true; }
+        if ($seoRow !== null && $seoRow['found'] && isset($seoRow['row']) && is_array($seoRow['row'])) { $seoProd = $seoRow['row']; }
     }
 } elseif (!isset($seoTitles[$seoPath]) && !$seoIsOther) {
     $seoNotFound = true;
@@ -181,7 +199,245 @@ $seoTitle     = isset($seoTitles[$seoPath]) ? $seoTitles[$seoPath] : $seoTitles[
 $seoRobots    = $seoKnown
     ? 'index, follow, max-image-preview:large, max-snippet:-1'
     : 'noindex, follow';
-$e = function ($v) { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8'); };
+$e = function ($v) { return htmlspecialchars((string) $v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); };
+
+// --- head i tresc karty z serwera ---
+// ZMIEN W OBU MIEJSCACH (patrz komentarz przy $seoLookup). Przy jakimkolwiek bledzie
+// zostaje dzisiejszy szablon: domyslne meta i pusty #root.
+$seoM = [];
+$seoHead = '';
+$seoBody = '';
+if ($seoProd !== null && !$seoNotFound) {
+    set_error_handler(function () { return true; });
+    try {
+        $p = $seoProd;
+        $s = function ($k) use ($p) {
+            if (!isset($p[$k]) || $p[$k] === null || is_bool($p[$k]) || is_array($p[$k])) { return ''; }
+            return (string) $p[$k];
+        };
+        $model  = $s('name');
+        $year   = $s('production_year');
+        $height = $s('lift_height');
+        $capM   = $s('lift_capacity_mast');
+        $capI   = $s('lift_capacity_initial');
+        $hours  = $s('working_hours');
+        $cond   = $s('condition');
+        $drive  = $s('drive_type');
+        $serial = $s('serial_number');
+        $status = $s('availability_status') !== '' ? $s('availability_status') : 'available';
+        $slugV  = $s('slug') !== '' ? $s('slug') : $s('id');
+
+        // zdjecia: product_images wg display_order (stabilnie), glowne = image_url || pierwsze
+        $imgRows = (isset($p['product_images']) && is_array($p['product_images'])) ? $p['product_images'] : [];
+        usort($imgRows, function ($a, $b) {
+            $x = (is_array($a) && isset($a['display_order'])) ? (float) $a['display_order'] : 0;
+            $y = (is_array($b) && isset($b['display_order'])) ? (float) $b['display_order'] : 0;
+            return $x <=> $y;
+        });
+        $images = [];
+        foreach ($imgRows as $ir) {
+            if (is_array($ir) && isset($ir['image_url']) && is_string($ir['image_url']) && $ir['image_url'] !== '') { $images[] = $ir['image_url']; }
+        }
+        $image = $s('image_url') !== '' ? $s('image_url') : (count($images) > 0 ? $images[0] : '');
+
+        // productMeta.ts: getProductMetaTitle / getProductMetaDescription / getProductOgImage
+        $parts = [];
+        if ($height !== '') { $parts[] = $height . ' mm'; }
+        if ($capM !== '') { $parts[] = $capM . ' kg'; }
+        $title = $model . ($year !== '' ? ' ' . $year : '') . (count($parts) ? ' — ' . implode(', ', $parts) : '') . ' | Stakerpol';
+        $specs = [];
+        if ($year !== '') { $specs[] = 'rok ' . $year; }
+        if ($height !== '') { $specs[] = 'podnoszenie ' . $height . ' mm'; }
+        if ($capM !== '') { $specs[] = 'udźwig ' . $capM . ' kg'; }
+        if ($hours !== '') { $specs[] = $hours . ' mth'; }
+        $avail = $status === 'available' ? ' Dostępny od razu.'
+            : ($status === 'reserved' ? ' Egzemplarz zarezerwowany.'
+            : ($status === 'sold' ? ' Egzemplarz sprzedany.' : ''));
+        $desc = 'Używany ' . $model . (count($specs) ? ', ' . implode(', ', $specs) : '') . '.' . $avail
+            . ' Stakerpol — sprzedaż używanych wózków paletowych Toyota BT.';
+        $ogImage = count($images) > 0 ? $images[0] : $image;
+
+        // productImageAlt.ts: getMainImageAlt
+        $alt = trim($s('main_image_alt'));
+        if ($alt === '') { $alt = trim($s('slogan')); }
+        if ($alt === '') { $alt = $year !== '' ? trim(trim($model) . ' ' . trim($year)) : trim($model); }
+
+        // productPricing.ts: resolvePriceView
+        $mode = $s('price_display_mode') !== '' ? $s('price_display_mode') : 'inquiry_with_pricelist';
+        $netRaw = (isset($p['net_price']) && is_numeric($p['net_price'])) ? (float) $p['net_price'] : null;
+        $currency = $s('price_currency') !== '' ? $s('price_currency') : 'PLN';
+        $hasPrice = $mode === 'show_price' && $netRaw !== null && is_finite($netRaw) && $netRaw > 0;
+        $priceTxt = null;
+        if ($hasPrice) {
+            $n = round($netRaw);
+            $sep = abs($n) >= 10000 ? chr(0xC2) . chr(0xA0) : '';
+            $priceTxt = number_format($n, 0, '', $sep) . ' ' . $currency;
+        }
+
+        // generateProductSchema.ts
+        $seo = null;
+        if (isset($p['product_seo_settings']) && is_array($p['product_seo_settings'])) {
+            $seo = $p['product_seo_settings'];
+            if (isset($seo[0]) && is_array($seo[0])) { $seo = $seo[0]; }
+            elseif (count($seo) === 0) { $seo = null; }
+        }
+        $sv = function ($k) use ($seo) {
+            return (is_array($seo) && isset($seo[$k]) && !is_array($seo[$k]) && !is_bool($seo[$k])) ? (string) $seo[$k] : '';
+        };
+        $modelName = $model;
+        if (preg_match('/SWE[0-9]+[A-Za-z0-9_]*/i', $model, $mm)) { $modelName = $mm[0]; }
+        elseif (preg_match('/BT[A-Za-z0-9_]*[0-9]+/i', $model, $mm)) { $modelName = $mm[0]; }
+        $allImages = [];
+        if ($image !== '') { $allImages[] = $image; }
+        foreach ($images as $im) { $allImages[] = $im; }
+        $allImages = array_values(array_unique($allImages));
+        $props = [];
+        $prop = function ($name, $value, $unit = null) use (&$props) {
+            $x = ['@type' => 'PropertyValue', 'name' => $name, 'value' => $value];
+            if ($unit !== null) { $x['unitCode'] = $unit; }
+            $props[] = $x;
+        };
+        if ($height !== '') { $prop('Wysokość podnoszenia', $height . ' mm', 'MMT'); }
+        if ($capM !== '') { $prop('Udźwig na maszcie', $capM . ' kg', 'KGM'); }
+        if ($capI !== '') { $prop('Udźwig przy podnoszeniu wstępnym', $capI . ' kg', 'KGM'); }
+        if ($hours !== '') { $prop('Motogodziny', $hours . ' mth', 'HUR'); }
+        if ($year !== '') { $prop('Rok produkcji', $year); }
+        if ($cond !== '') { $prop('Stan', $cond); }
+        if ($drive !== '') { $prop('Typ napędu', $drive); }
+        $prop('Zastosowanie', 'Magazyny i centra dystrybucyjne');
+        $prop('Zastosowanie', 'Zakłady produkcyjne');
+        $schemaDesc = $s('short_description') !== '' ? $s('short_description')
+            : ($s('detailed_description') !== '' ? $s('detailed_description') : 'Wózek widłowy ' . $model);
+        $schema = [
+            '@context' => 'https://schema.org/',
+            '@type' => 'Product',
+            'name' => $model,
+            'brand' => ['@type' => 'Brand', 'name' => 'Toyota'],
+            'model' => $modelName,
+            'sku' => $serial !== '' ? $serial : $s('id'),
+            'description' => $schemaDesc,
+            'url' => 'https://stakerpol.pl/produkty/' . $slugV,
+            'image' => $allImages,
+            'manufacturer' => ['@type' => 'Organization', 'name' => 'Toyota'],
+            'category' => 'Wózki paletowe BT Toyota',
+            'additionalProperty' => $props,
+        ];
+        $gtin = trim($sv('gtin'));
+        $gtinOk = false;
+        if (preg_match('/^([0-9]{8}|[0-9]{12}|[0-9]{13}|[0-9]{14})$/', $gtin)) {
+            $d = array_map('intval', str_split($gtin));
+            $check = array_pop($d);
+            $d = array_reverse($d);
+            $sum = 0;
+            foreach ($d as $i => $v) { $sum += $v * ($i % 2 === 0 ? 3 : 1); }
+            $gtinOk = ((10 - ($sum % 10)) % 10) === $check;
+        }
+        if ($gtinOk) { $schema['gtin'] = $gtin; }
+        if ($sv('mpn') !== '') { $schema['mpn'] = $sv('mpn'); }
+        $schemaOn = $seo === null || !empty($seo['enable_schema']);
+        if ($schemaOn && $hasPrice) {
+            $av = $status === 'reserved' ? 'PreOrder' : ($status === 'sold' ? 'OutOfStock' : 'InStock');
+            $lc = function_exists('mb_strtolower') ? mb_strtolower($cond, 'UTF-8') : strtolower($cond);
+            $refurb = false;
+            foreach (['odnowion', 'odnowien', 'refurb', 'po renowacji', 'renowacj', 'regenerowan'] as $h) {
+                if (strpos($lc, $h) !== false) { $refurb = true; }
+            }
+            $offers = [
+                '@type' => 'Offer',
+                'availability' => 'https://schema.org/' . $av,
+                'itemCondition' => $refurb ? 'https://schema.org/RefurbishedCondition' : 'https://schema.org/UsedCondition',
+                'businessFunction' => 'https://schema.org/Sell',
+                'seller' => ['@type' => 'Organization', 'name' => 'Stakerpol', 'url' => 'https://stakerpol.pl', 'telephone' => '+48694133592'],
+                'hasMerchantReturnPolicy' => ['@type' => 'MerchantReturnPolicy', 'applicableCountry' => 'PL', 'returnPolicyCategory' => 'https://schema.org/MerchantReturnNotPermitted'],
+                'shippingDetails' => [
+                    '@type' => 'OfferShippingDetails',
+                    'shippingRate' => ['@type' => 'MonetaryAmount', 'currency' => 'PLN'],
+                    'shippingDestination' => ['@type' => 'DefinedRegion', 'addressCountry' => 'PL'],
+                    'deliveryTime' => [
+                        '@type' => 'ShippingDeliveryTime',
+                        'businessDays' => ['@type' => 'OpeningHoursSpecification', 'dayOfWeek' => [
+                            'https://schema.org/Monday', 'https://schema.org/Tuesday', 'https://schema.org/Wednesday',
+                            'https://schema.org/Thursday', 'https://schema.org/Friday']],
+                        'cutoffTime' => '16:00:00+01:00',
+                        'handlingTime' => ['@type' => 'QuantitativeValue', 'minValue' => 1, 'maxValue' => 3, 'unitCode' => 'DAY'],
+                        'transitTime' => ['@type' => 'QuantitativeValue', 'minValue' => 1, 'maxValue' => 5, 'unitCode' => 'DAY'],
+                    ],
+                ],
+                'price' => number_format($netRaw, 2, '.', ''),
+                'priceCurrency' => $currency,
+            ];
+            if ($sv('price_valid_until') !== '') { $offers['priceValidUntil'] = $sv('price_valid_until'); }
+            $schema['offers'] = $offers;
+        }
+        if ($year !== '') { $schema['productionDate'] = $year; }
+        $ld = json_encode($schema, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+            | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+
+        $https = function ($u) { return (is_string($u) && strpos($u, 'https://') === 0) ? $u : ''; };
+        $og = $https($ogImage);
+
+        // --- tresc #root: zwykla, widoczna wersja karty (React zastapi ja po starcie) ---
+        $statusTxt = $status === 'sold' ? 'Sprzedany' : ($status === 'reserved' ? 'Zarezerwowany' : 'Dostępny');
+        $li = [];
+        $add = function ($label, $v, $unit = '') use (&$li, $e) {
+            if ($v !== '') { $li[] = '<li>' . $e($label) . ': ' . $e($v . $unit) . '</li>'; }
+        };
+        $add('Rok produkcji', $year);
+        $add('Motogodziny', $hours, ' mth');
+        $add('Udźwig na maszcie', $capM, ' kg');
+        $add('Udźwig przy podnoszeniu wstępnym', $capI, ' kg');
+        $add('Wysokość podnoszenia', $height, ' mm');
+        $add('Wysokość minimalna', $s('min_height'), ' mm');
+        $add('Maszt', $s('mast'));
+        $add('Wolny skok', $s('free_lift'), ' mm');
+        $add('Bateria', $s('battery'));
+        $add('Stan', $cond);
+        $add('Typ napędu', $drive);
+        $add('Numer seryjny', $serial);
+        $txt = function ($v) use ($e) {
+            $v = trim(strip_tags(str_replace(['<br>', '<br/>', '<br />', '</p>'], "\\n", $v)));
+            if ($v === '') { return ''; }
+            $out = '';
+            foreach (preg_split('/[\\r\\n]+/', $v) as $para) {
+                $para = trim($para);
+                if ($para !== '') { $out .= '<p>' . $e($para) . '</p>'; }
+            }
+            return $out;
+        };
+        $mainImg = $https($image);
+        $b  = '<main style="min-height:100vh;max-width:1200px;margin:0 auto;padding:24px 16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#1e293b;line-height:1.5">';
+        $b .= '<p><a href="/produkty">Wszystkie wózki</a></p>';
+        $b .= '<h1 style="font-size:28px;margin:8px 0">' . $e($model) . '</h1>';
+        $b .= '<p><strong>Status:</strong> ' . $e($statusTxt) . '</p>';
+        if ($mainImg !== '') {
+            $b .= '<img src="' . $e($mainImg) . '" alt="' . $e($alt) . '" width="800" height="600" style="display:block;max-width:100%;height:auto">';
+        }
+        $b .= $hasPrice
+            ? '<p><strong>Cena netto:</strong> ' . $e($priceTxt) . '</p>'
+            : '<p><strong>Cena:</strong> Na zapytanie</p>';
+        if (count($li)) { $b .= '<h2 style="font-size:20px">Parametry</h2><ul>' . implode('', $li) . '</ul>'; }
+        $opis = $txt($s('short_description')) . $txt($s('detailed_description'));
+        if ($opis !== '') { $b .= '<h2 style="font-size:20px">Opis</h2>' . $opis; }
+        $b .= '<p><a href="/kontakt">Kontakt — zapytaj o ten wózek</a> · <a href="/produkty">Zobacz wszystkie wózki</a></p>';
+        $b .= '</main>';
+
+        $h = '';
+        if ($og !== '') { $h .= '<meta property="og:image:alt" data-rh="true" content="' . $e($alt) . '" />' . "\\n"; }
+        if ($ld !== false) { $h .= '<script type="application/ld+json" data-rh="true">' . $ld . '</script>' . "\\n"; }
+
+        $seoM = [
+            'description' => $desc, 'og:title' => $title, 'og:description' => $desc,
+            'twitter:title' => $title, 'twitter:description' => $desc,
+        ];
+        if ($og !== '') { $seoM['og:image'] = $og; $seoM['twitter:image'] = $og; }
+        $seoTitle = $title;
+        $seoHead = $h;
+        $seoBody = $b;
+    } catch (Throwable $ex) {
+        $seoM = []; $seoHead = ''; $seoBody = '';
+    }
+    restore_error_handler();
+}
 ?>
 `.replace(/\u([0-9a-f]{4})/gi, (_, h) => String.fromCharCode(parseInt(h, 16)));
 
@@ -199,13 +455,24 @@ $e = function ($v) { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8'); };
       '<meta name="robots" content="<?php echo $e($seoRobots); ?>" />',
       'meta robots');
 
+    for (const k of ['description', 'og:title', 'og:description', 'og:image', 'twitter:title', 'twitter:description', 'twitter:image']) {
+      const re = new RegExp('(<meta\\s+(?:name|property)="' + k.replace(':', '\\:') + '"[^>]*?content=")([^"]*)(")');
+      podmien(re, (_, a, orig, z) =>
+        a + "<?php if (isset($seoM['" + k + "'])) { echo $e($seoM['" + k + "']); } else { ?>" + orig + '<?php } ?>' + z,
+        'meta ' + k);
+    }
+
+    podmien(/<\/head>/, '<?php echo $seoHead; ?>\n  </head>', '</head>');
+
+    podmien(/<div id="root"><\/div>/, '<div id="root"><?php echo $seoBody; ?></div>', '#root');
+
     podmien(/<meta\s+property="og:url"[^>]*>/,
       '<meta property="og:url" data-rh="true" content="<?php echo $e($seoCanonical); ?>" />',
       'meta og:url');
 
     if (bledy.length === 0) {
       s = blok.split('__SUPABASE_URL__').join(smUrl).split('__SUPABASE_KEY__').join(smKey) + s.replace(/^\s*\n/, '');
-      zmiany.push('wstrzyknieto SEO (canonical / title / robots)');
+      zmiany.push('wstrzyknieto SEO (canonical / title / robots / karta produktu)');
     }
   }
 

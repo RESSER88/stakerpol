@@ -1,3 +1,5 @@
+// ZMIEŃ W OBU MIEJSCACH: JSON-LD Product jest powielony w PHP w scripts/postbuild.cjs
+// (HTML z serwera dla /produkty/<slug>). Zgodność: scripts/check-ssr-parity.ts.
 import { Product } from '@/types';
 import { ProductSEOSettings } from '@/hooks/useProductSEO';
 import { productUrl } from '@/config/routes';

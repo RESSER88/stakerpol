@@ -1,3 +1,5 @@
+// ZMIEŃ W OBU MIEJSCACH: reguła ceny (show_price, > 0, format pl-PL) jest powielona
+// w PHP w scripts/postbuild.cjs (HTML z serwera dla /produkty/<slug>).
 import { Product } from '@/types';
 
 /**

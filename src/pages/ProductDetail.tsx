@@ -14,6 +14,7 @@ import ProductHeader from '@/components/products/ProductHeader';
 import RelatedProducts from '@/components/products/RelatedProducts';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import { generateProductSchema } from '@/utils/seo/generateProductSchema';
+import { getProductMetaTitle, getProductMetaDescription, getProductOgImage } from '@/utils/seo/productMeta';
 import { getMainImageAlt } from '@/utils/productImageAlt';
 import { useProductSEO } from '@/hooks/useProductSEO';
 import { trackViewItem } from '@/utils/analytics';
@@ -120,43 +121,10 @@ const ProductDetail = () => {
     { name: product.model, url: productUrl(product) }
   ];
 
-  // Indywidualny tytuł: „Model rok — 2100 mm, 1200 kg | Stakerpol”
-  const getMetaTitle = () => {
-    const year = product.specs?.productionYear ? ` ${product.specs.productionYear}` : '';
-    const parts: string[] = [];
-    if (product.specs?.liftHeight) parts.push(`${product.specs.liftHeight} mm`);
-    if (product.specs?.mastLiftingCapacity) parts.push(`${product.specs.mastLiftingCapacity} kg`);
-    const specsText = parts.length > 0 ? ` — ${parts.join(', ')}` : '';
-    return `${product.model}${year}${specsText} | Stakerpol`;
-  };
-
-  // Indywidualny opis: „Używany <model>, rok …, podnoszenie … mm, udźwig … kg, … mth.”
-  const getMetaDescription = () => {
-    const specs: string[] = [];
-    if (product.specs?.productionYear) specs.push(`rok ${product.specs.productionYear}`);
-    if (product.specs?.liftHeight) specs.push(`podnoszenie ${product.specs.liftHeight} mm`);
-    if (product.specs?.mastLiftingCapacity) specs.push(`udźwig ${product.specs.mastLiftingCapacity} kg`);
-    if (product.specs?.workingHours) specs.push(`${product.specs.workingHours} mth`);
-    const specsText = specs.length > 0 ? `, ${specs.join(', ')}` : '';
-
-    // Dostępność wyłącznie na podstawie realnego statusu egzemplarza.
-    const status = (product as any).availabilityStatus as string | undefined;
-    const availability =
-      status === 'available'
-        ? ' Dostępny od razu.'
-        : status === 'reserved'
-          ? ' Egzemplarz zarezerwowany.'
-          : status === 'sold'
-            ? ' Egzemplarz sprzedany.'
-            : '';
-
-    return `Używany ${product.model}${specsText}.${availability} Stakerpol — sprzedaż używanych wózków paletowych Toyota BT.`;
-  };
-
-  const getOgImage = () => {
-    if (product.images && product.images.length > 0) return product.images[0];
-    return product.image || '';
-  };
+  // ZMIEŃ W OBU MIEJSCACH: reguły head karty są też w scripts/postbuild.cjs (PHP).
+  const getMetaTitle = () => getProductMetaTitle(product);
+  const getMetaDescription = () => getProductMetaDescription(product);
+  const getOgImage = () => getProductOgImage(product);
 
   const productSchemaData = generateProductSchema(product, seoSettings);
 
