@@ -43,6 +43,12 @@ if (bledy.length === 0) {
   }
 
   // --- 3. SEO po stronie serwera ------------------------------------------
+  // Adres i klucz publishable Supabase bierzemy z public/sitemap.php (jedno zrodlo).
+  const sm = fs.existsSync(path.join(DIST, 'sitemap.php'))
+    ? fs.readFileSync(path.join(DIST, 'sitemap.php'), 'utf8') : '';
+  const smUrl = (sm.match(/\$SUPABASE_URL\s*=\s*'([^']+)'/) || [])[1];
+  const smKey = (sm.match(/\$SUPABASE_ANON\s*=\s*'(sb_publishable_[^']+)'/) || [])[1];
+  if (!smUrl || !smKey) bledy.push('nie odczytano adresu/klucza publishable z sitemap.php');
   if (s.includes('$seoCanonical')) {
     zmiany.push('blok SEO juz obecny - pominieto');
   } else {
@@ -54,12 +60,17 @@ if (bledy.length === 0) {
  * jako duplikaty. React-helmet nadpisuje te tagi po renderze (data-rh).
  * Generowane przez scripts/postbuild.cjs - nie edytowac w dist/.
  */
-$seoPath = parse_url(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/', PHP_URL_PATH);
-$seoPath = '/' . trim((string) $seoPath, '/');
+$seoUri   = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '/';
+$seoRaw   = @parse_url($seoUri, PHP_URL_PATH);
+if (!is_string($seoRaw) || $seoRaw === '') { $seoRaw = '/'; }
+$seoQuery = @parse_url($seoUri, PHP_URL_QUERY);
+$seoQs    = (is_string($seoQuery) && $seoQuery !== '') ? '?' . $seoQuery : '';
+$seoPath  = '/' . trim($seoRaw, '/');
 
 // Stare prefiksy jezykowe (/pl, /en, /cs, /sk, /de) -> wersja bez prefiksu.
+$seoHadLang = (bool) preg_match('#^/(pl|en|cs|sk|de)(?=/|$)#', $seoPath);
 $seoPath = preg_replace('#^/(pl|en|cs|sk|de)(?=/|$)#', '', $seoPath);
-if ($seoPath === '' || $seoPath === false) { $seoPath = '/'; }
+if ($seoPath === '' || !is_string($seoPath)) { $seoPath = '/'; }
 
 $seoTitles = [
     '/'           => 'Stakerpol - Paleciaki elektryczne Toyota BT',
@@ -70,8 +81,101 @@ $seoTitles = [
     '/prywatnosc' => 'Polityka prywatności – Stakerpol',
 ];
 
+// Trasy aplikacji (src/config/routes.ts + App.tsx) poza powyzszymi:
+// 200 z noindex jak dotad (panel, oferty, stare angielskie adresy).
+$seoOtherRoutes = ['/admin', '/products', '/contact', '/testimonials', '/privacy'];
+$seoIsOther = in_array($seoPath, $seoOtherRoutes, true)
+    || (bool) preg_match('#^/admin(/|$)#', $seoPath)
+    || (bool) preg_match('#^/oferta/[^/]+$#', $seoPath)
+    || (bool) preg_match('#^/products/[^/]+$#', $seoPath);
+
+// --- przekierowania 301 ---
+$seoTarget = $seoPath;
+$seoMapped = false;
+$seoOld = [
+    '/toyota-bt-swe-200d'                       => '/produkty',
+    '/uzywany-paleciak-elektryczny-podnoszacy'  => '/produkty',
+    '/polityka-prywatnosci'                     => '/prywatnosc',
+    '/sitemap.xml'                              => '/sitemap.php',
+];
+if (isset($seoOld[$seoPath])) { $seoTarget = $seoOld[$seoPath]; $seoMapped = true; }
+elseif (strpos($seoPath, '/bt-toyota-staxio-') === 0) { $seoTarget = '/produkty'; $seoMapped = true; }
+
 $seoIsProduct = (bool) preg_match('#^/produkty/[^/]+$#', $seoPath);
-$seoKnown     = isset($seoTitles[$seoPath]) || $seoIsProduct;
+$seoTrailing  = $seoRaw !== '/' && substr($seoRaw, -1) === '/'
+    && (isset($seoTitles[$seoPath]) || $seoIsProduct || $seoIsOther);
+
+$seoRedirect = function ($to) use ($seoQs) {
+    if (headers_sent()) { return; }
+    header('Location: https://stakerpol.pl' . $to . $seoQs, true, 301);
+    exit;
+};
+if ($seoMapped || $seoHadLang || $seoTrailing) { $seoRedirect($seoTarget); }
+
+// --- sprawdzenie karty produktu w Supabase ---
+// Zwraca ['found' => bool, 'slug' => string] albo null przy jakiejkolwiek
+// watpliwosci (blad, timeout, brak cURL) - wtedy strona zostaje 200.
+$seoLookup = function ($field, $value) {
+    try {
+        $cacheFile = rtrim((string) @sys_get_temp_dir(), '/') . '/stakerpol-seo-' . md5($field . ':' . $value) . '.json';
+        $cached = @file_get_contents($cacheFile);
+        if ($cached !== false) {
+            $c = @json_decode($cached, true);
+            if (is_array($c) && isset($c['t'], $c['found'])) {
+                $ttl = $c['found'] ? 600 : 120;
+                if (time() - (int) $c['t'] < $ttl) { return $c; }
+            }
+        }
+        if (!function_exists('curl_init')) { return null; }
+        $url = '__SUPABASE_URL__/rest/v1/products?select=slug&' . $field . '=eq.' . rawurlencode($value) . '&limit=1';
+        $ch = @curl_init($url);
+        if (!$ch) { return null; }
+        @curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 2,
+            CURLOPT_TIMEOUT        => 3,
+            CURLOPT_HTTPHEADER     => ['apikey: __SUPABASE_KEY__', 'Accept: application/json'],
+        ]);
+        $body = @curl_exec($ch);
+        $code = (int) @curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        @curl_close($ch);
+        if ($body === false || $code !== 200) { return null; }
+        $rows = @json_decode($body, true);
+        if (!is_array($rows)) { return null; }
+        if (count($rows) === 0) {
+            $r = ['found' => false, 'slug' => ''];
+        } elseif (isset($rows[0]) && is_array($rows[0])) {
+            $r = ['found' => true, 'slug' => isset($rows[0]['slug']) ? (string) $rows[0]['slug'] : ''];
+        } else {
+            return null;
+        }
+        $r['t'] = time();
+        @file_put_contents($cacheFile, json_encode($r));
+        return $r;
+    } catch (\Throwable $ex) {
+        return null;
+    }
+};
+
+$seoNotFound = false;
+if ($seoIsProduct) {
+    $seoSeg = rawurldecode(substr($seoPath, strlen('/produkty/')));
+    if (preg_match('#^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$#i', $seoSeg)) {
+        $seoRow = $seoLookup('id', strtolower($seoSeg));
+        if ($seoRow !== null) {
+            if (!$seoRow['found']) { $seoNotFound = true; }
+            elseif ($seoRow['slug'] !== '') { $seoRedirect('/produkty/' . rawurlencode($seoRow['slug'])); }
+        }
+    } else {
+        $seoRow = $seoLookup('slug', $seoSeg);
+        if ($seoRow !== null && !$seoRow['found']) { $seoNotFound = true; }
+    }
+} elseif (!isset($seoTitles[$seoPath]) && !$seoIsOther) {
+    $seoNotFound = true;
+}
+if ($seoNotFound && !headers_sent()) { http_response_code(404); }
+
+$seoKnown     = !$seoNotFound && (isset($seoTitles[$seoPath]) || $seoIsProduct);
 $seoCanonical = 'https://stakerpol.pl' . $seoPath;
 $seoTitle     = isset($seoTitles[$seoPath]) ? $seoTitles[$seoPath] : $seoTitles['/'];
 $seoRobots    = $seoKnown
@@ -100,7 +204,7 @@ $e = function ($v) { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8'); };
       'meta og:url');
 
     if (bledy.length === 0) {
-      s = blok + s.replace(/^\s*\n/, '');
+      s = blok.split('__SUPABASE_URL__').join(smUrl).split('__SUPABASE_KEY__').join(smKey) + s.replace(/^\s*\n/, '');
       zmiany.push('wstrzyknieto SEO (canonical / title / robots)');
     }
   }

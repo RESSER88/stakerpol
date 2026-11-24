@@ -19,7 +19,7 @@ export const FEATURES = {
 
 export const SITE_CONFIG = {
   META_TITLE: 'Stakerpol - Paleciaki elektryczne Toyota BT',
-  META_TITLE_LEGACY: 'Stakerpol - Paleciaki elektryczne Toyota BT | Sprzedaż używanych wózków elektrycznych i spalinowych',
+  META_TITLE_LEGACY: 'Stakerpol - Paleciaki elektryczne Toyota BT | Sprzedaż używanych elektrycznych wózków paletowych',
   DESCRIPTION: {
     pl: 'Oferujemy szeroki wybór wózków paletowych BT Toyota, idealnie dopasowanych do różnych zastosowań i potrzeb',
     en: 'We offer a wide selection of BT Toyota pallet trucks, perfectly adapted to various applications and needs.',

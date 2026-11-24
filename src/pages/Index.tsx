@@ -37,7 +37,7 @@ const Index = () => {
         <title>{getMetaTitle()}</title>
         <meta name="description" content="Profesjonalna sprzedaż używanych wózków paletowych Toyota i BT. Elektryczne paleciaki magazynowe z serwisem. Sprawdź ofertę w Stakerpol." />
         <meta property="og:title" content={getMetaTitle()} />
-        <meta property="og:description" content="Profesjonalna sprzedaż używanych paleciaków elektrycznych Toyota i BT. Elektryczne i spalinowe paleciaki magazynowe z serwisem." />
+        <meta property="og:description" content="Profesjonalna sprzedaż używanych paleciaków elektrycznych Toyota i BT. Elektryczne paleciaki magazynowe z serwisem." />
         <meta property="og:image" content={SOCIAL_IMAGE} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
@@ -45,10 +45,10 @@ const Index = () => {
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Stakerpol - Paleciaki elektryczne Toyota BT" />
-        <meta name="twitter:description" content="Profesjonalna sprzedaż używanych paleciaków elektrycznych Toyota i BT. Elektryczne i spalinowe paleciaki magazynowe." />
+        <meta name="twitter:description" content="Profesjonalna sprzedaż używanych paleciaków elektrycznych Toyota i BT. Elektryczne paleciaki magazynowe." />
         <meta name="twitter:image" content={SOCIAL_IMAGE} />
         <link rel="canonical" href={absoluteUrl(ROUTES.home)} />
-        <meta name="keywords" content="paleciaki elektryczne, wózki paletowe, toyota, bt, elektryczne, spalinowe, paleciaki, magazynowe, używane, serwis, stakerpol" />
+        <meta name="keywords" content="paleciaki elektryczne, wózki paletowe, toyota, bt, elektryczne, paleciaki, magazynowe, używane, serwis, stakerpol" />
         <link rel="preload" as="image" href="/lovable-uploads/cba7623d-e272-43d2-9cb1-c4864cb74fde.webp" fetchPriority="high" type="image/webp" />
       </Helmet>
       <LocalBusinessSchema />
