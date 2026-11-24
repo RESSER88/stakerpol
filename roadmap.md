@@ -29,4 +29,4 @@
 - [x] Mobilny dashboard: mniejsze odstępy i czytelniejsze etykiety statystyk
 - [x] Weryfikacja `/admin` przy szerokościach 320, 360, 390, 412 i 430 px
 - [x] SEO etap 1: JSON-LD Product/Breadcrumb, LocalBusiness, robots.txt, mapa strony
-- [ ] Logo w LocalBusiness — czeka na plik logo (nagłówek ma logo tekstowe)
+- [x] Logo w LocalBusiness (public/logo.png)
