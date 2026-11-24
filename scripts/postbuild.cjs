@@ -130,18 +130,22 @@ $seoLookup = function ($field, $value) use ($seoSelect) {
         $dir = rtrim((string) @sys_get_temp_dir(), '/');
         $cacheFile = $dir . '/stakerpol-seo3-' . md5($field . ':' . $value) . '.json';
         $cached = @file_get_contents($cacheFile);
+        // Przeterminowany wpis "jest" zostaje jako zapas, gdy odswiezenie sie nie uda.
+        // Wpis "brak" nigdy nie jest zapasem (404 tylko po swiezym 200 z []).
+        $stale = null;
         if ($cached !== false) {
             $c = @json_decode($cached, true);
             if (is_array($c) && isset($c['t'], $c['found'])) {
-                $ttl = $c['found'] ? 600 : 120;
+                $ttl = $c['found'] ? 3600 : 120;
                 if (time() - (int) $c['t'] < $ttl) { return $c; }
+                if ($c['found']) { $stale = $c; }
             }
         }
-        if (!function_exists('curl_init')) { return null; }
+        if (!function_exists('curl_init')) { return $stale; }
         $url = '__SUPABASE_URL__/rest/v1/products?select=' . rawurlencode($seoSelect)
             . '&' . $field . '=eq.' . rawurlencode($value) . '&limit=1';
         $ch = @curl_init($url);
-        if (!$ch) { return null; }
+        if (!$ch) { return $stale; }
         @curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CONNECTTIMEOUT => 2,
@@ -151,15 +155,15 @@ $seoLookup = function ($field, $value) use ($seoSelect) {
         $body = @curl_exec($ch);
         $code = (int) @curl_getinfo($ch, CURLINFO_HTTP_CODE);
         @curl_close($ch);
-        if ($body === false || $code !== 200) { return null; }
+        if ($body === false || $code !== 200) { return $stale; }
         $rows = @json_decode($body, true);
-        if (!is_array($rows)) { return null; }
+        if (!is_array($rows)) { return $stale; }
         if (count($rows) === 0) {
             $r = ['found' => false, 'slug' => '', 'row' => null];
         } elseif (isset($rows[0]) && is_array($rows[0])) {
             $r = ['found' => true, 'slug' => isset($rows[0]['slug']) ? (string) $rows[0]['slug'] : '', 'row' => $rows[0]];
         } else {
-            return null;
+            return $stale;
         }
         $r['t'] = time();
         $json = json_encode($r);
@@ -169,7 +173,7 @@ $seoLookup = function ($field, $value) use ($seoSelect) {
         }
         return $r;
     } catch (Throwable $ex) {
-        return null;
+        return isset($stale) ? $stale : null;
     }
 };
 
@@ -216,6 +220,8 @@ if ($seoProd !== null && !$seoNotFound) {
             return (string) $p[$k];
         };
         $model  = $s('name');
+        // productMeta.ts / productImageAlt.ts: cleanProductName (trim + jedna spacja)
+        $modelClean = trim(preg_replace('/\\s+/u', ' ', (string) $model));
         $year   = $s('production_year');
         $height = $s('lift_height');
         $capM   = $s('lift_capacity_mast');
@@ -244,7 +250,7 @@ if ($seoProd !== null && !$seoNotFound) {
         $parts = [];
         if ($height !== '') { $parts[] = $height . ' mm'; }
         if ($capM !== '') { $parts[] = $capM . ' kg'; }
-        $title = $model . ($year !== '' ? ' ' . $year : '') . (count($parts) ? ' — ' . implode(', ', $parts) : '') . ' | Stakerpol';
+        $title = $modelClean . ($year !== '' ? ' ' . $year : '') . (count($parts) ? ' — ' . implode(', ', $parts) : '') . ' | Stakerpol';
         $specs = [];
         if ($year !== '') { $specs[] = 'rok ' . $year; }
         if ($height !== '') { $specs[] = 'podnoszenie ' . $height . ' mm'; }
@@ -253,14 +259,14 @@ if ($seoProd !== null && !$seoNotFound) {
         $avail = $status === 'available' ? ' Dostępny od razu.'
             : ($status === 'reserved' ? ' Egzemplarz zarezerwowany.'
             : ($status === 'sold' ? ' Egzemplarz sprzedany.' : ''));
-        $desc = 'Używany ' . $model . (count($specs) ? ', ' . implode(', ', $specs) : '') . '.' . $avail
+        $desc = 'Używany ' . $modelClean . (count($specs) ? ', ' . implode(', ', $specs) : '') . '.' . $avail
             . ' Stakerpol — sprzedaż używanych wózków paletowych Toyota BT.';
         $ogImage = count($images) > 0 ? $images[0] : $image;
 
         // productImageAlt.ts: getMainImageAlt
         $alt = trim($s('main_image_alt'));
         if ($alt === '') { $alt = trim($s('slogan')); }
-        if ($alt === '') { $alt = $year !== '' ? trim(trim($model) . ' ' . trim($year)) : trim($model); }
+        if ($alt === '') { $alt = $year !== '' ? trim($modelClean . ' ' . trim($year)) : $modelClean; }
 
         // productPricing.ts: resolvePriceView
         $mode = $s('price_display_mode') !== '' ? $s('price_display_mode') : 'inquiry_with_pricelist';
@@ -405,12 +411,12 @@ if ($seoProd !== null && !$seoNotFound) {
             return $out;
         };
         $mainImg = $https($image);
-        $b  = '<main style="min-height:100vh;max-width:1200px;margin:0 auto;padding:24px 16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#1e293b;line-height:1.5">';
+        $b  = '<main style="min-height:100vh;max-width:1200px;box-sizing:border-box;margin:0 auto;padding:24px 32px 32px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#1e293b;line-height:1.5">';
         $b .= '<p><a href="/produkty">Wszystkie wózki</a></p>';
-        $b .= '<h1 style="font-size:28px;margin:8px 0">' . $e($model) . '</h1>';
+        $b .= '<h1 style="font-size:28px;margin:8px 0">' . $e($modelClean) . '</h1>';
         $b .= '<p><strong>Status:</strong> ' . $e($statusTxt) . '</p>';
         if ($mainImg !== '') {
-            $b .= '<img src="' . $e($mainImg) . '" alt="' . $e($alt) . '" width="800" height="600" style="display:block;max-width:100%;height:auto">';
+            $b .= '<img src="' . $e($mainImg) . '" alt="' . $e($alt) . '" width="600" height="800" style="display:block;width:100%;max-width:611px;height:auto;aspect-ratio:3/4;object-fit:cover;background:#f3f4f6;border-radius:8px">';
         }
         $b .= $hasPrice
             ? '<p><strong>Cena netto:</strong> ' . $e($priceTxt) . '</p>'
@@ -447,12 +453,15 @@ if ($seoPath === '/produkty' && !$seoNotFound) {
     set_error_handler(function () { return true; });
     try {
         $rows = null;
+        $staleRows = null;
         $dir = rtrim((string) @sys_get_temp_dir(), '/');
         $cacheFile = $dir . '/stakerpol-seo3-lista.json';
         $cached = @file_get_contents($cacheFile);
         if ($cached !== false) {
             $c = @json_decode($cached, true);
-            if (is_array($c) && isset($c['t'], $c['rows']) && is_array($c['rows']) && time() - (int) $c['t'] < 600) { $rows = $c['rows']; }
+            if (is_array($c) && isset($c['t'], $c['rows']) && is_array($c['rows'])) {
+                if (time() - (int) $c['t'] < 3600) { $rows = $c['rows']; } else { $staleRows = $c['rows']; }
+            }
         }
         if ($rows === null && function_exists('curl_init')) {
             $url = '__SUPABASE_URL__/rest/v1/products?select='
@@ -482,6 +491,7 @@ if ($seoPath === '/produkty' && !$seoNotFound) {
                 }
             }
         }
+        if ($rows === null && $staleRows !== null) { $rows = $staleRows; }
         if (is_array($rows) && count($rows) > 0) {
             $li = [];
             foreach ($rows as $r) {

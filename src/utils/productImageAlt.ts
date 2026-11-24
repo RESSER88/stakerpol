@@ -13,8 +13,11 @@ export interface ProductAltSource {
 
 const clean = (v?: string | number | null) => (v == null ? '' : String(v).trim());
 
+/** Nazwa produktu bez nadmiarowych białych znaków (trim + jedna spacja). ZMIEŃ W OBU MIEJSCACH: scripts/postbuild.cjs ($modelClean). */
+export const cleanProductName = (v?: string | null): string => (v == null ? '' : String(v).replace(/\s+/g, ' ').trim());
+
 const modelWithYear = (product?: ProductAltSource | null) => {
-  const model = clean(product?.model);
+  const model = cleanProductName(product?.model);
   const year = clean(product?.specs?.productionYear);
   return year ? `${model} ${year}`.trim() : model;
 };

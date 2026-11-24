@@ -1,4 +1,5 @@
 import type { Product } from '@/types';
+import { cleanProductName } from '@/utils/productImageAlt';
 
 /*
  * ZMIEŃ W OBU MIEJSCACH: te same reguły tytułu i opisu karty są powielone
@@ -13,7 +14,7 @@ export const getProductMetaTitle = (product: Product): string => {
   if (product.specs?.liftHeight) parts.push(`${product.specs.liftHeight} mm`);
   if (product.specs?.mastLiftingCapacity) parts.push(`${product.specs.mastLiftingCapacity} kg`);
   const specsText = parts.length > 0 ? ` — ${parts.join(', ')}` : '';
-  return `${product.model}${year}${specsText} | Stakerpol`;
+  return `${cleanProductName(product.model)}${year}${specsText} | Stakerpol`;
 };
 
 // Indywidualny opis: „Używany <model>, rok …, podnoszenie … mm, udźwig … kg, … mth.”
@@ -36,7 +37,7 @@ export const getProductMetaDescription = (product: Product): string => {
           ? ' Egzemplarz sprzedany.'
           : '';
 
-  return `Używany ${product.model}${specsText}.${availability} Stakerpol — sprzedaż używanych wózków paletowych Toyota BT.`;
+  return `Używany ${cleanProductName(product.model)}${specsText}.${availability} Stakerpol — sprzedaż używanych wózków paletowych Toyota BT.`;
 };
 
 export const getProductOgImage = (product: Product): string => {
