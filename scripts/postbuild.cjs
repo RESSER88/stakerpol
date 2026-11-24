@@ -438,6 +438,99 @@ if ($seoProd !== null && !$seoNotFound) {
     }
     restore_error_handler();
 }
+
+// --- lista /produkty z serwera ---
+// ZMIEN W OBU MIEJSCACH: src/pages/Products.tsx + usePublicSupabaseProducts.ts
+// (created_at malejaco, domyslnie tylko available/reserved - matchesDefaultAvailability),
+// zdjecie jak ProductCard: product_images[0] wg display_order, inaczej image_url.
+if ($seoPath === '/produkty' && !$seoNotFound) {
+    set_error_handler(function () { return true; });
+    try {
+        $rows = null;
+        $dir = rtrim((string) @sys_get_temp_dir(), '/');
+        $cacheFile = $dir . '/stakerpol-seo3-lista.json';
+        $cached = @file_get_contents($cacheFile);
+        if ($cached !== false) {
+            $c = @json_decode($cached, true);
+            if (is_array($c) && isset($c['t'], $c['rows']) && is_array($c['rows']) && time() - (int) $c['t'] < 600) { $rows = $c['rows']; }
+        }
+        if ($rows === null && function_exists('curl_init')) {
+            $url = '__SUPABASE_URL__/rest/v1/products?select='
+                . rawurlencode('slug,id,name,production_year,image_url,main_image_alt,slogan,availability_status,created_at,product_images(image_url,display_order)')
+                . '&order=created_at.desc';
+            $ch = @curl_init($url);
+            if ($ch) {
+                @curl_setopt_array($ch, [
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_CONNECTTIMEOUT => 2,
+                    CURLOPT_TIMEOUT        => 3,
+                    CURLOPT_HTTPHEADER     => ['apikey: __SUPABASE_KEY__', 'Accept: application/json'],
+                ]);
+                $body = @curl_exec($ch);
+                $code = (int) @curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                @curl_close($ch);
+                if ($body !== false && $code === 200) {
+                    $d = @json_decode($body, true);
+                    if (is_array($d)) {
+                        $rows = $d;
+                        $json = json_encode(['t' => time(), 'rows' => $rows]);
+                        $tmp = $json !== false ? @tempnam($dir, 'stkseo') : false;
+                        if ($tmp !== false) {
+                            if (@file_put_contents($tmp, $json) === false || !@rename($tmp, $cacheFile)) { @unlink($tmp); }
+                        }
+                    }
+                }
+            }
+        }
+        if (is_array($rows) && count($rows) > 0) {
+            $li = [];
+            foreach ($rows as $r) {
+                if (!is_array($r)) { continue; }
+                $g = function ($k) use ($r) {
+                    return (isset($r[$k]) && !is_array($r[$k]) && !is_bool($r[$k]) && $r[$k] !== null) ? (string) $r[$k] : '';
+                };
+                $st = $g('availability_status') !== '' ? $g('availability_status') : 'available';
+                if ($st !== 'available' && $st !== 'reserved') { continue; }
+                $slug = $g('slug') !== '' ? $g('slug') : $g('id');
+                if ($slug === '') { continue; }
+                $name = $g('name'); $year = $g('production_year');
+                $label = trim($name . ($year !== '' ? ' ' . $year : ''));
+                $imgs = (isset($r['product_images']) && is_array($r['product_images'])) ? $r['product_images'] : [];
+                usort($imgs, function ($a, $b) {
+                    $x = (is_array($a) && isset($a['display_order'])) ? (float) $a['display_order'] : 0;
+                    $y = (is_array($b) && isset($b['display_order'])) ? (float) $b['display_order'] : 0;
+                    return $x <=> $y;
+                });
+                $img = '';
+                foreach ($imgs as $ir) {
+                    if (is_array($ir) && isset($ir['image_url']) && is_string($ir['image_url']) && $ir['image_url'] !== '') { $img = $ir['image_url']; break; }
+                }
+                if ($img === '') { $img = $g('image_url'); }
+                if (strpos($img, 'https://') !== 0) { $img = ''; }
+                $alt = trim($g('main_image_alt'));
+                if ($alt === '') { $alt = trim($g('slogan')); }
+                if ($alt === '') { $alt = $label; }
+                $item = '<li style="margin:8px 0"><a href="/produkty/' . $e(rawurlencode($slug)) . '">';
+                if ($img !== '') {
+                    $item .= '<img src="' . $e($img) . '" alt="' . $e($alt) . '" width="120" height="90" loading="lazy" style="vertical-align:middle;margin-right:12px;object-fit:cover">';
+                }
+                $item .= $e($label) . '</a></li>';
+                $li[] = $item;
+            }
+            if (count($li) > 0) {
+                $b  = '<main style="min-height:100vh;max-width:1200px;margin:0 auto;padding:24px 16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#1e293b;line-height:1.5">';
+                $b .= '<h1 style="font-size:28px;margin:8px 0">Paleciaki elektryczne BT Toyota – oferta</h1>';
+                $b .= '<ul style="list-style:none;padding:0">' . implode('', $li) . '</ul>';
+                $b .= '<p><a href="/kontakt">Kontakt — zapytaj o wózek</a></p>';
+                $b .= '</main>';
+                $seoBody = $b;
+            }
+        }
+    } catch (Throwable $ex) {
+        $seoBody = '';
+    }
+    restore_error_handler();
+}
 ?>
 `.replace(/\u([0-9a-f]{4})/gi, (_, h) => String.fromCharCode(parseInt(h, 16)));
 
