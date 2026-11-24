@@ -234,6 +234,16 @@ const mapProductConditionToSchemaOrg = (condition?: string | null) => {
 };
 
 
+// GTIN-8/12/13/14 z poprawną cyfrą kontrolną (GS1 mod 10).
+export const isValidGtin = (raw: string): boolean => {
+  const v = (raw || '').trim();
+  if (!/^(\d{8}|\d{12}|\d{13}|\d{14})$/.test(v)) return false;
+  const digits = v.split('').map(Number);
+  const check = digits.pop()!;
+  const sum = digits.reverse().reduce((acc, d, i) => acc + d * (i % 2 === 0 ? 3 : 1), 0);
+  return (10 - (sum % 10)) % 10 === check;
+};
+
 export const generateProductSchema = (
   product: Product, 
   seoSettings?: ProductSEOSettings | null
@@ -260,15 +270,16 @@ export const generateProductSchema = (
   };
 
   // Add GTIN/MPN if available from SEO settings
-  if (seoSettings?.gtin) {
-    schema.gtin = seoSettings.gtin;
+  if (seoSettings?.gtin && isValidGtin(seoSettings.gtin)) {
+    schema.gtin = seoSettings.gtin.trim();
   }
   if (seoSettings?.mpn) {
     schema.mpn = seoSettings.mpn;
   }
 
-  // Add offers section only if enabled in SEO settings or if no settings exist
-  if (!seoSettings || seoSettings.enable_schema) {
+  // Offer tylko gdy cena jest widoczna na karcie (resolvePriceView) — Google wymaga price w Offer.
+  const priceView = resolvePriceView(product);
+  if ((!seoSettings || seoSettings.enable_schema) && priceView.hasPublicPrice && priceView.netPrice != null) {
     const availability = mapProductAvailabilityStatus((product as any).availabilityStatus);
 
     schema.offers = {
@@ -327,11 +338,7 @@ export const generateProductSchema = (
       }
     };
 
-    // Price source: wspólna funkcja decyzyjna (resolvePriceView) — to samo źródło co UI i CTA.
-    // Cena trafia do schema wyłącznie dla ofert z ceną publiczną; w innym razie jest pomijana.
-    const priceView = resolvePriceView(product);
-
-    if (priceView.hasPublicPrice && priceView.netPrice != null) {
+    {
       schema.offers.price = priceView.netPrice.toFixed(2);
       schema.offers.priceCurrency = priceView.currency;
       // priceValidUntil remains a technical SEO field

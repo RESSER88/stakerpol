@@ -26,7 +26,7 @@ const SEOManagerTool = ({ className }: SEOManagerToolProps) => {
   };
 
   const sitemapUrls = [
-    `https://${domain}/sitemap.xml`,
+    `https://${domain}/sitemap.php`,
     'https://peztqgfmmnxaaoapzpbw.supabase.co/functions/v1/sitemap',
     'https://peztqgfmmnxaaoapzpbw.supabase.co/functions/v1/geo-feed'
   ];

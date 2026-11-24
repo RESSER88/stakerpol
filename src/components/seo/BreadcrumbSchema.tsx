@@ -11,7 +11,7 @@ const BreadcrumbSchema = ({ items }: BreadcrumbSchemaProps) => {
   const schema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    "itemListElement": items.map((item, index) => ({
+    "itemListElement": items.filter((item) => item.name && item.name.trim()).map((item, index) => ({
       "@type": "ListItem", 
       "position": index + 1,
       "name": item.name,

@@ -9,11 +9,11 @@ const LocalBusinessSchema = ({ includeOfferCatalog = true }: LocalBusinessSchema
     "@id": "https://stakerpol.pl#organization",
     "name": "Stakerpol",
     "legalName": "Stakerpol",
-    "description": "Profesjonalna sprzedaż i serwis wózków paletowych BT Toyota. Oferujemy wysokiej jakości używane wózki elektryczne i spalinowe wraz z kompleksowym serwisem.",
+    "description": "Sprzedaż i serwis używanych elektrycznych paleciaków (wózków paletowych) Toyota BT.",
     "url": "https://stakerpol.pl",
     "telephone": "+48694133592",
     "email": "info@stakerpol.pl",
-    "foundingDate": "2010",
+    "foundingDate": "2008",
     "address": {
       "@type": "PostalAddress",
       "addressCountry": "PL",
@@ -52,39 +52,28 @@ const LocalBusinessSchema = ({ includeOfferCatalog = true }: LocalBusinessSchema
 
     "hasOfferCatalog": includeOfferCatalog ? {
       "@type": "OfferCatalog",
-      "name": "Wózki paletowe BT Toyota",
+      "name": "Elektryczne paleciaki Toyota BT",
       "itemListElement": [
         {
           "@type": "OfferCatalog",
-          "name": "Wózki elektryczne",
-          "description": "Elektryczne wózki paletowe BT Toyota - ekonomiczne, ciche i przyjazne środowisku"
-        },
-        {
-          "@type": "OfferCatalog", 
-          "name": "Wózki spalinowe",
-          "description": "Spalinowe wózki paletowe Toyota - wydajne rozwiązania do intensywnej pracy"
+          "name": "Używane elektryczne paleciaki Toyota BT",
+          "description": "Sprzedaż używanych elektrycznych paleciaków / wózków paletowych Toyota BT"
         },
         {
           "@type": "OfferCatalog",
-          "name": "Serwis i części",
-          "description": "Kompleksowy serwis wózków paletowych i oryginalne części zamienne"
+          "name": "Serwis elektrycznych paleciaków Toyota BT",
+          "description": "Serwis używanych elektrycznych paleciaków / wózków paletowych Toyota BT"
         }
       ]
     } : undefined,
     "knowsAbout": [
-      "Wózki paletowe Toyota",
-      "Wózki elektryczne BT",
-      "Serwis wózków paletowych", 
-      "Części zamienne Toyota",
-      "Wynajem wózków paletowych",
-      "Sprzedaż używanych wózków"
+      "Używane elektryczne paleciaki Toyota BT",
+      "Elektryczne wózki paletowe Toyota BT",
+      "Serwis elektrycznych paleciaków Toyota BT"
     ],
     "serviceType": [
-      "Sprzedaż wózków paletowych",
-      "Serwis i naprawa",
-      "Części zamienne",
-      "Wynajem krótkoterminowy",
-      "Doradztwo techniczne"
+      "Sprzedaż używanych elektrycznych paleciaków Toyota BT",
+      "Serwis elektrycznych paleciaków Toyota BT"
     ]
   } as const;
 

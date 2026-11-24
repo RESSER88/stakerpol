@@ -102,7 +102,6 @@ $apiUrl = $SUPABASE_URL . '/rest/v1/products'
 
 $response = fetchUrl($apiUrl, [
     'apikey: ' . $SUPABASE_ANON,
-    'Authorization: Bearer ' . $SUPABASE_ANON,
     'Accept: application/json',
 ], $fetchErr);
 

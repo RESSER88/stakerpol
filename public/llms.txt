@@ -25,4 +25,4 @@ Magazyn: ul. Międzyleśna 115, 32-095 Celiny, Polska
 
 ## Opcjonalne
 
-- [Mapa witryny](https://stakerpol.pl/sitemap.xml): zawiera pełną, aktualną listę wszystkich dostępnych wózków i podstron serwisu.
+- [Mapa witryny](https://stakerpol.pl/sitemap.php): zawiera pełną, aktualną listę wszystkich dostępnych wózków i podstron serwisu.
